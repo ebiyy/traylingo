@@ -49,9 +49,9 @@ docs/                   # Documentation
 
 ## Environment Setup
 
-Copy `.env.example` to `.env` and add your OpenAI API key:
+Copy `.env.example` to `.env` and add your Anthropic API key:
 ```
-OPENAI_API_KEY=sk-your-api-key-here
+ANTHROPIC_API_KEY=sk-ant-your-api-key-here
 ```
 
 ## OSS Contribution Guidelines
@@ -70,6 +70,9 @@ When suggesting changes, consider these OSS best practices:
 - Ensure CI passes before merging (lint, typecheck, cargo check)
 - Follow existing code patterns
 - Add comments for complex logic
+- Use `// WHY:` prefix for non-obvious implementation decisions (e.g., race condition fixes, workarounds)
+  - Keeps reasoning close to code, easier to maintain than separate docs
+  - Example: `// WHY: Prevents interleaving when multiple translations overlap.`
 
 ### Security
 - Never commit API keys or secrets

@@ -22,6 +22,8 @@ interface UsagePayload {
 }
 
 // Generate unique session ID
+// WHY: Prevents interleaving when multiple translations overlap.
+// Without this, rapid Cmd+J presses mix chunks from different API responses.
 function generateSessionId(): string {
   return `${Date.now()}-${Math.random().toString(36).slice(2, 11)}`;
 }
