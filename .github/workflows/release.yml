@@ -1,0 +1,55 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  release:
+    permissions:
+      contents: write
+    runs-on: macos-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - name: Setup Rust
+        uses: dtolnay/rust-action@stable
+
+      - name: Rust cache
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri
+
+      - name: Install dependencies
+        run: pnpm install
+
+      - name: Build Tauri app
+        uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tagName: ${{ github.ref_name }}
+          releaseName: 'TrayLingo ${{ github.ref_name }}'
+          releaseBody: |
+            See the [CHANGELOG](https://github.com/ebiyy/traylingo/blob/main/CHANGELOG.md) for details.
+
+            ## Installation
+
+            Download the `.dmg` file below and drag TrayLingo to your Applications folder.
+
+            **Note:** You'll need to set up your OpenAI API key. See the [README](https://github.com/ebiyy/traylingo#setup) for instructions.
+          releaseDraft: true
+          prerelease: false

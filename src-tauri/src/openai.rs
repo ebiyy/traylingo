@@ -73,7 +73,7 @@ pub async fn translate_stream(app: AppHandle, text: String) -> Result<(), String
         messages: vec![
             Message {
                 role: "system".to_string(),
-                content: "Translate to English if the input is Japanese, or to Japanese if the input is English. Only output the translation, nothing else.".to_string(),
+                content: "Translate to English if the input is Japanese, or to Japanese if the input is English. Preserve code blocks, URLs, technical terms, and formatting exactly as-is. Only output the translation, nothing else.".to_string(),
             },
             Message {
                 role: "user".to_string(),

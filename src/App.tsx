@@ -10,22 +10,34 @@ interface UsageInfo {
   estimated_cost: number;
 }
 
-// Format text based on detected language
+// Format text based on detected language, preserving code blocks
 function formatText(text: string): string {
   if (!text) return text;
 
-  // Detect if Japanese (hiragana, katakana, or kanji)
-  const isJapanese = /[\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FAF]/.test(text);
+  // Split by code blocks to preserve them
+  const parts = text.split(/(```[\s\S]*?```)/g);
 
-  if (isJapanese) {
-    // Add line breaks after Japanese periods for readability
-    return text
-      .replace(/。(?![\n」』）])/g, "。\n")
-      .replace(/\n{3,}/g, "\n\n");
-  }
+  return parts
+    .map((part) => {
+      // Don't modify code blocks
+      if (part.startsWith("```")) {
+        return part;
+      }
 
-  // English: preserve existing formatting
-  return text;
+      // Detect if Japanese (hiragana, katakana, or kanji)
+      const isJapanese = /[\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FAF]/.test(part);
+
+      if (isJapanese) {
+        // Add line breaks after Japanese periods for readability
+        return part
+          .replace(/。(?![\n」』）])/g, "。\n")
+          .replace(/\n{3,}/g, "\n\n");
+      }
+
+      // English: preserve existing formatting
+      return part;
+    })
+    .join("");
 }
 
 function App() {
