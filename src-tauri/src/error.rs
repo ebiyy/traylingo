@@ -98,5 +98,4 @@ mod tests {
         let err = TranslateError::ApiKeyMissing;
         assert!(err.user_message().contains("API key not configured"));
     }
-
 }
