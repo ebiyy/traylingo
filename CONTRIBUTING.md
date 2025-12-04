@@ -27,7 +27,7 @@ Thank you for your interest in contributing to TrayLingo! This document provides
 3. Set up environment variables:
    ```bash
    cp .env.example .env
-   # Edit .env and add your OpenAI API key
+   # Edit .env and add your Anthropic API key
    ```
 
 4. Run in development mode:
@@ -47,7 +47,7 @@ traylingo/
 │   ├── src/
 │   │   ├── lib.rs         # Tauri commands & app setup
 │   │   ├── main.rs        # Entry point
-│   │   └── openai.rs      # OpenAI API integration
+│   │   └── anthropic.rs   # Anthropic API integration
 │   ├── Cargo.toml         # Rust dependencies
 │   └── tauri.conf.json    # Tauri configuration
 ├── docs/                   # Documentation
@@ -94,14 +94,22 @@ traylingo/
 
 2. Make your changes
 
-3. Test your changes:
+3. Run tests:
+   ```bash
+   pnpm test:all          # Frontend + Rust tests
+   pnpm lint              # Lint check
+   pnpm typecheck         # Type check
+   cargo fmt --manifest-path src-tauri/Cargo.toml -- --check
+   ```
+
+4. Test manually:
    ```bash
    pnpm tauri dev
    ```
 
-4. Commit your changes
+5. Commit your changes
 
-5. Push and create a Pull Request
+6. Push and create a Pull Request
 
 ### PR Guidelines
 

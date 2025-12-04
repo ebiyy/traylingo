@@ -30,6 +30,12 @@ pnpm format
 cargo check --manifest-path src-tauri/Cargo.toml
 cargo clippy --manifest-path src-tauri/Cargo.toml
 cargo fmt --manifest-path src-tauri/Cargo.toml
+
+# Tests
+pnpm test              # Frontend tests (Vitest)
+pnpm test:watch        # Watch mode
+pnpm test:rust         # Rust tests
+pnpm test:all          # All tests
 ```
 
 ## Project Structure
@@ -46,6 +52,33 @@ docs/                   # Documentation
 - **TypeScript**: Follow existing patterns, use TypeScript for all frontend code
 - **Rust**: Run `cargo fmt` and `cargo clippy` before committing
 - **Commits**: Use conventional commits (feat:, fix:, docs:, etc.)
+
+## Testing Strategy
+
+### When to Add/Update Tests
+
+Propose adding tests when:
+- **Pure functions added**: Utility functions, calculations, formatters
+- **Business logic changes**: Pricing, validation, sanitization
+- **Bug fixes**: Add regression test to prevent recurrence
+
+### Test Locations
+
+| Type | Location | Framework |
+|------|----------|-----------|
+| Frontend utils | `src/utils/*.test.ts` | Vitest |
+| Rust unit tests | `src-tauri/src/*.rs` (`#[cfg(test)]`) | cargo test |
+
+### Current Test Coverage
+
+- **Rust**: `calculate_cost`, `sanitize_input` in `anthropic.rs`
+- **Frontend**: `formatText`, `isJapanese` in `src/utils/formatText.ts`
+
+### What NOT to Test (for now)
+
+- Tauri commands (require mocking AppHandle)
+- UI components (small app, manual testing sufficient)
+- E2E (complex setup, low ROI)
 
 ## Environment Setup
 
