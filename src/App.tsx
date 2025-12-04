@@ -2,40 +2,13 @@ import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
 import { readText, writeText } from "@tauri-apps/plugin-clipboard-manager";
 import { createMemo, createSignal, onMount, Show } from "solid-js";
+import { formatText } from "./utils/formatText";
 
 // Token usage info from backend
 interface UsageInfo {
   prompt_tokens: number;
   completion_tokens: number;
   estimated_cost: number;
-}
-
-// Format text based on detected language, preserving code blocks
-function formatText(text: string): string {
-  if (!text) return text;
-
-  // Split by code blocks to preserve them
-  const parts = text.split(/(```[\s\S]*?```)/g);
-
-  return parts
-    .map((part) => {
-      // Don't modify code blocks
-      if (part.startsWith("```")) {
-        return part;
-      }
-
-      // Detect if Japanese (hiragana, katakana, or kanji)
-      const isJapanese = /[\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FAF]/.test(part);
-
-      if (isJapanese) {
-        // Add line breaks after Japanese periods for readability
-        return part.replace(/。(?![\n」』）])/g, "。\n").replace(/\n{3,}/g, "\n\n");
-      }
-
-      // English: preserve existing formatting
-      return part;
-    })
-    .join("");
 }
 
 function App() {
