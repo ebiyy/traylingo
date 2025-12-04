@@ -14,3 +14,6 @@ src-tauri/target/
 
 # Logs
 *.log
+
+# Serena (personal config only, memories are committed)
+.serena/project.yml

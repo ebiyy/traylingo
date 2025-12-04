@@ -89,7 +89,9 @@ When making significant changes, consider updating:
 
 ## Serena Memory Management
 
-Serena MCP stores project knowledge in `.serena/memories/`. When changes cause divergence from learned knowledge, propose updating the relevant memory files.
+Serena MCP stores project knowledge in `.serena/memories/`. These memory files are committed to the repository for shared knowledge. Personal config (`.serena/project.yml`) is gitignored.
+
+When changes cause divergence from learned knowledge, propose updating the relevant memory files.
 
 ### When to Update Serena Memories
 
