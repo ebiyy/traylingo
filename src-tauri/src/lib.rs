@@ -9,8 +9,8 @@ use tauri_plugin_global_shortcut::{Code, GlobalShortcutExt, Modifiers, Shortcut}
 mod anthropic;
 
 #[tauri::command]
-async fn translate(app: tauri::AppHandle, text: String) -> Result<(), String> {
-    anthropic::translate_stream(app, text).await
+async fn translate(app: tauri::AppHandle, text: String, session_id: String) -> Result<(), String> {
+    anthropic::translate_stream(app, text, session_id).await
 }
 
 /// macOS: Control dock icon visibility

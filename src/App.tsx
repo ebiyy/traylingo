@@ -4,11 +4,26 @@ import { readText, writeText } from "@tauri-apps/plugin-clipboard-manager";
 import { createMemo, createSignal, onMount, Show } from "solid-js";
 import { formatText } from "./utils/formatText";
 
-// Token usage info from backend
-interface UsageInfo {
+// Event payloads with session ID
+interface ChunkPayload {
+  session_id: string;
+  text: string;
+}
+
+interface DonePayload {
+  session_id: string;
+}
+
+interface UsagePayload {
+  session_id: string;
   prompt_tokens: number;
   completion_tokens: number;
   estimated_cost: number;
+}
+
+// Generate unique session ID
+function generateSessionId(): string {
+  return `${Date.now()}-${Math.random().toString(36).slice(2, 11)}`;
 }
 
 function App() {
@@ -16,8 +31,9 @@ function App() {
   const [translated, setTranslated] = createSignal("");
   const [isTranslating, setIsTranslating] = createSignal(false);
   const [copied, setCopied] = createSignal(false);
-  const [usage, setUsage] = createSignal<UsageInfo | null>(null);
+  const [usage, setUsage] = createSignal<UsagePayload | null>(null);
   const [sessionCost, setSessionCost] = createSignal(0);
+  const [currentSessionId, setCurrentSessionId] = createSignal("");
 
   // Formatted translation text
   const formattedTranslation = createMemo(() => formatText(translated()));
@@ -37,31 +53,39 @@ function App() {
     await listen("shortcut-triggered", async () => {
       const text = await readText();
       if (text) {
+        const sessionId = generateSessionId();
+        setCurrentSessionId(sessionId);
         setOriginal(text);
         setTranslated("");
         setIsTranslating(true);
         setUsage(null);
-        invoke("translate", { text }).catch((err) => {
+        invoke("translate", { text, sessionId }).catch((err) => {
           setTranslated(`Error: ${err}`);
           setIsTranslating(false);
         });
       }
     });
 
-    // Listen for translation chunks
-    await listen<string>("translate-chunk", (event) => {
-      setTranslated((prev) => prev + event.payload);
+    // Listen for translation chunks (filter by session ID)
+    await listen<ChunkPayload>("translate-chunk", (event) => {
+      if (event.payload.session_id === currentSessionId()) {
+        setTranslated((prev) => prev + event.payload.text);
+      }
     });
 
-    // Listen for translation completion
-    await listen("translate-done", () => {
-      setIsTranslating(false);
+    // Listen for translation completion (filter by session ID)
+    await listen<DonePayload>("translate-done", (event) => {
+      if (event.payload.session_id === currentSessionId()) {
+        setIsTranslating(false);
+      }
     });
 
-    // Listen for usage info
-    await listen<UsageInfo>("translate-usage", (event) => {
-      setUsage(event.payload);
-      setSessionCost((prev) => prev + event.payload.estimated_cost);
+    // Listen for usage info (filter by session ID)
+    await listen<UsagePayload>("translate-usage", (event) => {
+      if (event.payload.session_id === currentSessionId()) {
+        setUsage(event.payload);
+        setSessionCost((prev) => prev + event.payload.estimated_cost);
+      }
     });
   });
 

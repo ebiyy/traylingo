@@ -17,3 +17,6 @@ src-tauri/target/
 
 # Serena (personal config only, memories are committed)
 .serena/project.yml
+
+# Temporary files
+temp/

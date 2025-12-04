@@ -28,6 +28,8 @@ struct StreamEvent {
     #[serde(rename = "type")]
     event_type: String,
     #[serde(default)]
+    index: Option<u32>,
+    #[serde(default)]
     delta: Option<ContentDelta>,
     #[serde(default)]
     usage: Option<Usage>,
@@ -45,13 +47,6 @@ struct ContentDelta {
 struct Usage {
     input_tokens: u32,
     output_tokens: u32,
-}
-
-#[derive(Serialize, Clone)]
-struct UsageInfo {
-    prompt_tokens: u32,
-    completion_tokens: u32,
-    estimated_cost: f64,
 }
 
 fn calculate_cost(prompt_tokens: u32, completion_tokens: u32) -> f64 {
@@ -73,12 +68,36 @@ fn sanitize_input(text: &str) -> String {
             || matches!(*c, '\u{30A0}'..='\u{30FF}')  // Katakana
             || matches!(*c, '\u{4E00}'..='\u{9FAF}')  // CJK Unified Ideographs (Kanji)
             || matches!(*c, '\u{3000}'..='\u{303F}')  // CJK Punctuation (。、・「」『』etc.)
-            || matches!(*c, '\u{FF00}'..='\u{FFEF}')  // Fullwidth forms (！？etc.)
+            || matches!(*c, '\u{FF00}'..='\u{FFEF}') // Fullwidth forms (！？etc.)
         })
         .collect()
 }
 
-pub async fn translate_stream(app: AppHandle, text: String) -> Result<(), String> {
+// Event payload with session ID for filtering
+#[derive(Serialize, Clone)]
+struct ChunkPayload {
+    session_id: String,
+    text: String,
+}
+
+#[derive(Serialize, Clone)]
+struct DonePayload {
+    session_id: String,
+}
+
+#[derive(Serialize, Clone)]
+struct UsagePayload {
+    session_id: String,
+    prompt_tokens: u32,
+    completion_tokens: u32,
+    estimated_cost: f64,
+}
+
+pub async fn translate_stream(
+    app: AppHandle,
+    text: String,
+    session_id: String,
+) -> Result<(), String> {
     let api_key = std::env::var("ANTHROPIC_API_KEY").map_err(|_| "ANTHROPIC_API_KEY not set")?;
 
     // Sanitize input to remove special symbols that confuse the model
@@ -151,9 +170,18 @@ Only output the translation.";
                 if let Ok(event) = serde_json::from_str::<StreamEvent>(data) {
                     match event.event_type.as_str() {
                         "content_block_delta" => {
-                            if let Some(delta) = &event.delta {
-                                if let Some(text) = &delta.text {
-                                    let _ = app.emit("translate-chunk", text.clone());
+                            // Only process index 0 to avoid duplicate content blocks
+                            if event.index == Some(0) {
+                                if let Some(delta) = &event.delta {
+                                    if let Some(text) = &delta.text {
+                                        let _ = app.emit(
+                                            "translate-chunk",
+                                            ChunkPayload {
+                                                session_id: session_id.clone(),
+                                                text: text.clone(),
+                                            },
+                                        );
+                                    }
                                 }
                             }
                         }
@@ -165,18 +193,23 @@ Only output the translation.";
                         "message_stop" => {
                             // Emit usage info before done
                             if let Some(usage) = &last_usage {
-                                let cost =
-                                    calculate_cost(usage.input_tokens, usage.output_tokens);
+                                let cost = calculate_cost(usage.input_tokens, usage.output_tokens);
                                 let _ = app.emit(
                                     "translate-usage",
-                                    UsageInfo {
+                                    UsagePayload {
+                                        session_id: session_id.clone(),
                                         prompt_tokens: usage.input_tokens,
                                         completion_tokens: usage.output_tokens,
                                         estimated_cost: cost,
                                     },
                                 );
                             }
-                            let _ = app.emit("translate-done", ());
+                            let _ = app.emit(
+                                "translate-done",
+                                DonePayload {
+                                    session_id: session_id.clone(),
+                                },
+                            );
                             return Ok(());
                         }
                         _ => {}
@@ -186,7 +219,12 @@ Only output the translation.";
         }
     }
 
-    let _ = app.emit("translate-done", ());
+    let _ = app.emit(
+        "translate-done",
+        DonePayload {
+            session_id: session_id.clone(),
+        },
+    );
     Ok(())
 }
 
