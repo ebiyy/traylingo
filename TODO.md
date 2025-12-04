@@ -21,6 +21,10 @@
 - [x] Issue/PR templates
 - [x] Error handling (network, API errors, rate limits)
 - [x] Settings UI (API key, model selection)
+- [x] Renovate (dependency auto-update)
+- [x] 翻訳中スケルトンローディング表示 (lucide-solid)
+- [x] コピーボタンをアイコン化 (lucide-solid Copy/Check)
+- [x] インラインSVGをlucide-solidに置換 (Settings, X, AlertTriangle)
 
 ---
 
@@ -34,11 +38,12 @@
 
 ## Backlog
 
-### Features
+### Features (Priority: Medium)
+- [ ] AI利用コストの永続化と累積表示 (tauri-plugin-store活用)
 - [ ] Notification support (translation complete)
 - [ ] Language auto-detection improvements
 
-### Polish
+### Polish (Priority: Low)
 - [ ] Improve dark theme styling (more refined)
 - [ ] Custom tray icon (A/あ design)
 - [ ] Keyboard shortcuts for copy/clear
@@ -48,6 +53,16 @@
 ### Distribution
 - [ ] Homebrew tap setup
 - [ ] First release (v0.1.0) via GitHub Actions
+
+---
+
+## Under Consideration
+
+### ROI検討が必要
+- [ ] ヒストリー機能 - 過去の翻訳履歴を保持・検索
+  - Pros: ユーザー利便性向上、再翻訳不要
+  - Cons: ストレージ、UI複雑化、検索実装コスト
+  - 判断: MVP後に再評価
 
 ---
 
