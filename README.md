@@ -78,6 +78,11 @@ TrayLingo uses the `gpt-4o-mini` model by default. Token pricing:
 - Input: $0.15 / 1M tokens
 - Output: $0.60 / 1M tokens
 
+## Documentation
+
+- [Architecture](docs/architecture.md) - System design and module structure
+- [Input Sanitization](docs/input-sanitization.md) - Unicode handling for translations
+
 ## Contributing
 
 Contributions are welcome! Please read our [Contributing Guide](CONTRIBUTING.md) before submitting a PR.
