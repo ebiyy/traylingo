@@ -30,7 +30,10 @@ impl Default for Settings {
 
 /// Available models for selection (id, display_name)
 pub const AVAILABLE_MODELS: &[(&str, &str)] = &[
-    ("claude-haiku-4-5-20251001", "Claude Haiku 4.5 (Fast, Cheap)"),
+    (
+        "claude-haiku-4-5-20251001",
+        "Claude Haiku 4.5 (Fast, Cheap)",
+    ),
     (
         "claude-sonnet-4-5-20250514",
         "Claude Sonnet 4.5 (Best Quality)",
