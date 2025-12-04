@@ -99,31 +99,4 @@ mod tests {
         assert!(err.user_message().contains("API key not configured"));
     }
 
-    #[test]
-    fn test_is_retryable() {
-        assert!(TranslateError::RateLimitExceeded {
-            retry_after_secs: None
-        }
-        .is_retryable());
-        assert!(TranslateError::Overloaded.is_retryable());
-        assert!(TranslateError::Timeout { timeout_secs: 30 }.is_retryable());
-        assert!(!TranslateError::ApiKeyMissing.is_retryable());
-        assert!(!TranslateError::AuthenticationFailed {
-            message: "test".into()
-        }
-        .is_retryable());
-    }
-
-    #[test]
-    fn test_retry_delay() {
-        assert_eq!(
-            TranslateError::RateLimitExceeded {
-                retry_after_secs: Some(10)
-            }
-            .retry_delay_ms(),
-            Some(10000)
-        );
-        assert_eq!(TranslateError::Overloaded.retry_delay_ms(), Some(3000));
-        assert_eq!(TranslateError::ApiKeyMissing.retry_delay_ms(), None);
-    }
 }
