@@ -4,8 +4,12 @@
     "config:recommended",
     ":semanticCommits"
   ],
-  "labels": ["dependencies"],
-  "schedule": ["before 9am on monday"],
+  "labels": [
+    "dependencies"
+  ],
+  "schedule": [
+    "before 9am on monday"
+  ],
   "timezone": "Asia/Tokyo",
   "prHourlyLimit": 2,
   "prConcurrentLimit": 5,
@@ -14,34 +18,50 @@
   "packageRules": [
     {
       "description": "Automerge non-major updates",
-      "matchUpdateTypes": ["minor", "patch"],
+      "matchUpdateTypes": [
+        "minor",
+        "patch"
+      ],
       "automerge": true
     },
     {
       "description": "Group Rust dependencies",
-      "matchManagers": ["cargo"],
+      "matchManagers": [
+        "cargo"
+      ],
       "groupName": "rust dependencies"
     },
     {
       "description": "Group Tauri ecosystem",
-      "matchPackagePatterns": ["^@tauri-apps/"],
-      "groupName": "tauri"
+      "groupName": "tauri",
+      "matchPackageNames": [
+        "/^@tauri-apps//"
+      ]
     },
     {
       "description": "Group build tools",
-      "matchPackageNames": ["vite", "typescript", "tailwindcss"],
-      "matchPackagePatterns": ["^@tailwindcss/", "^vite-plugin-"],
+      "matchPackageNames": [
+        "vite",
+        "typescript",
+        "tailwindcss",
+        "/^@tailwindcss//",
+        "/^vite-plugin-/"
+      ],
       "groupName": "build tools"
     },
     {
       "description": "Group testing tools",
-      "matchPackageNames": ["vitest"],
+      "matchPackageNames": [
+        "vitest"
+      ],
       "groupName": "testing"
     },
     {
       "description": "Group linting tools",
-      "matchPackagePatterns": ["^@biomejs/"],
-      "groupName": "linting"
+      "groupName": "linting",
+      "matchPackageNames": [
+        "/^@biomejs//"
+      ]
     }
   ]
 }
