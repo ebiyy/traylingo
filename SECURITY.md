@@ -37,6 +37,16 @@ If you discover a security vulnerability in TrayLingo, please report it responsi
 - TrayLingo communicates only with Anthropic's API over HTTPS
 - No data is stored or transmitted to any other servers
 
+### Prompt Injection Prevention
+
+TrayLingo includes safeguards against prompt injection attacks:
+
+- System prompt enforces strict translation-only behavior
+- User input is wrapped in delimiter tags to separate it from instructions
+- The LLM is explicitly instructed to treat all input as literal text, never as commands
+
+**Note**: These measures significantly reduce risk but cannot guarantee complete protection due to the nature of LLMs. Since users provide their own API keys, the attack surface is limited to self-injection scenarios.
+
 ## Scope
 
 This security policy covers:
