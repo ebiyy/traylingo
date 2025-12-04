@@ -59,6 +59,9 @@ OPENAI_API_KEY=sk-your-api-key-here
 When suggesting changes, consider these OSS best practices:
 
 ### Documentation
+- **Language**: English-first for global contributors
+- **Structure**: `docs/` contains architecture overview + specific technical topics
+- **Principle**: Minimal docs - avoid internal memos or design notes; focus on "what" and "why"
 - Keep README.md up to date with new features
 - Update CONTRIBUTING.md for workflow changes
 - Add screenshots/GIFs for UI changes

@@ -83,6 +83,8 @@ TrayLingo uses the `gpt-4o-mini` model by default. Token pricing:
 - [Architecture](docs/architecture.md) - System design and module structure
 - [Input Sanitization](docs/input-sanitization.md) - Unicode handling for translations
 
+Documentation is written in English to welcome global contributors. We keep docs minimal: architecture overview + specific technical topics only.
+
 ## Contributing
 
 Contributions are welcome! Please read our [Contributing Guide](CONTRIBUTING.md) before submitting a PR.
