@@ -12,6 +12,9 @@ src-tauri/target/
 # OS
 .DS_Store
 
+# IDE
+.vscode/
+
 # Logs
 *.log
 
