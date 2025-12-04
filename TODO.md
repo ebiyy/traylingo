@@ -6,7 +6,7 @@
 - [x] Hybrid dock visibility
 - [x] Window close → hide behavior
 - [x] ⌘J global shortcut with auto-copy
-- [x] OpenAI streaming translation
+- [x] Anthropic Claude streaming translation
 - [x] Basic 2-pane UI
 - [x] Wine red / salmon accent colors (#8B4557 / #E8A091)
 - [x] Scroll support for long texts (overflow-y-auto)
@@ -19,6 +19,8 @@
 - [x] OSS documentation (LICENSE, README, CONTRIBUTING, etc.)
 - [x] GitHub Actions CI/CD workflows
 - [x] Issue/PR templates
+- [x] Error handling (network, API errors, rate limits)
+- [x] Settings UI (API key, model selection)
 
 ---
 
@@ -35,8 +37,6 @@
 ### Features
 - [ ] Notification support (translation complete)
 - [ ] Language auto-detection improvements
-- [ ] Error handling improvements (network, API errors)
-- [ ] Settings UI (API key, model selection)
 
 ### Polish
 - [ ] Improve dark theme styling (more refined)
@@ -59,7 +59,6 @@
 - Border: `gray-700`
 - Accent: Wine red / Salmon (`#8B4557` / `#E8A091`)
 
-### Token Pricing (gpt-4o-mini)
-- Input: $0.15 / 1M tokens
-- Output: $0.60 / 1M tokens
-- Estimate: ~750 tokens/1000 chars
+### Token Pricing (Claude Haiku 4.5)
+- Input: $1.0 / 1M tokens
+- Output: $5.0 / 1M tokens
