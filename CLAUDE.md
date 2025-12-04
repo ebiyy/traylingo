@@ -122,6 +122,7 @@ When making significant changes, consider updating:
 - [ ] README.md (if user-facing features change)
 - [ ] CONTRIBUTING.md (if development workflow changes)
 - [ ] TODO.md (mark completed items, add new ones)
+- [ ] CHANGELOG.md (when releasing a new version)
 - [ ] docs/ (if architecture or concepts change)
 - [ ] Serena memories (if changes affect learned knowledge - see below)
 
