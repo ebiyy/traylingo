@@ -71,7 +71,7 @@ Propose adding tests when:
 
 ### Current Test Coverage
 
-- **Rust**: `calculate_cost`, `sanitize_input` in `anthropic.rs`
+- **Rust**: `calculate_cost` in `anthropic.rs`
 - **Frontend**: `formatText`, `isJapanese` in `src/utils/formatText.ts`
 
 ### What NOT to Test (for now)

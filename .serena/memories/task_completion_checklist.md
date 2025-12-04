@@ -17,6 +17,9 @@ cargo clippy --manifest-path src-tauri/Cargo.toml
 
 # 4. Rust formatting
 cargo fmt --manifest-path src-tauri/Cargo.toml
+
+# 5. Run tests
+pnpm test:all
 ```
 
 ### Manual Testing

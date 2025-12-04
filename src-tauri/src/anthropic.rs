@@ -55,24 +55,6 @@ fn calculate_cost(prompt_tokens: u32, completion_tokens: u32) -> f64 {
     input_cost + output_cost
 }
 
-/// Sanitize input text by keeping only allowed characters (positive list approach).
-/// This prevents special Unicode symbols from confusing the translation model.
-/// See docs/input-sanitization.md for details.
-fn sanitize_input(text: &str) -> String {
-    text.chars()
-        .filter(|c| {
-            c.is_ascii_alphanumeric()        // a-zA-Z0-9
-            || c.is_ascii_punctuation()      // Standard punctuation
-            || c.is_whitespace()             // Space, tab, newline
-            || matches!(*c, '\u{3040}'..='\u{309F}')  // Hiragana
-            || matches!(*c, '\u{30A0}'..='\u{30FF}')  // Katakana
-            || matches!(*c, '\u{4E00}'..='\u{9FAF}')  // CJK Unified Ideographs (Kanji)
-            || matches!(*c, '\u{3000}'..='\u{303F}')  // CJK Punctuation (。、・「」『』etc.)
-            || matches!(*c, '\u{FF00}'..='\u{FFEF}') // Fullwidth forms (！？etc.)
-        })
-        .collect()
-}
-
 // Event payload with session ID for filtering
 #[derive(Serialize, Clone)]
 struct ChunkPayload {
@@ -100,9 +82,6 @@ pub async fn translate_stream(
 ) -> Result<(), String> {
     let api_key = std::env::var("ANTHROPIC_API_KEY").map_err(|_| "ANTHROPIC_API_KEY not set")?;
 
-    // Sanitize input to remove special symbols that confuse the model
-    let sanitized_text = sanitize_input(&text);
-
     let client = Client::new();
 
     let system_prompt = "You are a Japanese-English translator.
@@ -120,7 +99,7 @@ Only output the translation.";
         model: "claude-haiku-4-5-20251001".to_string(),
         messages: vec![Message {
             role: "user".to_string(),
-            content: sanitized_text,
+            content: text,
         }],
         max_tokens: 4096,
         stream: true,
@@ -244,29 +223,5 @@ mod tests {
     #[test]
     fn test_calculate_cost_zero() {
         assert_eq!(calculate_cost(0, 0), 0.0);
-    }
-
-    #[test]
-    fn test_sanitize_input_english() {
-        let input = "Hello, World!";
-        assert_eq!(sanitize_input(input), "Hello, World!");
-    }
-
-    #[test]
-    fn test_sanitize_input_japanese() {
-        let input = "こんにちは、世界！";
-        assert_eq!(sanitize_input(input), "こんにちは、世界！");
-    }
-
-    #[test]
-    fn test_sanitize_input_removes_special_chars() {
-        let input = "Hello ✨ World 🌍";
-        assert_eq!(sanitize_input(input), "Hello  World ");
-    }
-
-    #[test]
-    fn test_sanitize_input_preserves_code() {
-        let input = "function foo() { return 42; }";
-        assert_eq!(sanitize_input(input), input);
     }
 }

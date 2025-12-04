@@ -49,14 +49,30 @@ cargo fmt --manifest-path src-tauri/Cargo.toml
 cargo fmt --manifest-path src-tauri/Cargo.toml -- --check
 ```
 
+## Testing
+
+```bash
+# Run frontend tests (Vitest)
+pnpm test
+
+# Watch mode for development
+pnpm test:watch
+
+# Run Rust tests
+pnpm test:rust
+
+# Run all tests (frontend + Rust)
+pnpm test:all
+```
+
 ## Environment Setup
 
 ```bash
 # Copy environment template
 cp .env.example .env
 
-# Edit .env and add your OpenAI API key:
-# OPENAI_API_KEY=sk-your-api-key-here
+# Edit .env and add your Anthropic API key:
+# ANTHROPIC_API_KEY=sk-ant-your-api-key-here
 ```
 
 ## Vite Commands
