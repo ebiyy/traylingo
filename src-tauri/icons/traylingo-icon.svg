@@ -1,0 +1,64 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
+  <defs>
+    <!-- Strong drop shadow -->
+    <filter id="dropShadow" x="-20%" y="-20%" width="150%" height="150%">
+      <feDropShadow dx="0" dy="20" stdDeviation="25" flood-color="#000" flood-opacity="0.4"/>
+    </filter>
+
+    <!-- Border gradient (strong) -->
+    <linearGradient id="borderGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FFFFFF"/>
+      <stop offset="40%" stop-color="#E8E6E4"/>
+      <stop offset="100%" stop-color="#8A8A8A"/>
+    </linearGradient>
+
+    <!-- Inner highlight gradient -->
+    <linearGradient id="innerHighlight" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#FFFFFF" stop-opacity="0.9"/>
+      <stop offset="100%" stop-color="#FFFFFF" stop-opacity="0"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Outer shadow layer -->
+  <rect x="40" y="40" width="944" height="944" rx="200" ry="200" fill="#D0CECC" filter="url(#dropShadow)"/>
+
+  <!-- Main tray background -->
+  <rect x="40" y="40" width="944" height="944" rx="200" ry="200" fill="#FAF8F6"/>
+
+  <!-- Strong border (emboss edge) -->
+  <rect x="45" y="45" width="934" height="934" rx="197" ry="197" fill="none" stroke="url(#borderGradient)" stroke-width="8"/>
+
+  <!-- Inner highlight (top) -->
+  <path d="M240 55 Q512 45 784 55 Q970 70 975 250 L970 200 Q960 80 800 60 Q512 40 224 60 Q64 80 54 200 L49 250 Q54 70 240 55Z" fill="url(#innerHighlight)"/>
+
+  <!-- Bottom inner shadow -->
+  <rect x="60" y="800" width="904" height="170" rx="180" ry="85" fill="#000" fill-opacity="0.08"/>
+
+  <!-- Apple skin ring (wine red) -->
+  <circle cx="512" cy="540" r="380" fill="#8B2942"/>
+
+  <!-- Apple flesh (pink, single color) -->
+  <circle cx="512" cy="540" r="330" fill="#FFE8E5"/>
+
+  <!-- Stem -->
+  <path d="M512 160 Q540 100 580 110" stroke="#5D4037" stroke-width="18" fill="none" stroke-linecap="round"/>
+
+  <!-- Leaf -->
+  <ellipse cx="600" cy="125" rx="50" ry="25" fill="#6B8E23" transform="rotate(25 600 125)"/>
+
+  <!-- Text "A" and "あ" large and centered -->
+  <text x="390" y="640"
+    font-family="Arial, Helvetica, sans-serif"
+    font-size="260"
+    font-weight="bold"
+    fill="#8B2942"
+    text-anchor="middle">A</text>
+
+  <text x="615" y="640"
+    font-family="Hiragino Sans, Hiragino Kaku Gothic ProN, sans-serif"
+    font-size="230"
+    font-weight="bold"
+    fill="#E8847C"
+    text-anchor="middle">あ</text>
+
+</svg>
