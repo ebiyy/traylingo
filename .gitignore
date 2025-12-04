@@ -20,3 +20,6 @@ src-tauri/target/
 
 # Temporary files
 temp/
+
+# Personal article drafts
+article/
