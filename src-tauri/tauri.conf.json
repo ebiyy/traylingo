@@ -16,10 +16,25 @@
         "title": "TrayLingo",
         "width": 900,
         "height": 600,
+        "url": "index.html#/main",
         "resizable": true,
         "fullscreen": false,
         "center": true,
         "visible": true
+      },
+      {
+        "label": "popup",
+        "title": "Quick Translate",
+        "width": 400,
+        "height": 100,
+        "x": 2000,
+        "y": 30,
+        "url": "index.html#/popup",
+        "visible": false,
+        "decorations": false,
+        "resizable": false,
+        "alwaysOnTop": true,
+        "focus": true
       }
     ],
     "security": {
