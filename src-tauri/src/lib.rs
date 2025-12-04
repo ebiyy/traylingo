@@ -2,8 +2,16 @@ use tauri::{
     image::Image,
     menu::{Menu, MenuItem},
     tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent},
-    Manager, RunEvent, WindowEvent,
+    Emitter, Manager, RunEvent, WindowEvent,
 };
+use tauri_plugin_global_shortcut::{Code, GlobalShortcutExt, Modifiers, Shortcut};
+
+mod openai;
+
+#[tauri::command]
+async fn translate(app: tauri::AppHandle, text: String) -> Result<(), String> {
+    openai::translate_stream(app, text).await
+}
 
 /// macOS: Control dock icon visibility
 #[cfg(target_os = "macos")]
@@ -55,10 +63,14 @@ fn hide_window(app: &tauri::AppHandle) {
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
+    // Load .env file
+    let _ = dotenvy::dotenv();
+
     let app = tauri::Builder::default()
         .plugin(tauri_plugin_global_shortcut::Builder::new().build())
         .plugin(tauri_plugin_clipboard_manager::init())
         .plugin(tauri_plugin_notification::init())
+        .invoke_handler(tauri::generate_handler![translate])
         .setup(|app| {
             // Create tray menu
             let quit = MenuItem::with_id(app, "quit", "Quit", true, None::<&str>)?;
@@ -93,6 +105,25 @@ pub fn run() {
                     }
                 })
                 .build(app)?;
+
+            // Register ⌘J global shortcut
+            let shortcut = Shortcut::new(Some(Modifiers::SUPER), Code::KeyJ);
+            app.global_shortcut().on_shortcut(shortcut, |app, _shortcut, _event| {
+                // Simulate ⌘C to copy selected text
+                #[cfg(target_os = "macos")]
+                {
+                    use std::process::Command;
+                    let _ = Command::new("osascript")
+                        .args(["-e", "tell application \"System Events\" to keystroke \"c\" using command down"])
+                        .output();
+                }
+
+                // Wait for clipboard to be populated
+                std::thread::sleep(std::time::Duration::from_millis(50));
+
+                show_window(app);
+                let _ = app.emit("shortcut-triggered", ());
+            })?;
 
             // Log plugin (debug only)
             if cfg!(debug_assertions) {
