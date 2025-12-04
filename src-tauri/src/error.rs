@@ -63,30 +63,6 @@ impl TranslateError {
             Self::Unknown { message } => format!("An error occurred: {}", message),
         }
     }
-
-    /// Whether this error is retryable
-    pub fn is_retryable(&self) -> bool {
-        matches!(
-            self,
-            Self::RateLimitExceeded { .. }
-                | Self::Overloaded
-                | Self::Timeout { .. }
-                | Self::NetworkError { .. }
-        )
-    }
-
-    /// Suggested retry delay in milliseconds
-    pub fn retry_delay_ms(&self) -> Option<u64> {
-        match self {
-            Self::RateLimitExceeded { retry_after_secs } => {
-                Some(retry_after_secs.unwrap_or(5) * 1000)
-            }
-            Self::Overloaded => Some(3000),
-            Self::Timeout { .. } => Some(1000),
-            Self::NetworkError { .. } => Some(2000),
-            _ => None,
-        }
-    }
 }
 
 impl std::fmt::Display for TranslateError {
