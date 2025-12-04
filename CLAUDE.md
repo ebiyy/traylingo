@@ -91,7 +91,7 @@ API key is configured via in-app Settings UI (gear icon). No `.env` file or envi
 When suggesting changes, consider these OSS best practices:
 
 ### Documentation
-- **Language**: English-first for global contributors
+- **Language**: English only. All documentation, code comments, and commit messages must be in English for global contributors.
 - **Structure**: `docs/` contains architecture overview + specific technical topics
 - **Principle**: Minimal docs - avoid internal memos or design notes; focus on "what" and "why"
 - Keep README.md up to date with new features
