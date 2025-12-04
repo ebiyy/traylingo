@@ -1,6 +1,6 @@
 # TrayLingo
 
-A lightweight macOS menu bar app for instant translation powered by OpenAI.
+A lightweight macOS menu bar app for instant translation powered by Claude AI.
 
 **Tray** (system tray) + **Lingo** (language/words) = TrayLingo
 
@@ -47,10 +47,10 @@ The built app will be in `src-tauri/target/release/bundle/`.
 
 ### Setup
 
-1. Get an OpenAI API key from [platform.openai.com](https://platform.openai.com/api-keys)
+1. Get an Anthropic API key from [console.anthropic.com](https://console.anthropic.com/)
 2. Create a `.env` file in the project root:
    ```
-   OPENAI_API_KEY=sk-your-api-key-here
+   ANTHROPIC_API_KEY=sk-ant-your-api-key-here
    ```
 
 ### Translating Text
@@ -70,13 +70,13 @@ The built app will be in `src-tauri/target/release/bundle/`.
 - **Framework**: [Tauri v2](https://tauri.app/)
 - **Frontend**: [Solid.js](https://www.solidjs.com/) + [Tailwind CSS v4](https://tailwindcss.com/)
 - **Backend**: Rust
-- **AI**: OpenAI GPT-4o-mini
+- **AI**: Claude Haiku 4.5 (Anthropic)
 
 ## Configuration
 
-TrayLingo uses the `gpt-4o-mini` model by default. Token pricing:
-- Input: $0.15 / 1M tokens
-- Output: $0.60 / 1M tokens
+TrayLingo uses the `claude-haiku-4-5-20251001` model. Token pricing:
+- Input: $1 / 1M tokens
+- Output: $5 / 1M tokens
 
 ## Documentation
 
@@ -99,4 +99,4 @@ Currently macOS only. Contributions to add Linux and Windows support are especia
 
 ## Acknowledgments
 
-Built with [Tauri](https://tauri.app/), [Solid.js](https://www.solidjs.com/), and [OpenAI](https://openai.com/).
+Built with [Tauri](https://tauri.app/), [Solid.js](https://www.solidjs.com/), and [Anthropic Claude](https://www.anthropic.com/).
