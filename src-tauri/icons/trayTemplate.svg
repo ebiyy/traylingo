@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="44" height="44" viewBox="0 0 44 44">
+  <defs>
+    <mask id="textMask">
+      <circle cx="22" cy="24" r="15" fill="white"/>
+      <!-- Cut out text as transparent -->
+      <text x="10" y="30" font-family="Arial" font-size="16" font-weight="bold" fill="black">A</text>
+      <text x="23" y="29" font-family="sans-serif" font-size="13" font-weight="bold" fill="black">あ</text>
+    </mask>
+  </defs>
+
+  <!-- White filled apple with text cut out -->
+  <circle cx="22" cy="24" r="15" fill="#fff" mask="url(#textMask)"/>
+
+  <!-- Stem -->
+  <path d="M22 9 Q25 3 28 4" stroke="#fff" stroke-width="3" fill="none"/>
+
+  <!-- Leaf -->
+  <ellipse cx="29" cy="5" rx="5" ry="2.5" fill="#fff" transform="rotate(25 29 5)"/>
+</svg>
