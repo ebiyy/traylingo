@@ -1,4 +1,5 @@
 import { invoke } from "@tauri-apps/api/core";
+import { X } from "lucide-solid";
 import { createEffect, createResource, createSignal, For, Show } from "solid-js";
 
 interface SettingsData {
@@ -57,21 +58,7 @@ export function Settings(props: SettingsProps) {
           onClick={props.onClose}
           class="text-gray-400 hover:text-white transition-colors"
         >
-          <svg
-            class="w-5 h-5"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-            role="img"
-            aria-label="Close"
-          >
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2"
-              d="M6 18L18 6M6 6l12 12"
-            />
-          </svg>
+          <X size={20} />
         </button>
       </div>
 
