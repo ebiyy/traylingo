@@ -63,8 +63,7 @@ fn calculate_cost(prompt_tokens: u32, completion_tokens: u32) -> f64 {
 }
 
 pub async fn translate_stream(app: AppHandle, text: String) -> Result<(), String> {
-    let api_key = std::env::var("OPENAI_API_KEY")
-        .map_err(|_| "OPENAI_API_KEY not set")?;
+    let api_key = std::env::var("OPENAI_API_KEY").map_err(|_| "OPENAI_API_KEY not set")?;
 
     let client = Client::new();
 
@@ -114,11 +113,14 @@ pub async fn translate_stream(app: AppHandle, text: String) -> Result<(), String
                     // Emit usage info before done
                     if let Some(usage) = last_usage {
                         let cost = calculate_cost(usage.prompt_tokens, usage.completion_tokens);
-                        let _ = app.emit("translate-usage", UsageInfo {
-                            prompt_tokens: usage.prompt_tokens,
-                            completion_tokens: usage.completion_tokens,
-                            estimated_cost: cost,
-                        });
+                        let _ = app.emit(
+                            "translate-usage",
+                            UsageInfo {
+                                prompt_tokens: usage.prompt_tokens,
+                                completion_tokens: usage.completion_tokens,
+                                estimated_cost: cost,
+                            },
+                        );
                     }
                     let _ = app.emit("translate-done", ());
                     return Ok(());

@@ -19,7 +19,12 @@ pnpm tauri dev
 pnpm tauri build
 
 # Type check
-pnpm exec tsc --noEmit
+pnpm typecheck
+
+# Lint & Format (Biome)
+pnpm lint
+pnpm lint:fix
+pnpm format
 
 # Rust checks
 cargo check --manifest-path src-tauri/Cargo.toml
@@ -80,3 +85,25 @@ When making significant changes, consider updating:
 - [ ] CONTRIBUTING.md (if development workflow changes)
 - [ ] TODO.md (mark completed items, add new ones)
 - [ ] docs/ (if architecture or concepts change)
+- [ ] Serena memories (if changes affect learned knowledge - see below)
+
+## Serena Memory Management
+
+Serena MCP stores project knowledge in `.serena/memories/`. When changes cause divergence from learned knowledge, propose updating the relevant memory files.
+
+### When to Update Serena Memories
+
+Propose `mcp__serena__edit_memory` or `mcp__serena__write_memory` when:
+- **Commands change**: New scripts in package.json, new CLI tools (e.g., Biome added)
+- **Structure changes**: New directories, file reorganization
+- **Tech stack changes**: New dependencies, framework updates
+- **Conventions change**: New linting rules, code style updates
+
+### Memory Files Reference
+| File | Update When |
+|------|-------------|
+| `suggested_commands.md` | Scripts/commands added or changed |
+| `code_style_conventions.md` | Linting, formatting, or style rules change |
+| `codebase_structure.md` | Directory structure or architecture changes |
+| `project_overview.md` | Tech stack or major features change |
+| `task_completion_checklist.md` | CI/CD or review process changes |

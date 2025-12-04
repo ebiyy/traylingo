@@ -1,7 +1,7 @@
-import { createSignal, onMount, Show, createMemo } from "solid-js";
-import { listen } from "@tauri-apps/api/event";
 import { invoke } from "@tauri-apps/api/core";
+import { listen } from "@tauri-apps/api/event";
 import { readText, writeText } from "@tauri-apps/plugin-clipboard-manager";
+import { createMemo, createSignal, onMount, Show } from "solid-js";
 
 // Token usage info from backend
 interface UsageInfo {
@@ -29,9 +29,7 @@ function formatText(text: string): string {
 
       if (isJapanese) {
         // Add line breaks after Japanese periods for readability
-        return part
-          .replace(/。(?![\n」』）])/g, "。\n")
-          .replace(/\n{3,}/g, "\n\n");
+        return part.replace(/。(?![\n」』）])/g, "。\n").replace(/\n{3,}/g, "\n\n");
       }
 
       // English: preserve existing formatting
@@ -105,9 +103,7 @@ function App() {
           </div>
           <div class="flex-1 overflow-y-auto p-4">
             <div class="text-base leading-relaxed whitespace-pre-wrap">
-              {original() || (
-                <span class="text-gray-500">Select text and press ⌘J</span>
-              )}
+              {original() || <span class="text-gray-500">Select text and press ⌘J</span>}
             </div>
           </div>
         </div>
@@ -123,6 +119,7 @@ function App() {
             </h2>
             <Show when={translated() && !isTranslating()}>
               <button
+                type="button"
                 onClick={copyTranslation}
                 class="text-xs px-2 py-1 rounded bg-gray-800 hover:bg-gray-700 text-gray-300 hover:text-white transition-colors"
               >
@@ -145,11 +142,9 @@ function App() {
         <div class="flex items-center gap-4">
           <Show when={usage()}>
             <span>
-              Tokens: {usage()!.prompt_tokens} in / {usage()!.completion_tokens} out
+              Tokens: {usage()?.prompt_tokens} in / {usage()?.completion_tokens} out
             </span>
-            <span class="text-[#8B4557]">
-              ${usage()!.estimated_cost.toFixed(6)}
-            </span>
+            <span class="text-[#8B4557]">${usage()?.estimated_cost.toFixed(6)}</span>
           </Show>
         </div>
         <Show when={sessionCost() > 0}>
