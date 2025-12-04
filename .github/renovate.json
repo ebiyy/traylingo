@@ -1,0 +1,25 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": [
+    "config:base"
+  ],
+  "labels": ["dependencies"],
+  "packageRules": [
+    {
+      "description": "Group non-major updates together",
+      "matchUpdateTypes": ["minor", "patch"],
+      "groupName": "non-major dependencies"
+    },
+    {
+      "description": "Rust dependencies",
+      "matchManagers": ["cargo"],
+      "groupName": "rust dependencies",
+      "matchUpdateTypes": ["minor", "patch"]
+    },
+    {
+      "description": "Tauri ecosystem",
+      "matchPackagePatterns": ["^@tauri-apps/"],
+      "groupName": "tauri"
+    }
+  ]
+}

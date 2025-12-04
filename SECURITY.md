@@ -45,5 +45,5 @@ This security policy covers:
 - Documentation
 
 Out of scope:
-- OpenAI API security (report to OpenAI directly)
+- Anthropic API security (report to Anthropic directly)
 - User's local environment configuration
