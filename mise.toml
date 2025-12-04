@@ -1,2 +1,4 @@
 [tools]
+node = "24.11.1"
+pnpm = "9.15.9"
 rust = "stable"
