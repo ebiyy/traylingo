@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Security
+
+- Add prompt injection prevention for translation input
+  - System prompt hardened with strict translation-only rules
+  - User input wrapped in delimiter tags to prevent instruction injection
+
 ## [0.1.0] - 2025-01-XX
 
 ### Added
