@@ -7,10 +7,34 @@ use tauri::{
 use tauri_plugin_global_shortcut::{Code, GlobalShortcutExt, Modifiers, Shortcut};
 
 mod anthropic;
+mod error;
+mod settings;
+
+use settings::Settings;
 
 #[tauri::command]
 async fn translate(app: tauri::AppHandle, text: String, session_id: String) -> Result<(), String> {
-    anthropic::translate_stream(app, text, session_id).await
+    let api_key = settings::get_api_key(&app);
+    let model = settings::get_model(&app);
+    anthropic::translate_stream(app, text, session_id, api_key, model).await
+}
+
+#[tauri::command]
+fn get_settings(app: tauri::AppHandle) -> Settings {
+    settings::get_settings(&app)
+}
+
+#[tauri::command]
+fn save_settings(app: tauri::AppHandle, new_settings: Settings) -> Result<(), String> {
+    settings::save_settings(&app, &new_settings)
+}
+
+#[tauri::command]
+fn get_available_models() -> Vec<(String, String)> {
+    settings::AVAILABLE_MODELS
+        .iter()
+        .map(|(id, name)| (id.to_string(), name.to_string()))
+        .collect()
 }
 
 /// macOS: Control dock icon visibility
@@ -63,14 +87,17 @@ fn hide_window(app: &tauri::AppHandle) {
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
-    // Load .env file
-    let _ = dotenvy::dotenv();
-
     let app = tauri::Builder::default()
         .plugin(tauri_plugin_global_shortcut::Builder::new().build())
         .plugin(tauri_plugin_clipboard_manager::init())
         .plugin(tauri_plugin_notification::init())
-        .invoke_handler(tauri::generate_handler![translate])
+        .plugin(tauri_plugin_store::Builder::new().build())
+        .invoke_handler(tauri::generate_handler![
+            translate,
+            get_settings,
+            save_settings,
+            get_available_models
+        ])
         .setup(|app| {
             // Create tray menu
             let quit = MenuItem::with_id(app, "quit", "Quit", true, None::<&str>)?;

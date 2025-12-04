@@ -1,11 +1,14 @@
+use std::time::Duration;
+
 use futures::StreamExt;
 use reqwest::Client;
 use serde::{Deserialize, Serialize};
 use tauri::{AppHandle, Emitter};
 
-// Pricing for Claude Haiku 4.5 (per 1M tokens)
-const INPUT_PRICE_PER_MILLION: f64 = 1.0;
-const OUTPUT_PRICE_PER_MILLION: f64 = 5.0;
+use crate::error::TranslateError;
+use crate::settings::get_model_pricing;
+
+const REQUEST_TIMEOUT_SECS: u64 = 30;
 
 #[derive(Serialize)]
 struct MessageRequest {
@@ -49,9 +52,10 @@ struct Usage {
     output_tokens: u32,
 }
 
-fn calculate_cost(prompt_tokens: u32, completion_tokens: u32) -> f64 {
-    let input_cost = (prompt_tokens as f64 / 1_000_000.0) * INPUT_PRICE_PER_MILLION;
-    let output_cost = (completion_tokens as f64 / 1_000_000.0) * OUTPUT_PRICE_PER_MILLION;
+fn calculate_cost(prompt_tokens: u32, completion_tokens: u32, model: &str) -> f64 {
+    let (input_price, output_price) = get_model_pricing(model);
+    let input_cost = (prompt_tokens as f64 / 1_000_000.0) * input_price;
+    let output_cost = (completion_tokens as f64 / 1_000_000.0) * output_price;
     input_cost + output_cost
 }
 
@@ -79,10 +83,24 @@ pub async fn translate_stream(
     app: AppHandle,
     text: String,
     session_id: String,
+    api_key: String,
+    model: String,
 ) -> Result<(), String> {
-    let api_key = std::env::var("ANTHROPIC_API_KEY").map_err(|_| "ANTHROPIC_API_KEY not set")?;
+    // Check API key
+    if api_key.is_empty() {
+        return Err(serde_json::to_string(&TranslateError::ApiKeyMissing)
+            .unwrap_or_else(|_| "API key missing".to_string()));
+    }
 
-    let client = Client::new();
+    let client = Client::builder()
+        .timeout(Duration::from_secs(REQUEST_TIMEOUT_SECS))
+        .build()
+        .map_err(|e| {
+            serde_json::to_string(&TranslateError::NetworkError {
+                message: e.to_string(),
+            })
+            .unwrap_or_else(|_| e.to_string())
+        })?;
 
     let system_prompt = "You are a Japanese-English translator.
 
@@ -96,7 +114,7 @@ Output formatting:
 Only output the translation.";
 
     let request = MessageRequest {
-        model: "claude-haiku-4-5-20251001".to_string(),
+        model: model.clone(),
         messages: vec![Message {
             role: "user".to_string(),
             content: text,
@@ -115,12 +133,32 @@ Only output the translation.";
         .json(&request)
         .send()
         .await
-        .map_err(|e| e.to_string())?;
+        .map_err(|e| {
+            let error: TranslateError = e.into();
+            serde_json::to_string(&error).unwrap_or_else(|_| error.to_string())
+        })?;
 
     if !response.status().is_success() {
-        let status = response.status();
+        let status = response.status().as_u16();
+        let retry_after = response
+            .headers()
+            .get("retry-after")
+            .and_then(|v| v.to_str().ok())
+            .and_then(|s| s.parse().ok());
         let body = response.text().await.unwrap_or_default();
-        return Err(format!("API error {}: {}", status, body));
+
+        let error = match status {
+            401 => TranslateError::AuthenticationFailed { message: body },
+            429 => TranslateError::RateLimitExceeded {
+                retry_after_secs: retry_after,
+            },
+            529 => TranslateError::Overloaded,
+            _ => TranslateError::ApiError {
+                status,
+                message: body,
+            },
+        };
+        return Err(serde_json::to_string(&error).unwrap_or_else(|_| error.to_string()));
     }
 
     let mut stream = response.bytes_stream();
@@ -172,7 +210,8 @@ Only output the translation.";
                         "message_stop" => {
                             // Emit usage info before done
                             if let Some(usage) = &last_usage {
-                                let cost = calculate_cost(usage.input_tokens, usage.output_tokens);
+                                let cost =
+                                    calculate_cost(usage.input_tokens, usage.output_tokens, &model);
                                 let _ = app.emit(
                                     "translate-usage",
                                     UsagePayload {
@@ -212,16 +251,25 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_calculate_cost_basic() {
-        // 1000 input + 500 output tokens
-        let cost = calculate_cost(1000, 500);
+    fn test_calculate_cost_haiku() {
+        // 1000 input + 500 output tokens with Haiku 4.5 pricing ($1.0/$5.0)
+        let cost = calculate_cost(1000, 500, "claude-haiku-4-5-20251001");
         // input: 1000 * 1.0 / 1_000_000 = 0.001
         // output: 500 * 5.0 / 1_000_000 = 0.0025
         assert!((cost - 0.0035).abs() < 1e-10);
     }
 
     #[test]
+    fn test_calculate_cost_sonnet() {
+        // 1000 input + 500 output tokens with Sonnet pricing ($3.0/$15.0)
+        let cost = calculate_cost(1000, 500, "claude-sonnet-4-5-20250514");
+        // input: 1000 * 3.0 / 1_000_000 = 0.003
+        // output: 500 * 15.0 / 1_000_000 = 0.0075
+        assert!((cost - 0.0105).abs() < 1e-10);
+    }
+
+    #[test]
     fn test_calculate_cost_zero() {
-        assert_eq!(calculate_cost(0, 0), 0.0);
+        assert_eq!(calculate_cost(0, 0, "claude-haiku-4-5-20251001"), 0.0);
     }
 }
