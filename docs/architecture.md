@@ -98,12 +98,9 @@ Frontend communicates with Rust backend via:
 
 ## Configuration
 
-### Environment Variables
+### API Key
 
-```bash
-# .env file
-OPENAI_API_KEY=sk-your-api-key-here
-```
+Configured via in-app Settings UI (gear icon). Stored locally via `tauri-plugin-store`.
 
 ### Build Configuration
 

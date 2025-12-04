@@ -50,8 +50,7 @@ Root files:
 ├── vite.config.ts      # Vite bundler configuration
 ├── index.html          # HTML entry point
 ├── mise.toml           # mise runtime manager config
-├── .env                # Environment variables (API keys)
-├── .env.example        # Environment template
+├── .gitignore          # Git ignore rules
 └── .gitignore          # Git ignore patterns
 ```
 

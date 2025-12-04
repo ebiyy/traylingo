@@ -48,10 +48,8 @@ The built app will be in `src-tauri/target/release/bundle/`.
 ### Setup
 
 1. Get an Anthropic API key from [console.anthropic.com](https://console.anthropic.com/)
-2. Create a `.env` file in the project root:
-   ```
-   ANTHROPIC_API_KEY=sk-ant-your-api-key-here
-   ```
+2. Launch TrayLingo and click the gear icon (⚙️) to open Settings
+3. Enter your API key and select your preferred model
 
 ### Translating Text
 
@@ -74,9 +72,15 @@ The built app will be in `src-tauri/target/release/bundle/`.
 
 ## Configuration
 
-TrayLingo uses the `claude-haiku-4-5-20251001` model. Token pricing:
-- Input: $1 / 1M tokens
-- Output: $5 / 1M tokens
+Available models (configurable in Settings):
+| Model | Speed | Input | Output |
+|-------|-------|-------|--------|
+| Claude Haiku 4.5 (default) | Fast | $1/1M | $5/1M |
+| Claude Sonnet 4.5 | Best | $3/1M | $15/1M |
+| Claude 3.5 Sonnet | Good | $3/1M | $15/1M |
+| Claude 3.5 Haiku | Fast | $0.8/1M | $4/1M |
+
+Your API key and settings are stored locally on your device.
 
 ## Documentation
 

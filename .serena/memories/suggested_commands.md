@@ -69,9 +69,7 @@ pnpm test:all
 
 ```bash
 # Copy environment template
-cp .env.example .env
-
-# Edit .env and add your Anthropic API key:
+# Configure API key via in-app Settings (gear icon)
 # ANTHROPIC_API_KEY=sk-ant-your-api-key-here
 ```
 

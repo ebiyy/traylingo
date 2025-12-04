@@ -28,13 +28,13 @@ If you discover a security vulnerability in TrayLingo, please report it responsi
 
 ### API Key Safety
 
-- Never commit your `.env` file or API keys to version control
-- Use environment variables for API key configuration
+- Your API key is stored locally on your device via `tauri-plugin-store`
+- Never share your API key or settings file
 - Rotate your API key if you suspect it has been exposed
 
 ### Network Security
 
-- TrayLingo communicates only with OpenAI's API over HTTPS
+- TrayLingo communicates only with Anthropic's API over HTTPS
 - No data is stored or transmitted to any other servers
 
 ## Scope

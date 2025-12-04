@@ -68,6 +68,6 @@ Example: `feat: add streaming translation support`
 ## Security Guidelines
 
 - **NEVER** commit API keys or secrets
-- Use `.env` file for sensitive configuration
-- `.env.example` provides template without actual values
+- API key is configured via in-app Settings UI (no `.env` file)
+- Settings stored locally via `tauri-plugin-store`
 - Review changes for security issues before committing

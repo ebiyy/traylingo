@@ -82,10 +82,9 @@ Propose adding tests when:
 
 ## Environment Setup
 
-Copy `.env.example` to `.env` and add your Anthropic API key:
-```
-ANTHROPIC_API_KEY=sk-ant-your-api-key-here
-```
+API key is configured via in-app Settings UI (gear icon). No `.env` file or environment variable fallback.
+
+**Fallback policy**: Avoid fallback mechanisms by default. If a fallback seems necessary, explicitly propose it to the user first.
 
 ## OSS Contribution Guidelines
 

@@ -24,16 +24,14 @@ Thank you for your interest in contributing to TrayLingo! This document provides
    pnpm install
    ```
 
-3. Set up environment variables:
-   ```bash
-   cp .env.example .env
-   # Edit .env and add your Anthropic API key
-   ```
-
-4. Run in development mode:
+3. Run in development mode:
    ```bash
    pnpm tauri dev
    ```
+
+4. Configure API key:
+   - Click the gear icon (⚙️) in the app footer
+   - Enter your Anthropic API key from [console.anthropic.com](https://console.anthropic.com/)
 
 ## Project Structure
 
