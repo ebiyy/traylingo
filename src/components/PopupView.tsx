@@ -76,7 +76,11 @@ export function PopupView() {
         clipboardText = await readText();
       } catch {
         // Clipboard read failed - might be empty or non-text content
-        setError(parseError("クリップボードにテキストがありません。テキストを選択してから再度お試しください。"));
+        setError(
+          parseError(
+            "クリップボードにテキストがありません。テキストを選択してから再度お試しください。",
+          ),
+        );
         setIsLoading(false);
         return;
       }
@@ -87,7 +91,11 @@ export function PopupView() {
         });
         setText(result);
       } else {
-        setError(parseError("クリップボードにテキストがありません。テキストを選択してから再度お試しください。"));
+        setError(
+          parseError(
+            "クリップボードにテキストがありません。テキストを選択してから再度お試しください。",
+          ),
+        );
       }
     } catch (e) {
       setError(parseError(e));
@@ -103,7 +111,7 @@ export function PopupView() {
     const contentHeight = contentRef.scrollHeight + HEADER_HEIGHT;
     const newHeight = Math.min(Math.max(contentHeight, MIN_HEIGHT), MAX_HEIGHT);
     await currentWindow.setSize(
-      new PhysicalSize(400, Math.round(newHeight * window.devicePixelRatio))
+      new PhysicalSize(400, Math.round(newHeight * window.devicePixelRatio)),
     );
   };
 
@@ -178,7 +186,11 @@ export function PopupView() {
       </div>
 
       {/* Content */}
-      <div ref={contentRef} class="p-4 overflow-y-auto" style={{ "max-height": `${MAX_HEIGHT - HEADER_HEIGHT}px` }}>
+      <div
+        ref={contentRef}
+        class="p-4 overflow-y-auto"
+        style={{ "max-height": `${MAX_HEIGHT - HEADER_HEIGHT}px` }}
+      >
         <Show
           when={!isLoading()}
           fallback={
@@ -191,9 +203,7 @@ export function PopupView() {
         >
           <Show
             when={!error()}
-            fallback={
-              <p class="text-red-400">{getUserMessage(error() as TranslateError)}</p>
-            }
+            fallback={<p class="text-red-400">{getUserMessage(error() as TranslateError)}</p>}
           >
             <p class="leading-relaxed whitespace-pre-wrap wrap-break-word">{formatText(text())}</p>
           </Show>
