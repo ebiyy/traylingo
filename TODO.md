@@ -25,10 +25,16 @@
 - [x] 翻訳中スケルトンローディング表示 (lucide-solid)
 - [x] コピーボタンをアイコン化 (lucide-solid Copy/Check)
 - [x] インラインSVGをlucide-solidに置換 (Settings, X, AlertTriangle)
+- [x] Quick Popup (⌘⇧J) - 画面右上にミニ翻訳ポップアップ表示
 
 ---
 
 ## In Progress
+
+### Quick Popup 改善
+- [ ] ショートカットキー再検討 (⌘⇧J が他アプリと競合: Finder, IntelliJ など)
+  - 候補: ⌘⇧T, ⌘⌥J, ⌘⌥T, カスタマイズ可能化
+- [ ] ポップアップを閉じた時に他アプリが前面に来る問題
 
 ### OSS Release Preparation
 - [ ] Add app screenshot to docs/screenshot.png
@@ -77,3 +83,35 @@
 ### Token Pricing (Claude Haiku 4.5)
 - Input: $1.0 / 1M tokens
 - Output: $5.0 / 1M tokens
+
+---
+
+## Technical Debt
+
+### Quick Popup タイミング依存の実装 (⌘⇧J)
+
+現在の実装は複数のマジックナンバー（固定遅延時間）に依存しており、環境によっては不安定になる可能性がある。
+
+#### 問題箇所
+
+| 場所 | 値 | 用途 | リスク |
+|------|-----|------|--------|
+| `lib.rs` L174 | 150ms | ⌘C後のクリップボード待機 | 遅いアプリでは不足 |
+| `lib.rs` L185 | 200ms | JSプリロード待機 | 遅いマシンでは不足 |
+| `PopupView.tsx` L24 | 500ms | 翻訳トリガーのデバウンス | 連続操作を誤ブロック |
+
+#### 根本原因
+
+1. **クリップボード**: ⌘C シミュレーション後、クリップボードが更新されるまでの時間が不定
+2. **JSロード**: Tauri v2 では hidden ウィンドウの Webview JS はロードされない
+3. **イベント競合**: `popup-shown` イベントと `onFocusChanged` が両方発火する
+
+#### 改善案（将来実装）
+
+1. **クリップボード変更検知**: 固定待機ではなく、ポーリングでクリップボード内容の変化を検知
+2. **Ready信号**: フロントエンドがロード完了したら `invoke("popup_ready")` でRustに通知
+3. **単一トリガー**: イベントとフォーカスの両方ではなく、1つに統一してデバウンス不要に
+
+#### 関連ファイル
+- `src-tauri/src/lib.rs`: show_popup, ⌘⇧J ショートカット, プリロード
+- `src/components/PopupView.tsx`: 翻訳トリガー, デバウンス処理
