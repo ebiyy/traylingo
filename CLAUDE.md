@@ -53,6 +53,41 @@ docs/                   # Documentation
 - **Rust**: Run `cargo fmt` and `cargo clippy` before committing
 - **Commits**: Use conventional commits (feat:, fix:, docs:, etc.)
 
+## Git Workflow
+
+- **Branches**: `main` (protected) ← `develop` (default) ← feature branches
+- **Pull strategy**: `pull.rebase true` is configured for this repo
+- **PRs**: Target `develop`, not `main`
+
+See [CONTRIBUTING.md](CONTRIBUTING.md#git-workflow) for details.
+
+## Release Management
+
+### Slash Commands
+
+| Command | Purpose |
+|---------|---------|
+| `/fix-issue {n}` | Fix GitHub issue in worktree |
+| `/release {version}` | Create release branch and PR |
+
+### Release Workflow
+
+1. Create `release/v{version}` branch from `develop`
+2. Bump versions in: `package.json`, `src-tauri/Cargo.toml`, `src-tauri/tauri.conf.json`
+3. Update CHANGELOG.md (move [Unreleased] to [version])
+4. Create PR to `main`
+5. After merge: tag `v{version}` (triggers release build)
+6. Merge back to `develop`
+
+### Version Verification
+
+```bash
+# Check all versions match
+node -p "require('./package.json').version"
+grep -m1 '^version' src-tauri/Cargo.toml | cut -d'\"' -f2
+node -p "require('./src-tauri/tauri.conf.json').version"
+```
+
 ## Testing Strategy
 
 ### When to Add/Update Tests

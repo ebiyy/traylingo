@@ -9,13 +9,15 @@ Fix GitHub Issue #$ARGUMENTS using git worktree for isolation.
 - `ISSUE_NUM`: $ARGUMENTS
 - `WORKTREE_PATH`: ../traylingo-issue-$ARGUMENTS
 - `BRANCH_NAME`: fix/issue-$ARGUMENTS
+- `BASE_BRANCH`: develop
 
 ## Steps
 
 1. Run `gh issue view $ARGUMENTS` to understand the issue
-2. Create a worktree with a new branch:
+2. Ensure develop is up-to-date and create a worktree:
    ```bash
-   git worktree add ../traylingo-issue-$ARGUMENTS -b fix/issue-$ARGUMENTS
+   git fetch origin develop
+   git worktree add ../traylingo-issue-$ARGUMENTS -b fix/issue-$ARGUMENTS origin/develop
    ```
 3. **Continue working automatically** - NO directory switch needed
 
@@ -36,9 +38,9 @@ Fix GitHub Issue #$ARGUMENTS using git worktree for isolation.
    git -C ../traylingo-issue-$ARGUMENTS commit -m "fix: description"
    git -C ../traylingo-issue-$ARGUMENTS push -u origin fix/issue-$ARGUMENTS
    ```
-7. Create PR:
+7. Create PR targeting develop:
    ```bash
-   gh pr create --repo ebiyy/traylingo --head fix/issue-$ARGUMENTS --title "Fix #$ARGUMENTS: title" --body "Closes #$ARGUMENTS"
+   gh pr create --repo ebiyy/traylingo --base develop --head fix/issue-$ARGUMENTS --title "Fix #$ARGUMENTS: title" --body "Closes #$ARGUMENTS"
    ```
 8. After PR merge, clean up:
    ```bash
@@ -48,6 +50,8 @@ Fix GitHub Issue #$ARGUMENTS using git worktree for isolation.
 
 ## Notes
 
+- **Always branch from `develop`** (not main) - main is protected
+- PRs must target `develop` branch
 - Follow existing code style
 - Add tests if appropriate
 - Include `Closes #$ARGUMENTS` in PR description

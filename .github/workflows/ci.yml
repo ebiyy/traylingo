@@ -2,7 +2,7 @@ name: CI
 
 on:
   push:
-    branches: [main]
+    branches: [main, develop, "release/**"]
     paths-ignore:
       - "*.md"
       - "docs/**"
@@ -10,7 +10,7 @@ on:
       - ".github/**"
       - "!.github/workflows/ci.yml"
   pull_request:
-    branches: [main]
+    branches: [main, develop]
     paths-ignore:
       - "*.md"
       - "docs/**"

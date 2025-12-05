@@ -75,6 +75,32 @@
 - Already clear variable/function names
 - Implementation details that code shows clearly
 
+## Git Workflow
+
+### Branch Strategy
+- **`main`**: Protected branch, production-ready code only
+- **`develop`**: Main development branch, PRs are merged here
+- **Feature branches**: Create from `develop` for new work
+
+### Pull Configuration
+- **Rebase by default**: `pull.rebase true` is configured for this repo
+- This prevents divergent branch issues when pulling with local commits
+
+### PR Target
+- Always target `develop` branch (not `main`)
+- Exception: Release branches target `main`
+
+### Release Branch Workflow
+- **Create**: `release/v{version}` from `develop`
+- **Purpose**: Version bump, CHANGELOG update, final testing
+- **Merge**: To `main` (squash), then back to `develop`
+- **Tag**: After merge to main, triggers release build
+
+### Version Files (must all match)
+- `package.json`
+- `src-tauri/Cargo.toml`
+- `src-tauri/tauri.conf.json`
+
 ## Commit Conventions
 
 Use conventional commits:

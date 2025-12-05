@@ -174,7 +174,7 @@ function App() {
             <div class="flex items-center justify-between p-3 border-b border-[var(--border-primary)]">
               <h2 class="text-sm font-medium text-[var(--text-muted)]">Original</h2>
             </div>
-            <div class="flex-1 overflow-y-auto p-4">
+            <div class="flex-1 overflow-y-auto overflow-x-hidden p-4">
               <textarea
                 class="w-full h-full bg-transparent text-base leading-relaxed resize-none outline-none placeholder:text-[var(--text-placeholder)] focus-ring"
                 placeholder="Select text and press ⌘J, or paste/type here"
@@ -209,7 +209,7 @@ function App() {
                 </button>
               </Show>
             </div>
-            <div class="flex-1 overflow-y-auto p-4">
+            <div class="flex-1 overflow-y-auto overflow-x-hidden p-4">
               <Show
                 when={!error()}
                 fallback={
