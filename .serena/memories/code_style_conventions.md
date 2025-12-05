@@ -52,6 +52,29 @@
 - Structs: `PascalCase` (e.g., `ChatRequest`, `UsageInfo`)
 - Constants: `SCREAMING_SNAKE_CASE` (e.g., `INPUT_PRICE_PER_MILLION`)
 
+## Self-Documenting Code
+
+**Principle**: Code should explain itself. Use comments only when code alone cannot convey intent.
+
+**Comment Prefixes:**
+| Prefix | Purpose |
+|--------|---------|
+| `WHY:` | Non-obvious design decisions |
+| `HACK:` | Temporary workaround |
+| `NOTE:` | Important context |
+| `TODO:` | Future improvement |
+
+**When to comment:**
+- Non-obvious decisions (WHY)
+- Workarounds (HACK)
+- Important context (NOTE)
+- Planned improvements (TODO)
+
+**When NOT to comment:**
+- Obvious code
+- Already clear variable/function names
+- Implementation details that code shows clearly
+
 ## Commit Conventions
 
 Use conventional commits:

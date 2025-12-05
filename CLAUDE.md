@@ -101,10 +101,37 @@ When suggesting changes, consider these OSS best practices:
 ### Code Quality
 - Ensure CI passes before merging (lint, typecheck, cargo check)
 - Follow existing code patterns
-- Add comments for complex logic
-- Use `// WHY:` prefix for non-obvious implementation decisions (e.g., race condition fixes, workarounds)
-  - Keeps reasoning close to code, easier to maintain than separate docs
-  - Example: `// WHY: Prevents interleaving when multiple translations overlap.`
+
+### Self-Documenting Code
+
+**Principle**: Code should explain itself. Use comments only when code alone cannot convey intent.
+
+**When to write comments:**
+- Non-obvious design decisions (use `WHY:`)
+- Workarounds or temporary fixes (use `HACK:`)
+- Important notes for future readers (use `NOTE:`)
+- Planned improvements (use `TODO:`)
+
+**Comment prefixes:**
+| Prefix | Purpose | Example |
+|--------|---------|---------|
+| `WHY:` | Explains non-obvious decisions | `// WHY: Translate technical terms for accessibility` |
+| `HACK:` | Temporary workaround | `// HACK: Delay needed due to race condition` |
+| `NOTE:` | Important context | `// NOTE: This API returns null on first call` |
+| `TODO:` | Future improvement | `// TODO: Add retry logic for network errors` |
+
+**What NOT to comment:**
+- Obvious code (e.g., `// increment counter` before `i++`)
+- Already clear variable/function names
+- Implementation details that code shows clearly
+
+**Example (good):**
+```rust
+// WHY: Translate technical terms for accessibility
+// Users who don't understand English need full translation, not preserved terms.
+// Only proper nouns (product/service names) are kept unchanged.
+let system_prompt = r#"..."#;
+```
 
 ### Security
 - Never commit API keys or secrets
