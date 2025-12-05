@@ -106,29 +106,36 @@ fn hide_window(app: &tauri::AppHandle) {
     }
 }
 
-/// Poll clipboard until content changes or timeout.
-/// Returns true if clipboard changed, false if timeout.
-fn wait_for_clipboard_change(timeout_ms: u64) -> bool {
+/// Poll clipboard until content changes from original or timeout.
+/// Returns the new clipboard text if changed, None if timeout.
+///
+/// NOTE: First trigger after app launch often times out (works on second try).
+/// This may be due to:
+/// - macOS accessibility permission delays
+/// - osascript cold start latency
+/// - Clipboard daemon initialization
+///
+/// See: https://github.com/ebiyy/traylingo/issues/22
+fn wait_for_clipboard_change_from(original: &str, timeout_ms: u64) -> Option<String> {
     use arboard::Clipboard;
 
     let mut clipboard = match Clipboard::new() {
         Ok(c) => c,
-        Err(_) => return false,
+        Err(_) => return None,
     };
 
-    let original = clipboard.get_text().unwrap_or_default();
     let start = Instant::now();
     let timeout = Duration::from_millis(timeout_ms);
 
     while start.elapsed() < timeout {
         if let Ok(current) = clipboard.get_text() {
-            if current != original && !current.is_empty() {
-                return true;
+            if current != original && !current.trim().is_empty() {
+                return Some(current);
             }
         }
         std::thread::sleep(Duration::from_millis(10));
     }
-    false
+    None
 }
 
 /// Simulate ⌘C to copy selected text.
@@ -156,54 +163,89 @@ fn popup_ready() {
     POPUP_READY.store(true, Ordering::SeqCst);
 }
 
-fn show_popup(app: &tauri::AppHandle) {
-    if let Some(window) = app.get_webview_window("popup") {
-        let mut use_saved_position = false;
+/// Calculate popup position based on cursor location with edge detection
+#[cfg(target_os = "macos")]
+fn calculate_popup_position(app: &tauri::AppHandle) -> Option<(i32, i32)> {
+    const POPUP_WIDTH: i32 = 400;
+    const POPUP_HEIGHT: i32 = 300; // Estimated max height
+    const OFFSET: i32 = 15;
+    const MENU_BAR_HEIGHT: i32 = 25;
 
-        // Restore saved position if available AND within primary monitor bounds
-        if let Some(pos) = settings::get_window_position(app, "popup") {
-            #[cfg(target_os = "macos")]
-            {
-                if let Ok(Some(monitor)) = window.primary_monitor() {
-                    let size = monitor.size();
-                    // WHY: Validate saved position is within primary monitor bounds
-                    // to prevent popup appearing on disconnected/different monitors
-                    if pos.x >= 0 && pos.x < size.width as i32 && pos.y >= 0 {
-                        let _ = window.set_position(tauri::Position::Physical(
-                            tauri::PhysicalPosition::new(pos.x, pos.y),
-                        ));
-                        use_saved_position = true;
-                    }
-                }
-            }
-            #[cfg(not(target_os = "macos"))]
-            {
-                let _ = window.set_position(tauri::Position::Physical(
-                    tauri::PhysicalPosition::new(pos.x, pos.y),
-                ));
-                use_saved_position = true;
-            }
+    // Get cursor position from AppHandle (works even when window is hidden)
+    let cursor = match app.cursor_position() {
+        Ok(c) => c,
+        Err(e) => {
+            log::warn!("Failed to get cursor position: {:?}", e);
+            return None;
         }
+    };
+    let cursor_x = cursor.x as i32;
+    let cursor_y = cursor.y as i32;
 
-        // Use default position (top-right corner of primary monitor) if saved position is invalid
-        if !use_saved_position {
-            #[cfg(target_os = "macos")]
-            {
-                if let Ok(Some(monitor)) = window.primary_monitor() {
-                    let size = monitor.size();
-                    let x = (size.width as i32) - 420;
-                    let y = 30;
-                    let _ = window.set_position(tauri::Position::Physical(
-                        tauri::PhysicalPosition::new(x, y),
-                    ));
-                }
+    // TODO: Multi-monitor detection sometimes fails (returns None) even when cursor
+    // is clearly on a monitor. This may be a Tauri API issue or coordinate mismatch.
+    // When this happens, popup falls back to primary monitor top-right position.
+    // See: https://github.com/ebiyy/traylingo/issues/21
+    let monitor = match app.monitor_from_point(cursor.x, cursor.y) {
+        Ok(Some(m)) => m,
+        Ok(None) => {
+            log::warn!("No monitor found at cursor position");
+            return None;
+        }
+        Err(e) => {
+            log::warn!("Failed to get monitor: {:?}", e);
+            return None;
+        }
+    };
+    let mon_pos = monitor.position();
+    let mon_size = monitor.size();
+
+    let mon_right = mon_pos.x + mon_size.width as i32;
+    let mon_bottom = mon_pos.y + mon_size.height as i32;
+    let mon_top = mon_pos.y + MENU_BAR_HEIGHT;
+
+    // Default: bottom-right of cursor
+    let mut x = cursor_x + OFFSET;
+    let mut y = cursor_y + OFFSET;
+
+    // Edge detection: flip if needed
+    if x + POPUP_WIDTH > mon_right {
+        x = cursor_x - POPUP_WIDTH - OFFSET;
+    }
+    if y + POPUP_HEIGHT > mon_bottom {
+        y = cursor_y - POPUP_HEIGHT - OFFSET;
+    }
+
+    // Clamp to monitor bounds
+    x = x.max(mon_pos.x);
+    y = y.max(mon_top);
+
+    Some((x, y))
+}
+
+fn show_popup(app: &tauri::AppHandle, clipboard_text: Option<String>) {
+    if let Some(window) = app.get_webview_window("popup") {
+        // Position popup near cursor
+        #[cfg(target_os = "macos")]
+        {
+            if let Some((x, y)) = calculate_popup_position(app) {
+                let _ = window.set_position(tauri::Position::Physical(
+                    tauri::PhysicalPosition::new(x, y),
+                ));
+            }
+            // Fallback: primary monitor top-right (rare case)
+            else if let Ok(Some(monitor)) = window.primary_monitor() {
+                let size = monitor.size();
+                let _ = window.set_position(tauri::Position::Physical(
+                    tauri::PhysicalPosition::new((size.width as i32) - 420, 30),
+                ));
             }
         }
 
         let _ = window.show();
         let _ = window.set_focus();
-        // Emit event to trigger translation (backup for focus event)
-        let _ = app.emit_to("popup", "popup-shown", ());
+        // Pass clipboard text via event to avoid race condition with JS clipboard access
+        let _ = app.emit_to("popup", "popup-shown", clipboard_text);
     }
 }
 
@@ -339,11 +381,17 @@ pub fn run() {
             let shortcut = Shortcut::new(Some(Modifiers::SUPER), Code::KeyJ);
             app.global_shortcut()
                 .on_shortcut(shortcut, |app, _shortcut, _event| {
+                    // Capture clipboard content BEFORE simulating copy
+                    let original_clipboard = arboard::Clipboard::new()
+                        .ok()
+                        .and_then(|mut c| c.get_text().ok())
+                        .unwrap_or_default();
+
                     #[cfg(target_os = "macos")]
                     simulate_copy();
 
                     // Poll for clipboard change (max 500ms)
-                    let _ = wait_for_clipboard_change(500);
+                    let _ = wait_for_clipboard_change_from(&original_clipboard, 500);
 
                     show_window(app);
                     let _ = app.emit("shortcut-triggered", ());
@@ -354,13 +402,19 @@ pub fn run() {
                 Shortcut::new(Some(Modifiers::CONTROL | Modifiers::ALT), Code::KeyJ);
             app.global_shortcut()
                 .on_shortcut(popup_shortcut, |app, _shortcut, _event| {
+                    // Capture clipboard content BEFORE simulating copy
+                    let original_clipboard = arboard::Clipboard::new()
+                        .ok()
+                        .and_then(|mut c| c.get_text().ok())
+                        .unwrap_or_default();
+
                     #[cfg(target_os = "macos")]
                     simulate_copy();
 
-                    // Poll for clipboard change (max 500ms)
-                    let _ = wait_for_clipboard_change(500);
+                    // Poll for clipboard change from original (max 500ms)
+                    let clipboard_text = wait_for_clipboard_change_from(&original_clipboard, 500);
 
-                    show_popup(app);
+                    show_popup(app, clipboard_text);
                 })?;
 
             // Preload popup window to ensure JS is loaded before first use
@@ -417,12 +471,6 @@ pub fn run() {
                     WindowEvent::Focused(false) => {
                         // Hide popup when it loses focus (click outside)
                         hide_popup(app_handle);
-                    }
-                    WindowEvent::Moved(position) => {
-                        // Save popup position when moved
-                        let _ = settings::save_window_position(
-                            app_handle, "popup", position.x, position.y,
-                        );
                     }
                     _ => {}
                 },
