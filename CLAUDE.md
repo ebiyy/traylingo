@@ -148,10 +148,36 @@ let system_prompt = r#"..."#;
 When making significant changes, consider updating:
 - [ ] README.md (if user-facing features change)
 - [ ] CONTRIBUTING.md (if development workflow changes)
-- [ ] TODO.md (mark completed items, add new ones)
+- [ ] ROADMAP.md (add new issues, move completed items)
 - [ ] CHANGELOG.md (when releasing a new version)
 - [ ] docs/ (if architecture or concepts change)
 - [ ] Serena memories (if changes affect learned knowledge - see below)
+
+## Roadmap Management
+
+The [ROADMAP.md](ROADMAP.md) tracks planned features and progress. Items should be linked to GitHub Issues.
+
+### Workflow
+
+1. **New feature/bug** → Create GitHub Issue first
+2. **Add to roadmap** → Add issue link to appropriate section in ROADMAP.md
+3. **Complete work** → Close issue, move item to "Completed" section
+
+### ROADMAP.md Sections
+
+| Section | Purpose |
+|---------|---------|
+| In Progress | Currently being worked on |
+| Next Release | Planned for next version |
+| Future | Long-term plans |
+| Under Consideration | Needs ROI evaluation |
+| Completed | Done (collapsed) |
+
+### Format
+
+```markdown
+- [ ] Feature description ([#123](https://github.com/ebiyy/traylingo/issues/123))
+```
 
 ## Serena Memory Management
 
