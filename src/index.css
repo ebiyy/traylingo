@@ -127,7 +127,7 @@ body {
 
 /* Selection styling */
 ::selection {
-  background-color: var(--accent-primary-muted);
+  background-color: rgba(139, 69, 87, 0.5);
   color: var(--text-primary);
 }
 
