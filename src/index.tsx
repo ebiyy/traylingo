@@ -6,6 +6,23 @@ import App from "./App";
 import { PopupView } from "./components/PopupView";
 
 // =============================================================================
+// Telemetry Opt-out Flag
+// =============================================================================
+// This flag controls whether error reports are sent to Sentry.
+// Updated via setTelemetryEnabled() when user changes settings.
+// Default: true (opt-out model - users must explicitly disable)
+// =============================================================================
+let telemetryEnabled = true;
+
+/**
+ * Update telemetry enabled state.
+ * Called from Settings component when user toggles "Send error reports".
+ */
+export function setTelemetryEnabled(enabled: boolean) {
+  telemetryEnabled = enabled;
+}
+
+// =============================================================================
 // IMPORTANT: Privacy Protection - Sentry PII Masking
 // =============================================================================
 // This app handles sensitive user data (clipboard text for translation).
@@ -21,6 +38,11 @@ import { PopupView } from "./components/PopupView";
 Sentry.init({
   dsn: "https://12cc4e2328693a567ba7580e40f8b3f1@o4503930312261632.ingest.us.sentry.io/4510482273009664",
   beforeSend(event) {
+    // Check opt-out first - drop all events if telemetry disabled
+    if (!telemetryEnabled) {
+      return null;
+    }
+
     // WHY: Users paste sensitive content (emails, passwords, private messages) for translation.
     // This data MUST NOT be sent to external services.
     if (event.breadcrumbs) {

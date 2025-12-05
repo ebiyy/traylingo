@@ -392,35 +392,8 @@ fn check_for_updates(app: tauri::AppHandle) {
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
-    // =============================================================================
-    // IMPORTANT: Privacy Protection - Sentry PII Masking
-    // =============================================================================
-    // This app handles sensitive user data (clipboard text for translation).
-    // We MUST scrub any text content before sending to Sentry to protect user privacy.
-    //
-    // DO NOT:
-    // - Add send_default_pii: true (sends IP, user agent, etc.)
-    // - Log clipboard/translation text via sentry::capture_message or set_extra
-    // - Remove or weaken the before_send filter below
-    //
-    // If adding new Sentry integrations, ensure they don't leak user text content.
-    // See also: src/index.tsx for frontend Sentry configuration.
-    // =============================================================================
-    let _sentry_guard = sentry::init((
-        "https://7a8f51076788f70a7a7caaa5841f436b@o4503930312261632.ingest.us.sentry.io/4510482334482432",
-        sentry::ClientOptions {
-            release: sentry::release_name!(),
-            before_send: Some(Arc::new(|mut event| {
-                // WHY: Users paste sensitive content (emails, passwords, private messages)
-                // for translation. This data MUST NOT be sent to external services.
-                event.extra.remove("text");
-                event.extra.remove("translation");
-                event.extra.remove("clipboard");
-                Some(event)
-            })),
-            ..Default::default()
-        },
-    ));
+    // NOTE: Sentry initialization is moved to setup() to read settings first.
+    // See setup() callback below for the conditional Sentry init.
 
     let app = tauri::Builder::default()
         .plugin(tauri_plugin_global_shortcut::Builder::new().build())
@@ -442,6 +415,43 @@ pub fn run() {
             app_log
         ])
         .setup(|app| {
+            // =============================================================================
+            // IMPORTANT: Privacy Protection - Sentry PII Masking
+            // =============================================================================
+            // This app handles sensitive user data (clipboard text for translation).
+            // We MUST scrub any text content before sending to Sentry to protect user privacy.
+            //
+            // DO NOT:
+            // - Add send_default_pii: true (sends IP, user agent, etc.)
+            // - Log clipboard/translation text via sentry::capture_message or set_extra
+            // - Remove or weaken the before_send filter below
+            //
+            // If adding new Sentry integrations, ensure they don't leak user text content.
+            // See also: src/index.tsx for frontend Sentry configuration.
+            // =============================================================================
+            let user_settings = settings::get_settings(app.handle());
+            let sentry_guard: Option<sentry::ClientInitGuard> = if user_settings.send_telemetry {
+                Some(sentry::init((
+                    "https://7a8f51076788f70a7a7caaa5841f436b@o4503930312261632.ingest.us.sentry.io/4510482334482432",
+                    sentry::ClientOptions {
+                        release: sentry::release_name!(),
+                        before_send: Some(Arc::new(|mut event| {
+                            // WHY: Users paste sensitive content (emails, passwords, private messages)
+                            // for translation. This data MUST NOT be sent to external services.
+                            event.extra.remove("text");
+                            event.extra.remove("translation");
+                            event.extra.remove("clipboard");
+                            Some(event)
+                        })),
+                        ..Default::default()
+                    },
+                )))
+            } else {
+                None
+            };
+            // Store guard in managed state to keep Sentry client alive
+            app.manage(sentry_guard);
+
             // Create tray menu
             let quit = MenuItem::with_id(app, "quit", "Quit", true, None::<&str>)?;
             let show = MenuItem::with_id(app, "show", "Show Window", true, None::<&str>)?;
@@ -452,7 +462,8 @@ pub fn run() {
                 true,
                 None::<&str>,
             )?;
-            let menu = Menu::with_items(app, &[&show, &check_update, &quit])?;
+            let privacy = MenuItem::with_id(app, "privacy", "Privacy Policy", true, None::<&str>)?;
+            let menu = Menu::with_items(app, &[&show, &check_update, &privacy, &quit])?;
 
             // Load tray icon from embedded bytes (monochrome template)
             let icon = Image::from_bytes(include_bytes!("../icons/trayTemplate@2x.png"))
@@ -471,6 +482,9 @@ pub fn run() {
                     }
                     "check_update" => {
                         check_for_updates(app.clone());
+                    }
+                    "privacy" => {
+                        let _ = open::that("https://github.com/ebiyy/traylingo/blob/main/PRIVACY.md");
                     }
                     _ => {}
                 })
