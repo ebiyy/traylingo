@@ -33,7 +33,7 @@ pnpm test:all
 Consider updating these files if relevant:
 - [ ] `README.md` - User-facing feature changes
 - [ ] `CONTRIBUTING.md` - Development workflow changes
-- [ ] `TODO.md` - Mark completed items, add new ones
+- [ ] `ROADMAP.md` - Mark completed items, add new ones
 - [ ] `docs/` - Architecture or concept changes
 
 ## Commit Guidelines
