@@ -1,5 +1,11 @@
 # TrayLingo
 
+[![License](https://img.shields.io/github/license/ebiyy/traylingo)](LICENSE)
+[![CI](https://img.shields.io/github/actions/workflow/status/ebiyy/traylingo/ci.yml?branch=main&label=CI)](https://github.com/ebiyy/traylingo/actions/workflows/ci.yml)
+[![Release](https://img.shields.io/github/v/release/ebiyy/traylingo)](https://github.com/ebiyy/traylingo/releases)
+[![macOS](https://img.shields.io/badge/platform-macOS-blue?logo=apple)](https://github.com/ebiyy/traylingo)
+[![Downloads](https://img.shields.io/github/downloads/ebiyy/traylingo/total)](https://github.com/ebiyy/traylingo/releases)
+
 A lightweight macOS menu bar app for instant translation powered by Claude AI.
 
 **Tray** (system tray) + **Lingo** (language/words) = TrayLingo
@@ -86,7 +92,7 @@ The built app will be in `src-tauri/target/release/bundle/`.
 - **Left-click** on tray icon: Toggle window visibility
 - **Right-click** on tray icon: Open menu (Quit)
 - **Cmd+J**: Translate selected text (main window)
-- **Cmd+Option+J**: Quick translate popup (minimal UI, auto-closes)
+- **Ctrl+Option+J**: Quick translate popup (minimal UI, auto-closes)
 
 ### Troubleshooting
 
@@ -112,10 +118,17 @@ Available models (configurable in Settings):
 
 Your API key and settings are stored locally on your device.
 
+## Privacy
+
+See [PRIVACY.md](PRIVACY.md) for our privacy policy.
+
+**TL;DR:** Error reports are sent to Sentry by default to help improve the app. No translation content is ever collected. You can disable error reporting in Settings.
+
 ## Documentation
 
 - [Architecture](docs/architecture.md) - System design and module structure
 - [Error Management](docs/error-management.md) - Error handling strategy and logging
+- [Privacy Policy](PRIVACY.md) - Data collection and opt-out options
 - [Roadmap](ROADMAP.md) - Planned features and progress
 
 Documentation is written in English to welcome global contributors. We keep docs minimal: architecture overview + specific technical topics only.

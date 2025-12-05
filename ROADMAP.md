@@ -5,31 +5,47 @@
 
 ## In Progress
 
-- [ ] Fix: Popup close causes other app to come to foreground
+- [x] Fix: Popup close causes other app to come to foreground
+- [ ] Bug: Global shortcut triggers twice per single key press ([#23](https://github.com/ebiyy/traylingo/issues/23))
+- [ ] Bug: First shortcut trigger often times out (clipboard not captured) ([#22](https://github.com/ebiyy/traylingo/issues/22))
+- [ ] Bug: Multi-monitor detection fails intermittently ([#21](https://github.com/ebiyy/traylingo/issues/21))
+
+## Pre-Release (v0.1.0 Blockers)
+
+Security and bug fixes required before public release:
+
+- [x] Security: Enable CSP in tauri.conf.json (currently `null`)
+- [x] Security: Mask sensitive data (clipboard text) in Sentry PII
+- [x] Bug: Update event listeners not cleaned up in App.tsx (memory leak on HMR)
+- [x] Consistency: Japanese error message in PopupView.tsx (should be English)
 
 ## Next Release
 
-- [ ] Window position memory ([#9](https://github.com/ebiyy/traylingo/issues/9))
-- [ ] Improve dark theme styling ([#8](https://github.com/ebiyy/traylingo/issues/8))
-- [ ] Persist and display cumulative AI cost (tauri-plugin-store)
+- [ ] Refactor: Extract system prompt constant (duplicated in translate_stream/translate_once)
+- [ ] Fix: Log format order in app_log (timestamp should come first)
 - [ ] Sentry: Add error capture at appropriate locations (API errors, panics, etc.) via sentry-cli
 - [x] Auto-update via tauri-plugin-updater (Check for Updates in tray menu)
 
+## v0.2.0
+
+- [ ] Persist and display cumulative AI cost (tauri-plugin-store)
+- [ ] Usage history for token/cost analysis ([#20](https://github.com/ebiyy/traylingo/issues/20))
+
+## v0.1.0
+
+- [ ] First release via GitHub Actions
+- [ ] Homebrew tap setup
+
 ## Future
 
-- [ ] Notification support - translation complete ([#11](https://github.com/ebiyy/traylingo/issues/11))
-- [ ] First release (v0.1.0) via GitHub Actions
-- [ ] Homebrew tap setup
 - [ ] Language auto-detection improvements
+- [ ] Use tauri-plugin-shell for external links (Settings.tsx Anthropic Console link)
+- [ ] Configurable popup auto-close delay (currently hardcoded 8s)
+- [ ] Clean up dead code: `message_stopped` variable in anthropic.rs
 
 ## Under Consideration
 
 Items requiring ROI evaluation before implementation:
-
-- [ ] Translation history - store and search past translations
-  - Pros: User convenience, avoid re-translation
-  - Cons: Storage management, UI complexity, search implementation
-  - Decision: Re-evaluate post-MVP
 
 - [ ] Markdown rendering for translated text
   - Pros: Better readability for technical docs, syntax highlighting
@@ -66,7 +82,7 @@ Items requiring ROI evaluation before implementation:
 - [x] Skeleton loading during translation
 - [x] Icon-based copy button (lucide-solid)
 - [x] Replace inline SVGs with lucide-solid
-- [x] Quick Popup (⌘⌥J) - mini translation popup ([#6](https://github.com/ebiyy/traylingo/issues/6))
+- [x] Quick Popup (⌃⌥J) - mini translation popup ([#6](https://github.com/ebiyy/traylingo/issues/6))
 - [x] Fix: VSCode webview panels copy internal ID instead of selected text ([#7](https://github.com/ebiyy/traylingo/issues/7))
 - [x] Custom tray icon (A/あ design)
 - [x] App screenshot in docs/
@@ -75,5 +91,9 @@ Items requiring ROI evaluation before implementation:
 - [x] Incomplete response detection ([#13](https://github.com/ebiyy/traylingo/issues/13))
 - [x] Error history local storage ([#14](https://github.com/ebiyy/traylingo/issues/14))
 - [x] Animation for streaming text ([#10](https://github.com/ebiyy/traylingo/issues/10))
+- [x] Window position memory ([#9](https://github.com/ebiyy/traylingo/issues/9))
+- [x] Improve dark theme styling ([#8](https://github.com/ebiyy/traylingo/issues/8))
+- [x] Privacy Policy (PRIVACY.md) and Sentry opt-out toggle in Settings
+- [x] Notification support (translation complete) ([#11](https://github.com/ebiyy/traylingo/issues/11))
 
 </details>

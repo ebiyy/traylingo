@@ -1,4 +1,5 @@
 use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::Arc;
 use std::time::{Duration, Instant};
 use tauri::{
     image::Image,
@@ -51,11 +52,21 @@ fn clear_error_history(app: tauri::AppHandle) -> Result<(), String> {
     settings::clear_error_history(&app)
 }
 
-/// macOS: Control dock icon visibility
+/// macOS: Control dock icon visibility and app focus
 #[cfg(target_os = "macos")]
 mod macos {
+    use objc2::rc::Retained;
     use objc2::MainThreadMarker;
-    use objc2_app_kit::{NSApplication, NSApplicationActivationPolicy};
+    use objc2_app_kit::{
+        NSApplication, NSApplicationActivationOptions, NSApplicationActivationPolicy,
+        NSRunningApplication, NSWorkspace,
+    };
+    use std::sync::Mutex;
+
+    /// Stores the app that was active before showing the popup.
+    /// WHY: When popup closes, macOS focuses a random window. We need to restore
+    /// focus to the original app. This is cleared by restore_frontmost_app().
+    static PREVIOUS_APP: Mutex<Option<Retained<NSRunningApplication>>> = Mutex::new(None);
 
     pub fn set_dock_visible(visible: bool) {
         if let Some(mtm) = MainThreadMarker::new() {
@@ -66,6 +77,39 @@ mod macos {
             } else {
                 app.setActivationPolicy(NSApplicationActivationPolicy::Accessory);
             }
+        }
+    }
+
+    /// Save the currently frontmost application before showing popup.
+    ///
+    /// WHY check is_some(): The global shortcut can trigger show_popup() multiple times
+    /// in quick succession. Without this guard, the second call would overwrite the
+    /// saved app with "traylingo" itself (since popup is now frontmost), breaking
+    /// the restore logic.
+    pub fn save_frontmost_app() {
+        let mut prev = PREVIOUS_APP.lock().unwrap();
+        if prev.is_some() {
+            return;
+        }
+
+        let workspace = NSWorkspace::sharedWorkspace();
+        if let Some(app) = workspace.frontmostApplication() {
+            *prev = Some(app);
+        }
+    }
+
+    /// Restore focus to the previously saved application.
+    ///
+    /// WHY use take(): Consumes the stored app reference so subsequent calls are no-ops.
+    /// This handles cases where hide_popup() is called multiple times (e.g., Escape key
+    /// followed by focus loss event).
+    pub fn restore_frontmost_app() {
+        let app = {
+            let mut prev = PREVIOUS_APP.lock().unwrap();
+            prev.take()
+        };
+        if let Some(app) = app {
+            app.activateWithOptions(NSApplicationActivationOptions::empty());
         }
     }
 }
@@ -106,29 +150,36 @@ fn hide_window(app: &tauri::AppHandle) {
     }
 }
 
-/// Poll clipboard until content changes or timeout.
-/// Returns true if clipboard changed, false if timeout.
-fn wait_for_clipboard_change(timeout_ms: u64) -> bool {
+/// Poll clipboard until content changes from original or timeout.
+/// Returns the new clipboard text if changed, None if timeout.
+///
+/// NOTE: First trigger after app launch often times out (works on second try).
+/// This may be due to:
+/// - macOS accessibility permission delays
+/// - osascript cold start latency
+/// - Clipboard daemon initialization
+///
+/// See: https://github.com/ebiyy/traylingo/issues/22
+fn wait_for_clipboard_change_from(original: &str, timeout_ms: u64) -> Option<String> {
     use arboard::Clipboard;
 
     let mut clipboard = match Clipboard::new() {
         Ok(c) => c,
-        Err(_) => return false,
+        Err(_) => return None,
     };
 
-    let original = clipboard.get_text().unwrap_or_default();
     let start = Instant::now();
     let timeout = Duration::from_millis(timeout_ms);
 
     while start.elapsed() < timeout {
         if let Ok(current) = clipboard.get_text() {
-            if current != original && !current.is_empty() {
-                return true;
+            if current != original && !current.trim().is_empty() {
+                return Some(current);
             }
         }
         std::thread::sleep(Duration::from_millis(10));
     }
-    false
+    None
 }
 
 /// Simulate ⌘C to copy selected text.
@@ -156,36 +207,103 @@ fn popup_ready() {
     POPUP_READY.store(true, Ordering::SeqCst);
 }
 
-fn show_popup(app: &tauri::AppHandle) {
+/// Calculate popup position based on cursor location with edge detection
+#[cfg(target_os = "macos")]
+fn calculate_popup_position(app: &tauri::AppHandle) -> Option<(i32, i32)> {
+    const POPUP_WIDTH: i32 = 400;
+    const POPUP_HEIGHT: i32 = 300; // Estimated max height
+    const OFFSET: i32 = 15;
+    const MENU_BAR_HEIGHT: i32 = 25;
+
+    // Get cursor position from AppHandle (works even when window is hidden)
+    let cursor = match app.cursor_position() {
+        Ok(c) => c,
+        Err(e) => {
+            log::warn!("Failed to get cursor position: {:?}", e);
+            return None;
+        }
+    };
+    let cursor_x = cursor.x as i32;
+    let cursor_y = cursor.y as i32;
+
+    // TODO: Multi-monitor detection sometimes fails (returns None) even when cursor
+    // is clearly on a monitor. This may be a Tauri API issue or coordinate mismatch.
+    // When this happens, popup falls back to primary monitor top-right position.
+    // See: https://github.com/ebiyy/traylingo/issues/21
+    let monitor = match app.monitor_from_point(cursor.x, cursor.y) {
+        Ok(Some(m)) => m,
+        Ok(None) => {
+            log::warn!("No monitor found at cursor position");
+            return None;
+        }
+        Err(e) => {
+            log::warn!("Failed to get monitor: {:?}", e);
+            return None;
+        }
+    };
+    let mon_pos = monitor.position();
+    let mon_size = monitor.size();
+
+    let mon_right = mon_pos.x + mon_size.width as i32;
+    let mon_bottom = mon_pos.y + mon_size.height as i32;
+    let mon_top = mon_pos.y + MENU_BAR_HEIGHT;
+
+    // Default: bottom-right of cursor
+    let mut x = cursor_x + OFFSET;
+    let mut y = cursor_y + OFFSET;
+
+    // Edge detection: flip if needed
+    if x + POPUP_WIDTH > mon_right {
+        x = cursor_x - POPUP_WIDTH - OFFSET;
+    }
+    if y + POPUP_HEIGHT > mon_bottom {
+        y = cursor_y - POPUP_HEIGHT - OFFSET;
+    }
+
+    // Clamp to monitor bounds
+    x = x.max(mon_pos.x);
+    y = y.max(mon_top);
+
+    Some((x, y))
+}
+
+fn show_popup(app: &tauri::AppHandle, clipboard_text: Option<String>) {
     if let Some(window) = app.get_webview_window("popup") {
-        // Restore saved position if available, otherwise use top-right corner
-        if let Some(pos) = settings::get_window_position(app, "popup") {
-            let _ = window.set_position(tauri::Position::Physical(tauri::PhysicalPosition::new(
-                pos.x, pos.y,
-            )));
-        } else {
-            #[cfg(target_os = "macos")]
-            {
-                if let Ok(Some(monitor)) = window.primary_monitor() {
-                    let size = monitor.size();
-                    let x = (size.width as i32) - 420;
-                    let y = 30;
-                    let _ = window.set_position(tauri::Position::Physical(
-                        tauri::PhysicalPosition::new(x, y),
-                    ));
-                }
+        // Save frontmost app before showing popup
+        #[cfg(target_os = "macos")]
+        macos::save_frontmost_app();
+
+        // Position popup near cursor
+        #[cfg(target_os = "macos")]
+        {
+            if let Some((x, y)) = calculate_popup_position(app) {
+                let _ = window.set_position(tauri::Position::Physical(
+                    tauri::PhysicalPosition::new(x, y),
+                ));
+            }
+            // Fallback: primary monitor top-right (rare case)
+            else if let Ok(Some(monitor)) = window.primary_monitor() {
+                let size = monitor.size();
+                let _ = window.set_position(tauri::Position::Physical(
+                    tauri::PhysicalPosition::new((size.width as i32) - 420, 30),
+                ));
             }
         }
+
         let _ = window.show();
         let _ = window.set_focus();
-        // Emit event to trigger translation (backup for focus event)
-        let _ = app.emit_to("popup", "popup-shown", ());
+        // Pass clipboard text via event to avoid race condition with JS clipboard access
+        let _ = app.emit_to("popup", "popup-shown", clipboard_text);
     }
 }
 
 fn hide_popup(app: &tauri::AppHandle) {
     if let Some(window) = app.get_webview_window("popup") {
         let _ = window.hide();
+
+        // Restore focus to the previously frontmost app
+        #[cfg(target_os = "macos")]
+        macos::restore_frontmost_app();
     }
 }
 
@@ -199,6 +317,46 @@ async fn quick_translate(app: tauri::AppHandle, text: String) -> Result<String, 
 #[tauri::command]
 fn close_popup(app: tauri::AppHandle) {
     hide_popup(&app);
+}
+
+// Frontend log entry for unified logging
+#[derive(serde::Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct LogEntry {
+    ts: String,
+    level: String,
+    scope: String,
+    message: String,
+    correlation_id: Option<String>,
+    data: Option<serde_json::Value>,
+}
+
+#[tauri::command]
+fn app_log(entry: LogEntry) {
+    let corr = entry.correlation_id.as_deref().unwrap_or("-");
+    let data_str = entry
+        .data
+        .as_ref()
+        .map(|d| format!(" | data={}", d))
+        .unwrap_or_default();
+
+    let line = format!(
+        "[{}] [{}] [corr={}] {}{}",
+        entry.scope, corr, entry.ts, entry.message, data_str
+    );
+
+    match entry.level.as_str() {
+        "debug" => log::debug!("{}", line),
+        "info" => log::info!("{}", line),
+        "warn" => log::warn!("{}", line),
+        "error" => log::error!("{}", line),
+        _ => log::info!("{}", line),
+    }
+}
+
+#[tauri::command]
+fn open_external_url(url: String) -> Result<(), String> {
+    open::that(&url).map_err(|e| e.to_string())
 }
 
 /// Check for updates and notify user of result.
@@ -239,14 +397,8 @@ fn check_for_updates(app: tauri::AppHandle) {
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
-    let _sentry_guard = sentry::init((
-        "https://7a8f51076788f70a7a7caaa5841f436b@o4503930312261632.ingest.us.sentry.io/4510482334482432",
-        sentry::ClientOptions {
-            release: sentry::release_name!(),
-            send_default_pii: true,
-            ..Default::default()
-        },
-    ));
+    // NOTE: Sentry initialization is moved to setup() to read settings first.
+    // See setup() callback below for the conditional Sentry init.
 
     let app = tauri::Builder::default()
         .plugin(tauri_plugin_global_shortcut::Builder::new().build())
@@ -264,9 +416,48 @@ pub fn run() {
             clear_error_history,
             quick_translate,
             close_popup,
-            popup_ready
+            popup_ready,
+            app_log,
+            open_external_url
         ])
         .setup(|app| {
+            // =============================================================================
+            // IMPORTANT: Privacy Protection - Sentry PII Masking
+            // =============================================================================
+            // This app handles sensitive user data (clipboard text for translation).
+            // We MUST scrub any text content before sending to Sentry to protect user privacy.
+            //
+            // DO NOT:
+            // - Add send_default_pii: true (sends IP, user agent, etc.)
+            // - Log clipboard/translation text via sentry::capture_message or set_extra
+            // - Remove or weaken the before_send filter below
+            //
+            // If adding new Sentry integrations, ensure they don't leak user text content.
+            // See also: src/index.tsx for frontend Sentry configuration.
+            // =============================================================================
+            let user_settings = settings::get_settings(app.handle());
+            let sentry_guard: Option<sentry::ClientInitGuard> = if user_settings.send_telemetry {
+                Some(sentry::init((
+                    "https://7a8f51076788f70a7a7caaa5841f436b@o4503930312261632.ingest.us.sentry.io/4510482334482432",
+                    sentry::ClientOptions {
+                        release: sentry::release_name!(),
+                        before_send: Some(Arc::new(|mut event| {
+                            // WHY: Users paste sensitive content (emails, passwords, private messages)
+                            // for translation. This data MUST NOT be sent to external services.
+                            event.extra.remove("text");
+                            event.extra.remove("translation");
+                            event.extra.remove("clipboard");
+                            Some(event)
+                        })),
+                        ..Default::default()
+                    },
+                )))
+            } else {
+                None
+            };
+            // Store guard in managed state to keep Sentry client alive
+            app.manage(sentry_guard);
+
             // Create tray menu
             let quit = MenuItem::with_id(app, "quit", "Quit", true, None::<&str>)?;
             let show = MenuItem::with_id(app, "show", "Show Window", true, None::<&str>)?;
@@ -277,7 +468,8 @@ pub fn run() {
                 true,
                 None::<&str>,
             )?;
-            let menu = Menu::with_items(app, &[&show, &check_update, &quit])?;
+            let privacy = MenuItem::with_id(app, "privacy", "Privacy Policy", true, None::<&str>)?;
+            let menu = Menu::with_items(app, &[&show, &check_update, &privacy, &quit])?;
 
             // Load tray icon from embedded bytes (monochrome template)
             let icon = Image::from_bytes(include_bytes!("../icons/trayTemplate@2x.png"))
@@ -297,6 +489,9 @@ pub fn run() {
                     "check_update" => {
                         check_for_updates(app.clone());
                     }
+                    "privacy" => {
+                        let _ = open::that("https://github.com/ebiyy/traylingo/blob/main/PRIVACY.md");
+                    }
                     _ => {}
                 })
                 .on_tray_icon_event(|tray, event| {
@@ -315,27 +510,40 @@ pub fn run() {
             let shortcut = Shortcut::new(Some(Modifiers::SUPER), Code::KeyJ);
             app.global_shortcut()
                 .on_shortcut(shortcut, |app, _shortcut, _event| {
+                    // Capture clipboard content BEFORE simulating copy
+                    let original_clipboard = arboard::Clipboard::new()
+                        .ok()
+                        .and_then(|mut c| c.get_text().ok())
+                        .unwrap_or_default();
+
                     #[cfg(target_os = "macos")]
                     simulate_copy();
 
                     // Poll for clipboard change (max 500ms)
-                    let _ = wait_for_clipboard_change(500);
+                    let _ = wait_for_clipboard_change_from(&original_clipboard, 500);
 
                     show_window(app);
                     let _ = app.emit("shortcut-triggered", ());
                 })?;
 
-            // Register ⌘⌥J global shortcut (popup window)
-            let popup_shortcut = Shortcut::new(Some(Modifiers::SUPER | Modifiers::ALT), Code::KeyJ);
+            // Register ⌃⌥J global shortcut (popup window)
+            let popup_shortcut =
+                Shortcut::new(Some(Modifiers::CONTROL | Modifiers::ALT), Code::KeyJ);
             app.global_shortcut()
                 .on_shortcut(popup_shortcut, |app, _shortcut, _event| {
+                    // Capture clipboard content BEFORE simulating copy
+                    let original_clipboard = arboard::Clipboard::new()
+                        .ok()
+                        .and_then(|mut c| c.get_text().ok())
+                        .unwrap_or_default();
+
                     #[cfg(target_os = "macos")]
                     simulate_copy();
 
-                    // Poll for clipboard change (max 500ms)
-                    let _ = wait_for_clipboard_change(500);
+                    // Poll for clipboard change from original (max 500ms)
+                    let clipboard_text = wait_for_clipboard_change_from(&original_clipboard, 500);
 
-                    show_popup(app);
+                    show_popup(app, clipboard_text);
                 })?;
 
             // Preload popup window to ensure JS is loaded before first use
@@ -392,12 +600,6 @@ pub fn run() {
                     WindowEvent::Focused(false) => {
                         // Hide popup when it loses focus (click outside)
                         hide_popup(app_handle);
-                    }
-                    WindowEvent::Moved(position) => {
-                        // Save popup position when moved
-                        let _ = settings::save_window_position(
-                            app_handle, "popup", position.x, position.y,
-                        );
                     }
                     _ => {}
                 },
