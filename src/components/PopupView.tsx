@@ -7,6 +7,7 @@ import { createEffect, createSignal, onCleanup, onMount, Show } from "solid-js";
 import type { TranslateError } from "../types/error";
 import { getUserMessage, parseError } from "../types/error";
 import { formatText } from "../utils/formatText";
+import { Logger } from "../utils/logger";
 
 const MIN_HEIGHT = 80; // 2 lines + header
 const MAX_HEIGHT = 400;
@@ -56,13 +57,23 @@ export function PopupView() {
     setError(null);
     setIsLoading(true);
 
+    const correlationId = crypto.randomUUID();
+    Logger.info(
+      "ipc",
+      "quick_translate start",
+      { textLength: clipboardText?.length ?? 0 },
+      correlationId,
+    );
+
     try {
       if (clipboardText?.trim()) {
         const result = await invoke<string>("quick_translate", {
           text: clipboardText,
         });
+        Logger.info("ipc", "quick_translate done", { resultLength: result.length }, correlationId);
         setText(result);
       } else {
+        Logger.warn("ui", "clipboard empty", undefined, correlationId);
         setError(
           parseError(
             "クリップボードにテキストがありません。テキストを選択してから再度お試しください。",
@@ -70,6 +81,7 @@ export function PopupView() {
         );
       }
     } catch (e) {
+      Logger.error("ipc", "quick_translate failed", { error: String(e) }, correlationId);
       setError(parseError(e));
     } finally {
       setIsLoading(false);
@@ -102,6 +114,7 @@ export function PopupView() {
   });
 
   onMount(async () => {
+    Logger.info("lifecycle", "PopupView mounted");
     // Signal to Rust that frontend is ready
     await invoke("popup_ready");
 
@@ -110,6 +123,7 @@ export function PopupView() {
     // Listen for popup-shown event from Rust (emitted in show_popup)
     // Payload contains clipboard text read by Rust to avoid race condition
     unlistenPopupShown = await listen<string | null>("popup-shown", (event) => {
+      Logger.info("ui", "popup shown (⌃⌥J)", { hasClipboard: !!event.payload });
       runTranslation(event.payload);
     });
   });

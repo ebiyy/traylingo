@@ -42,6 +42,8 @@ export function Settings(props: SettingsProps) {
       setSaved(true);
       setTimeout(() => setSaved(false), 2000);
     } catch (err) {
+      // TODO: Replace with Logger.error when migrating to unified logging
+      // biome-ignore lint/suspicious/noConsole: Legacy code, will migrate later
       console.error("Failed to save settings:", err);
     } finally {
       setSaving(false);

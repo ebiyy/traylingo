@@ -267,6 +267,41 @@ fn close_popup(app: tauri::AppHandle) {
     hide_popup(&app);
 }
 
+// Frontend log entry for unified logging
+#[derive(serde::Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct LogEntry {
+    ts: String,
+    level: String,
+    scope: String,
+    message: String,
+    correlation_id: Option<String>,
+    data: Option<serde_json::Value>,
+}
+
+#[tauri::command]
+fn app_log(entry: LogEntry) {
+    let corr = entry.correlation_id.as_deref().unwrap_or("-");
+    let data_str = entry
+        .data
+        .as_ref()
+        .map(|d| format!(" | data={}", d))
+        .unwrap_or_default();
+
+    let line = format!(
+        "[{}] [{}] [corr={}] {}{}",
+        entry.scope, corr, entry.ts, entry.message, data_str
+    );
+
+    match entry.level.as_str() {
+        "debug" => log::debug!("{}", line),
+        "info" => log::info!("{}", line),
+        "warn" => log::warn!("{}", line),
+        "error" => log::error!("{}", line),
+        _ => log::info!("{}", line),
+    }
+}
+
 /// Check for updates and notify user of result.
 /// Spawns an async task to avoid blocking the menu event handler.
 fn check_for_updates(app: tauri::AppHandle) {
@@ -330,7 +365,8 @@ pub fn run() {
             clear_error_history,
             quick_translate,
             close_popup,
-            popup_ready
+            popup_ready,
+            app_log
         ])
         .setup(|app| {
             // Create tray menu

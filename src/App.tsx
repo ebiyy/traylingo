@@ -1,4 +1,5 @@
 import { invoke } from "@tauri-apps/api/core";
+import type { UnlistenFn } from "@tauri-apps/api/event";
 import { listen } from "@tauri-apps/api/event";
 import { readText, writeText } from "@tauri-apps/plugin-clipboard-manager";
 import {
@@ -9,12 +10,16 @@ import {
 import { relaunch } from "@tauri-apps/plugin-process";
 import { check } from "@tauri-apps/plugin-updater";
 import { Check as CheckIcon, Copy, Settings as SettingsIcon } from "lucide-solid";
-import { createMemo, createSignal, onMount, Show } from "solid-js";
+import { createMemo, createSignal, onCleanup, onMount, Show } from "solid-js";
 import { ErrorDisplay } from "./components/ErrorDisplay";
 import { Settings } from "./components/Settings";
 import type { TranslateError } from "./types/error";
 import { parseError } from "./types/error";
 import { formatText } from "./utils/formatText";
+import { Logger } from "./utils/logger";
+
+// Module-level state to prevent duplicate listeners during HMR
+let globalUnlistenFns: UnlistenFn[] = [];
 
 // Event payloads with session ID
 interface ChunkPayload {
@@ -82,9 +87,12 @@ function App() {
     setUsage(null);
     setError(null);
 
+    Logger.info("ipc", "translate start", { textLength: text.length }, sessionId);
+
     try {
       await invoke("translate", { text, sessionId });
     } catch (err) {
+      Logger.error("ipc", "translate failed", { error: String(err) }, sessionId);
       setError(parseError(err));
       setIsTranslating(false);
     }
@@ -128,41 +136,65 @@ function App() {
   };
 
   onMount(async () => {
+    // Clean up any existing listeners from HMR
+    for (const unlisten of globalUnlistenFns) {
+      unlisten();
+    }
+    globalUnlistenFns = [];
+
+    Logger.info("lifecycle", "App mounted");
     await loadSettings();
 
     // Listen for shortcut trigger
-    await listen("shortcut-triggered", async () => {
-      const text = await readText();
-      if (text) {
-        setOriginal(text);
-        triggerTranslation(text, true);
-      }
-    });
+    globalUnlistenFns.push(
+      await listen("shortcut-triggered", async () => {
+        Logger.info("ui", "shortcut triggered (⌘J)");
+        const text = await readText();
+        if (text) {
+          setOriginal(text);
+          triggerTranslation(text, true);
+        }
+      }),
+    );
 
     // Listen for translation chunks (filter by session ID)
-    await listen<ChunkPayload>("translate-chunk", (event) => {
-      if (event.payload.session_id === currentSessionId()) {
-        setTranslated((prev) => prev + event.payload.text);
-      }
-    });
+    globalUnlistenFns.push(
+      await listen<ChunkPayload>("translate-chunk", (event) => {
+        if (event.payload.session_id === currentSessionId()) {
+          setTranslated((prev) => prev + event.payload.text);
+        }
+      }),
+    );
 
     // Listen for translation completion (filter by session ID)
-    await listen<DonePayload>("translate-done", (event) => {
-      if (event.payload.session_id === currentSessionId()) {
-        setIsTranslating(false);
-      }
-    });
+    globalUnlistenFns.push(
+      await listen<DonePayload>("translate-done", (event) => {
+        if (event.payload.session_id === currentSessionId()) {
+          Logger.info("ipc", "translate done", undefined, event.payload.session_id);
+          setIsTranslating(false);
+        }
+      }),
+    );
 
     // Listen for usage info (filter by session ID)
-    await listen<UsagePayload>("translate-usage", (event) => {
-      if (event.payload.session_id === currentSessionId()) {
-        setUsage(event.payload);
-        setSessionCost((prev) => prev + event.payload.estimated_cost);
-      }
-    });
+    globalUnlistenFns.push(
+      await listen<UsagePayload>("translate-usage", (event) => {
+        if (event.payload.session_id === currentSessionId()) {
+          setUsage(event.payload);
+          setSessionCost((prev) => prev + event.payload.estimated_cost);
+        }
+      }),
+    );
 
     // Setup update notifications
     await setupUpdateNotifications();
+  });
+
+  onCleanup(() => {
+    for (const unlisten of globalUnlistenFns) {
+      unlisten();
+    }
+    globalUnlistenFns = [];
   });
 
   // Helper to send system notification
@@ -194,6 +226,8 @@ function App() {
           await relaunch();
         }
       } catch (err) {
+        // TODO: Replace with Logger.error when migrating to unified logging
+        // biome-ignore lint/suspicious/noConsole: Legacy code, will migrate later
         console.error("Failed to install update:", err);
         await notify("Update Failed", `Failed to install update: ${err}`);
       }

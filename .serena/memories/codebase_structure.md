@@ -24,10 +24,12 @@ src/
 │   ├── PopupView.tsx       # Quick popup view component
 │   └── ErrorDisplay.tsx    # Error display component
 ├── types/
-│   └── error.ts            # Error type definitions
+│   ├── error.ts            # Error type definitions
+│   └── logging.ts          # Logging types (LogLevel, LogScope, LogEntry)
 └── utils/
     ├── formatText.ts       # Text formatting utilities (isJapanese, etc.)
-    └── formatText.test.ts  # Tests for formatText utilities
+    ├── formatText.test.ts  # Tests for formatText utilities
+    └── logger.ts           # Unified logging utility (Logger.info/warn/error)
 ```
 
 ## Backend (src-tauri/)
@@ -68,7 +70,10 @@ Root files:
 ## Documentation
 ```
 docs/
-\1\n├── error-management.md # Error handling strategy and logging\n\2      # Menu bar icon design details
+├── architecture.md     # High-level architecture overview
+├── error-management.md # Error handling strategy
+├── logging.md          # Unified logging layer documentation
+├── icon-design.md      # Menu bar icon design details
 ├── screenshot.png      # Application screenshot
 └── screenshot-popup.png # Quick popup screenshot
 
