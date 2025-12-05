@@ -5049,6 +5049,7 @@ dependencies = [
 name = "traylingo"
 version = "0.1.0"
 dependencies = [
+ "arboard",
  "futures",
  "log",
  "objc2 0.6.3",

@@ -1,3 +1,5 @@
+use std::sync::atomic::{AtomicBool, Ordering};
+use std::time::{Duration, Instant};
 use tauri::{
     image::Image,
     menu::{Menu, MenuItem},
@@ -5,6 +7,8 @@ use tauri::{
     Emitter, Manager, RunEvent, WindowEvent,
 };
 use tauri_plugin_global_shortcut::{Code, GlobalShortcutExt, Modifiers, Shortcut};
+
+static POPUP_READY: AtomicBool = AtomicBool::new(false);
 
 mod anthropic;
 mod error;
@@ -85,6 +89,36 @@ fn hide_window(app: &tauri::AppHandle) {
     }
 }
 
+/// Poll clipboard until content changes or timeout.
+/// Returns true if clipboard changed, false if timeout.
+fn wait_for_clipboard_change(timeout_ms: u64) -> bool {
+    use arboard::Clipboard;
+
+    let mut clipboard = match Clipboard::new() {
+        Ok(c) => c,
+        Err(_) => return false,
+    };
+
+    let original = clipboard.get_text().unwrap_or_default();
+    let start = Instant::now();
+    let timeout = Duration::from_millis(timeout_ms);
+
+    while start.elapsed() < timeout {
+        if let Ok(current) = clipboard.get_text() {
+            if current != original && !current.is_empty() {
+                return true;
+            }
+        }
+        std::thread::sleep(Duration::from_millis(10));
+    }
+    false
+}
+
+#[tauri::command]
+fn popup_ready() {
+    POPUP_READY.store(true, Ordering::SeqCst);
+}
+
 fn show_popup(app: &tauri::AppHandle) {
     if let Some(window) = app.get_webview_window("popup") {
         #[cfg(target_os = "macos")]
@@ -136,7 +170,8 @@ pub fn run() {
             save_settings,
             get_available_models,
             quick_translate,
-            close_popup
+            close_popup,
+            popup_ready
         ])
         .setup(|app| {
             // Create tray menu
@@ -185,8 +220,8 @@ pub fn run() {
                         .output();
                 }
 
-                // Wait for clipboard to be populated
-                std::thread::sleep(std::time::Duration::from_millis(50));
+                // Poll for clipboard change (max 500ms)
+                let _ = wait_for_clipboard_change(500);
 
                 show_window(app);
                 let _ = app.emit("shortcut-triggered", ());
@@ -209,26 +244,26 @@ pub fn run() {
                             .output();
                     }
 
-                    // TECH_DEBT: Magic number - wait for clipboard to be populated
-                    // WHY: 50ms was too short - clipboard may not be ready yet on some apps
-                    // RISK: May still fail on very slow apps (e.g., Electron apps under load)
-                    // IMPROVEMENT: Poll clipboard for changes instead of fixed delay
-                    // SEE: TODO.md "Technical Debt" section
-                    std::thread::sleep(std::time::Duration::from_millis(150));
+                    // Poll for clipboard change (max 500ms)
+                    let _ = wait_for_clipboard_change(500);
 
                     show_popup(app);
-                    // No event emit - popup will invoke quick_translate on mount
                 })?;
 
-            // TECH_DEBT: Preload popup window to ensure JS is loaded before first use
-            // WHY: Tauri v2 webview JS doesn't load until window is first shown
-            // RISK: 200ms may be insufficient on slow machines; causes brief startup delay
-            // IMPROVEMENT: Have frontend send "ready" signal via invoke() instead of fixed delay
-            // SEE: TODO.md "Technical Debt" section
+            // Preload popup window to ensure JS is loaded before first use
+            // Tauri v2 webview JS doesn't load until window is first shown
             if let Some(popup) = app.get_webview_window("popup") {
                 // Window is positioned off-screen (x: 2000 in tauri.conf.json), so this won't be visible
                 let _ = popup.show();
-                std::thread::sleep(std::time::Duration::from_millis(200));
+
+                // Wait for frontend ready signal (max 2000ms)
+                let start = Instant::now();
+                while !POPUP_READY.load(Ordering::SeqCst)
+                    && start.elapsed().as_millis() < 2000
+                {
+                    std::thread::sleep(Duration::from_millis(10));
+                }
+
                 let _ = popup.hide();
             }
 
@@ -276,4 +311,38 @@ pub fn run() {
             _ => {}
         }
     });
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_popup_ready_sets_flag() {
+        // Reset state before test
+        POPUP_READY.store(false, Ordering::SeqCst);
+
+        assert!(!POPUP_READY.load(Ordering::SeqCst));
+        popup_ready();
+        assert!(POPUP_READY.load(Ordering::SeqCst));
+    }
+
+    #[test]
+    fn test_popup_ready_idempotent() {
+        // Calling popup_ready multiple times should be safe
+        POPUP_READY.store(false, Ordering::SeqCst);
+
+        popup_ready();
+        popup_ready();
+        popup_ready();
+
+        assert!(POPUP_READY.load(Ordering::SeqCst));
+    }
+
+    // NOTE: Clipboard tests require GUI environment and are tested via `pnpm tauri dev`
+    // Edge cases covered by manual testing:
+    // - Timeout behavior (returns false after timeout)
+    // - Zero timeout (returns immediately)
+    // - Clipboard change detection (returns true early when content changes)
+    // - Empty clipboard handling (graceful error handling)
 }
