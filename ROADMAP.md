@@ -6,6 +6,9 @@
 ## In Progress
 
 - [x] Fix: Popup close causes other app to come to foreground
+- [ ] Bug: Global shortcut triggers twice per single key press ([#23](https://github.com/ebiyy/traylingo/issues/23))
+- [ ] Bug: First shortcut trigger often times out (clipboard not captured) ([#22](https://github.com/ebiyy/traylingo/issues/22))
+- [ ] Bug: Multi-monitor detection fails intermittently ([#21](https://github.com/ebiyy/traylingo/issues/21))
 
 ## Pre-Release (v0.1.0 Blockers)
 
@@ -91,5 +94,6 @@ Items requiring ROI evaluation before implementation:
 - [x] Window position memory ([#9](https://github.com/ebiyy/traylingo/issues/9))
 - [x] Improve dark theme styling ([#8](https://github.com/ebiyy/traylingo/issues/8))
 - [x] Privacy Policy (PRIVACY.md) and Sentry opt-out toggle in Settings
+- [x] Notification support (translation complete) ([#11](https://github.com/ebiyy/traylingo/issues/11))
 
 </details>
