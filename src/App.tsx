@@ -166,17 +166,17 @@ function App() {
         />
       }
     >
-      <div class="flex flex-col h-screen bg-gray-900 text-gray-100">
+      <div class="flex flex-col h-screen bg-gradient-subtle text-[var(--text-primary)]">
         {/* Main content */}
         <div class="flex flex-1 min-h-0">
           {/* Left pane - Original */}
-          <div class="flex-1 flex flex-col border-r border-gray-700">
-            <div class="flex items-center justify-between p-3 border-b border-gray-800">
-              <h2 class="text-sm font-medium text-gray-400">Original</h2>
+          <div class="flex-1 flex flex-col border-r border-[var(--border-primary)]">
+            <div class="flex items-center justify-between p-3 border-b border-[var(--border-primary)]">
+              <h2 class="text-sm font-medium text-[var(--text-muted)]">Original</h2>
             </div>
             <div class="flex-1 overflow-y-auto p-4">
               <textarea
-                class="w-full h-full bg-transparent text-base leading-relaxed resize-none outline-none placeholder:text-gray-500"
+                class="w-full h-full bg-transparent text-base leading-relaxed resize-none outline-none placeholder:text-[var(--text-placeholder)] focus-ring"
                 placeholder="Select text and press ⌘J, or paste/type here"
                 value={original()}
                 onInput={(e) => {
@@ -194,17 +194,17 @@ function App() {
 
           {/* Right pane - Translation */}
           <div class="flex-1 flex flex-col">
-            <div class="flex items-center justify-between p-3 border-b border-gray-800">
-              <h2 class="text-sm font-medium text-[#E8A091]">Translation</h2>
+            <div class="flex items-center justify-between p-3 border-b border-[var(--border-primary)]">
+              <h2 class="text-sm font-medium text-[var(--accent-secondary)]">Translation</h2>
               <Show when={translated() && !isTranslating() && !error()}>
                 <button
                   type="button"
                   onClick={copyTranslation}
-                  class="p-1.5 rounded bg-gray-800 hover:bg-gray-700 text-gray-300 hover:text-white transition-colors"
+                  class="p-1.5 rounded bg-[var(--bg-tertiary)] hover:bg-[var(--bg-elevated)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-theme"
                   title={copied() ? "Copied!" : "Copy to clipboard"}
                 >
                   <Show when={copied()} fallback={<Copy size={14} />}>
-                    <Check size={14} class="text-green-400" />
+                    <Check size={14} class="text-[var(--success)]" />
                   </Show>
                 </button>
               </Show>
@@ -228,16 +228,18 @@ function App() {
                       class={`text-base leading-relaxed whitespace-pre-wrap animate-fade-in ${isTranslating() ? "streaming-cursor" : ""}`}
                     >
                       {formattedTranslation() || (
-                        <span class="text-gray-500">Translation will appear here...</span>
+                        <span class="text-[var(--text-placeholder)]">
+                          Translation will appear here...
+                        </span>
                       )}
                     </div>
                   }
                 >
                   {/* Skeleton loading indicator */}
-                  <div class="space-y-3 animate-pulse">
-                    <div class="h-4 bg-gray-700 rounded w-3/4" />
-                    <div class="h-4 bg-gray-700 rounded w-full" />
-                    <div class="h-4 bg-gray-700 rounded w-5/6" />
+                  <div class="space-y-3">
+                    <div class="h-4 rounded w-3/4 animate-skeleton" />
+                    <div class="h-4 rounded w-full animate-skeleton" />
+                    <div class="h-4 rounded w-5/6 animate-skeleton" />
                   </div>
                 </Show>
               </Show>
@@ -246,13 +248,13 @@ function App() {
         </div>
 
         {/* Footer - Usage stats */}
-        <div class="flex items-center justify-between px-4 py-2 border-t border-gray-800 text-xs text-gray-500">
+        <div class="flex items-center justify-between px-4 py-2 border-t border-[var(--border-primary)] text-xs text-[var(--text-muted)]">
           <div class="flex items-center gap-4">
             {/* Settings button */}
             <button
               type="button"
               onClick={() => setView("settings")}
-              class="text-gray-400 hover:text-[#E8A091] transition-colors"
+              class="text-[var(--text-muted)] hover:text-[var(--accent-secondary)] transition-theme"
               title="Settings"
             >
               <SettingsIcon size={16} />
@@ -261,12 +263,15 @@ function App() {
               <span>
                 Tokens: {usage()?.prompt_tokens} in / {usage()?.completion_tokens} out
               </span>
-              <span class="text-[#8B4557]">${usage()?.estimated_cost.toFixed(6)}</span>
+              <span class="text-[var(--accent-primary)]">
+                ${usage()?.estimated_cost.toFixed(6)}
+              </span>
             </Show>
           </div>
           <Show when={sessionCost() > 0}>
             <span>
-              Session: <span class="text-[#E8A091]">${sessionCost().toFixed(6)}</span>
+              Session:{" "}
+              <span class="text-[var(--accent-secondary)]">${sessionCost().toFixed(6)}</span>
             </span>
           </Show>
         </div>
