@@ -64,7 +64,8 @@ jobs:
         run: cargo install cargo-deny --locked
 
       - name: cargo-deny
-        run: cargo deny check --manifest-path src-tauri/Cargo.toml
+        run: cargo deny check
+        working-directory: src-tauri
 
       - name: Cargo check
         run: cargo check --manifest-path src-tauri/Cargo.toml
