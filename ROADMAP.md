@@ -5,26 +5,15 @@
 
 ## In Progress
 
-- [x] Fix: Popup close causes other app to come to foreground
 - [ ] Bug: Global shortcut triggers twice per single key press ([#23](https://github.com/ebiyy/traylingo/issues/23))
 - [ ] Bug: First shortcut trigger often times out (clipboard not captured) ([#22](https://github.com/ebiyy/traylingo/issues/22))
 - [ ] Bug: Multi-monitor detection fails intermittently ([#21](https://github.com/ebiyy/traylingo/issues/21))
-
-## Pre-Release (v0.1.0 Blockers)
-
-Security and bug fixes required before public release:
-
-- [x] Security: Enable CSP in tauri.conf.json (currently `null`)
-- [x] Security: Mask sensitive data (clipboard text) in Sentry PII
-- [x] Bug: Update event listeners not cleaned up in App.tsx (memory leak on HMR)
-- [x] Consistency: Japanese error message in PopupView.tsx (should be English)
 
 ## Next Release
 
 - [ ] Refactor: Extract system prompt constant (duplicated in translate_stream/translate_once)
 - [ ] Fix: Log format order in app_log (timestamp should come first)
 - [ ] Sentry: Add error capture at appropriate locations (API errors, panics, etc.) via sentry-cli
-- [x] Auto-update via tauri-plugin-updater (Check for Updates in tray menu)
 
 ## v0.2.0
 
@@ -95,5 +84,11 @@ Items requiring ROI evaluation before implementation:
 - [x] Improve dark theme styling ([#8](https://github.com/ebiyy/traylingo/issues/8))
 - [x] Privacy Policy (PRIVACY.md) and Sentry opt-out toggle in Settings
 - [x] Notification support (translation complete) ([#11](https://github.com/ebiyy/traylingo/issues/11))
+- [x] Fix: Popup close causes other app to come to foreground
+- [x] Security: Enable CSP in tauri.conf.json
+- [x] Security: Mask sensitive data (clipboard text) in Sentry PII
+- [x] Bug: Update event listeners not cleaned up in App.tsx (memory leak on HMR)
+- [x] Consistency: Japanese error message in PopupView.tsx (should be English)
+- [x] Auto-update via tauri-plugin-updater (Check for Updates in tray menu)
 
 </details>
