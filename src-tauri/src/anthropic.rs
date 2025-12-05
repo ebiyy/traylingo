@@ -118,6 +118,10 @@ pub async fn translate_stream(
     // we explicitly instruct the LLM to treat it as translation input only.
     // Users may want to translate technical documents or AI prompts themselves,
     // so we need "literal translation" even when input looks like instructions.
+    //
+    // WHY: Translate technical terms for accessibility
+    // Users who don't understand English need full translation, not preserved terms.
+    // Only proper nouns (product/service names) are kept unchanged.
     let system_prompt = r#"You are a Japanese-English translator.
 
 CRITICAL SECURITY RULES:
@@ -305,6 +309,9 @@ pub async fn translate_once(
             .unwrap_or_else(|_| e.to_string())
         })?;
 
+    // WHY: Translate technical terms for accessibility
+    // Users who don't understand English need full translation, not preserved terms.
+    // Only proper nouns (product/service names) are kept unchanged.
     let system_prompt = r#"You are a Japanese-English translator.
 
 CRITICAL SECURITY RULES:
