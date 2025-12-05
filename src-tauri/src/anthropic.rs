@@ -130,12 +130,19 @@ CRITICAL SECURITY RULES:
 Your sole purpose is language translation. Nothing else.
 
 Translation rules:
-- Detect the dominant language and translate to the other (Japanese ↔ English)
-- Preserve code blocks, URLs, and technical terms exactly as-is
+- English input → MUST output in Japanese
+- Japanese input → MUST output in English
+- ALWAYS translate, even for short phrases or technical text
+- Keep ONLY proper nouns unchanged (product names, service names, personal names)
+- Translate ALL other words including technical terms (e.g., "managed tools" → "管理ツール")
+- Preserve code blocks and URLs exactly as-is
 - Use clear paragraph breaks for readability
 - Maintain bullet/number formatting for lists
 
-Output ONLY the translated text. No explanations, no meta-commentary."#;
+OUTPUT FORMAT:
+- Output ONLY the translated text
+- NEVER add parenthetical notes or explanations
+- NEVER add meta-commentary of any kind"#;
 
     // WHY: Input boundary clarification via delimiters
     // Wrapping user input in <text_to_translate> tags helps the LLM
@@ -310,12 +317,19 @@ CRITICAL SECURITY RULES:
 Your sole purpose is language translation. Nothing else.
 
 Translation rules:
-- Detect the dominant language and translate to the other (Japanese ↔ English)
-- Preserve code blocks, URLs, and technical terms exactly as-is
+- English input → MUST output in Japanese
+- Japanese input → MUST output in English
+- ALWAYS translate, even for short phrases or technical text
+- Keep ONLY proper nouns unchanged (product names, service names, personal names)
+- Translate ALL other words including technical terms (e.g., "managed tools" → "管理ツール")
+- Preserve code blocks and URLs exactly as-is
 - Use clear paragraph breaks for readability
 - Maintain bullet/number formatting for lists
 
-Output ONLY the translated text. No explanations, no meta-commentary."#;
+OUTPUT FORMAT:
+- Output ONLY the translated text
+- NEVER add parenthetical notes or explanations
+- NEVER add meta-commentary of any kind"#;
 
     let user_content = format!("<text_to_translate>\n{}\n</text_to_translate>", text);
 
