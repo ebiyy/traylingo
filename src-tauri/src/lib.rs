@@ -392,12 +392,27 @@ fn check_for_updates(app: tauri::AppHandle) {
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
+    // =============================================================================
+    // IMPORTANT: Privacy Protection - Sentry PII Masking
+    // =============================================================================
+    // This app handles sensitive user data (clipboard text for translation).
+    // We MUST scrub any text content before sending to Sentry to protect user privacy.
+    //
+    // DO NOT:
+    // - Add send_default_pii: true (sends IP, user agent, etc.)
+    // - Log clipboard/translation text via sentry::capture_message or set_extra
+    // - Remove or weaken the before_send filter below
+    //
+    // If adding new Sentry integrations, ensure they don't leak user text content.
+    // See also: src/index.tsx for frontend Sentry configuration.
+    // =============================================================================
     let _sentry_guard = sentry::init((
         "https://7a8f51076788f70a7a7caaa5841f436b@o4503930312261632.ingest.us.sentry.io/4510482334482432",
         sentry::ClientOptions {
             release: sentry::release_name!(),
             before_send: Some(Arc::new(|mut event| {
-                // Remove any text data that might contain user content to protect privacy
+                // WHY: Users paste sensitive content (emails, passwords, private messages)
+                // for translation. This data MUST NOT be sent to external services.
                 event.extra.remove("text");
                 event.extra.remove("translation");
                 event.extra.remove("clipboard");
