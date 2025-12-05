@@ -8,7 +8,7 @@ TrayLingo is a macOS menu bar (system tray) application for instant translation 
 ## Key Features
 - **Global Shortcuts**:
   - `⌘J` - Translate selected text (main window)
-  - `⌘⌥J` - Quick popup translation
+  - `⌃⌥J` - Quick popup translation
 - **Streaming Translation**: Real-time translation display
 - **Auto Language Detection**: Japanese ↔ English automatic detection
 - **Code Block Preservation**: Technical content remains intact

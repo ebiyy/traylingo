@@ -349,8 +349,9 @@ pub fn run() {
                     let _ = app.emit("shortcut-triggered", ());
                 })?;
 
-            // Register ⌘⌥J global shortcut (popup window)
-            let popup_shortcut = Shortcut::new(Some(Modifiers::SUPER | Modifiers::ALT), Code::KeyJ);
+            // Register ⌃⌥J global shortcut (popup window)
+            let popup_shortcut =
+                Shortcut::new(Some(Modifiers::CONTROL | Modifiers::ALT), Code::KeyJ);
             app.global_shortcut()
                 .on_shortcut(popup_shortcut, |app, _shortcut, _event| {
                     #[cfg(target_os = "macos")]

@@ -86,7 +86,7 @@ Root docs:
 ## Key Architecture Points
 
 ### Communication Flow
-1. User presses `⌘J` (main window) or `⌘⌥J` (quick popup)
+1. User presses `⌘J` (main window) or `⌃⌥J` (quick popup)
 2. Frontend receives global shortcut event
 3. Clipboard content read via Tauri plugin
 4. `translate` command called to backend
