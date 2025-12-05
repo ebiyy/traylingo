@@ -54,12 +54,14 @@ export function ErrorDisplay(props: ErrorDisplayProps) {
   return (
     <div class="flex flex-col items-center justify-center p-6 text-center">
       {/* Error Icon */}
-      <div class="w-12 h-12 rounded-full bg-[#8B4557]/20 flex items-center justify-center mb-4">
-        <AlertTriangle size={24} class="text-[#E8A091]" />
+      <div class="w-12 h-12 rounded-full bg-[var(--accent-primary-muted)] flex items-center justify-center mb-4">
+        <AlertTriangle size={24} class="text-[var(--accent-secondary)]" />
       </div>
 
       {/* Error Message */}
-      <p class="text-gray-300 mb-4 max-w-md text-sm">{getUserMessage(props.error)}</p>
+      <p class="text-[var(--text-secondary)] mb-4 max-w-md text-sm">
+        {getUserMessage(props.error)}
+      </p>
 
       {/* Action Buttons */}
       <div class="flex gap-3">
@@ -67,7 +69,7 @@ export function ErrorDisplay(props: ErrorDisplayProps) {
           <button
             type="button"
             onClick={props.onOpenSettings}
-            class="px-4 py-2 bg-[#8B4557] hover:bg-[#9B5567] text-white rounded-md transition-colors text-sm"
+            class="px-4 py-2 bg-[var(--accent-primary)] hover:bg-[var(--accent-primary-hover)] text-white rounded-md transition-theme text-sm"
           >
             Open Settings
           </button>
@@ -78,7 +80,7 @@ export function ErrorDisplay(props: ErrorDisplayProps) {
             type="button"
             onClick={handleRetry}
             disabled={retrying()}
-            class="px-4 py-2 bg-gray-700 hover:bg-gray-600 disabled:opacity-50 text-white rounded-md transition-colors text-sm"
+            class="px-4 py-2 bg-[var(--bg-elevated)] hover:bg-[var(--border-secondary)] disabled:opacity-50 text-white rounded-md transition-theme text-sm"
           >
             {retrying() ? `Retrying in ${countdown()}s...` : "Try Again"}
           </button>
@@ -88,11 +90,11 @@ export function ErrorDisplay(props: ErrorDisplayProps) {
         <button
           type="button"
           onClick={handleCopyReport}
-          class="px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-md transition-colors text-sm flex items-center gap-2"
+          class="px-4 py-2 bg-[var(--bg-elevated)] hover:bg-[var(--border-secondary)] text-white rounded-md transition-theme text-sm flex items-center gap-2"
           title="Copy error report for GitHub Issue"
         >
           <Show when={copied()} fallback={<ClipboardCopy size={14} />}>
-            <Check size={14} class="text-green-400" />
+            <Check size={14} class="text-[var(--success)]" />
           </Show>
           {copied() ? "Copied!" : "Copy Report"}
         </button>
