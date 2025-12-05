@@ -33,6 +33,10 @@ function generateSessionId(): string {
   return `${Date.now()}-${Math.random().toString(36).slice(2, 11)}`;
 }
 
+interface AppSettings {
+  model: string;
+}
+
 function App() {
   const [original, setOriginal] = createSignal("");
   const [translated, setTranslated] = createSignal("");
@@ -43,6 +47,7 @@ function App() {
   const [currentSessionId, setCurrentSessionId] = createSignal("");
   const [error, setError] = createSignal<TranslateError | null>(null);
   const [view, setView] = createSignal<"main" | "settings">("main");
+  const [currentModel, setCurrentModel] = createSignal("");
 
   // Debounce timer for auto-translate
   let debounceTimer: ReturnType<typeof setTimeout> | null = null;
@@ -104,7 +109,19 @@ function App() {
     }
   };
 
+  // Load current model from settings
+  const loadSettings = async () => {
+    try {
+      const settings = await invoke<AppSettings>("get_settings");
+      setCurrentModel(settings.model);
+    } catch {
+      // Settings may not exist yet, use default
+    }
+  };
+
   onMount(async () => {
+    await loadSettings();
+
     // Listen for shortcut trigger
     await listen("shortcut-triggered", async () => {
       const text = await readText();
@@ -138,7 +155,17 @@ function App() {
   });
 
   return (
-    <Show when={view() === "main"} fallback={<Settings onClose={() => setView("main")} />}>
+    <Show
+      when={view() === "main"}
+      fallback={
+        <Settings
+          onClose={() => {
+            setView("main");
+            loadSettings(); // Reload in case model changed
+          }}
+        />
+      }
+    >
       <div class="flex flex-col h-screen bg-gray-900 text-gray-100">
         {/* Main content */}
         <div class="flex flex-1 min-h-0">
@@ -190,6 +217,7 @@ function App() {
                     error={error() as TranslateError}
                     onRetry={handleRetry}
                     onOpenSettings={() => setView("settings")}
+                    context={{ model: currentModel() }}
                   />
                 }
               >

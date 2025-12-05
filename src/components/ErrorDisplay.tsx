@@ -1,17 +1,26 @@
-import { AlertTriangle } from "lucide-solid";
+import { writeText } from "@tauri-apps/plugin-clipboard-manager";
+import { AlertTriangle, Check, ClipboardCopy } from "lucide-solid";
 import { createSignal, Show } from "solid-js";
-import type { TranslateError } from "../types/error";
-import { getRetryDelay, getUserMessage, isRetryable, needsSettings } from "../types/error";
+import type { ErrorReportContext, TranslateError } from "../types/error";
+import {
+  generateErrorReport,
+  getRetryDelay,
+  getUserMessage,
+  isRetryable,
+  needsSettings,
+} from "../types/error";
 
 interface ErrorDisplayProps {
   error: TranslateError;
   onRetry: () => void;
   onOpenSettings: () => void;
+  context?: ErrorReportContext;
 }
 
 export function ErrorDisplay(props: ErrorDisplayProps) {
   const [retrying, setRetrying] = createSignal(false);
   const [countdown, setCountdown] = createSignal(0);
+  const [copied, setCopied] = createSignal(false);
 
   const handleRetry = () => {
     const delay = getRetryDelay(props.error);
@@ -33,6 +42,13 @@ export function ErrorDisplay(props: ErrorDisplayProps) {
     } else {
       props.onRetry();
     }
+  };
+
+  const handleCopyReport = async () => {
+    const report = generateErrorReport(props.error, props.context);
+    await writeText(report);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
   };
 
   return (
@@ -67,6 +83,19 @@ export function ErrorDisplay(props: ErrorDisplayProps) {
             {retrying() ? `Retrying in ${countdown()}s...` : "Try Again"}
           </button>
         </Show>
+
+        {/* Copy Report Button */}
+        <button
+          type="button"
+          onClick={handleCopyReport}
+          class="px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-md transition-colors text-sm flex items-center gap-2"
+          title="Copy error report for GitHub Issue"
+        >
+          <Show when={copied()} fallback={<ClipboardCopy size={14} />}>
+            <Check size={14} class="text-green-400" />
+          </Show>
+          {copied() ? "Copied!" : "Copy Report"}
+        </button>
       </div>
     </div>
   );
