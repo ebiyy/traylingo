@@ -31,10 +31,10 @@ Thank you for your interest in contributing to TrayLingo! This document provides
 
 4. Install development tools:
    ```bash
-   # Option A: With mise (recommended)
-   mise install  # Installs lefthook, taplo, etc.
+   # Option A: With mise or asdf (recommended)
+   mise install  # or: asdf install
 
-   # Option B: Without mise
+   # Option B: Without mise/asdf
    brew install lefthook          # or: go install github.com/evilmartians/lefthook@latest
    brew install taplo             # optional: TOML formatter
    ```

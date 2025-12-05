@@ -53,7 +53,7 @@ pnpm knip              # Find unused code/dependencies
 
 ## Development Tools
 
-Tools are managed via `mise.toml` for consistent versions across contributors.
+Tools are managed via `.tool-versions` (asdf/mise compatible) for consistent versions across contributors.
 
 | Tool | Purpose | Auto-run |
 |------|---------|----------|
