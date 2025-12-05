@@ -15,6 +15,10 @@ TrayLingo is a macOS menu bar (system tray) application for instant translation 
 - **Token Usage Tracking**: API cost monitoring per request/session
 - **Menu Bar Integration**: Lives in system tray
 - **Settings UI**: In-app configuration (gear icon)
+- **Cost Optimizations**:
+  - Prompt Caching (Anthropic API) - 90% off cached system prompt tokens
+  - Translation Cache (local) - same text returns instantly without API call
+  - Optimized prompt (~150 tokens vs ~200 original)
 
 ## Tech Stack
 
@@ -56,6 +60,7 @@ TrayLingo is a macOS menu bar (system tray) application for instant translation 
 - tauri-plugin-notification
 - reqwest 0.12 (json, stream features)
 - tokio (full features)
+- sha2 0.10 (for translation cache hashing)
 - objc2, objc2-app-kit (macOS specific)
 
 **Node.js (package.json)**:
