@@ -88,3 +88,39 @@ export function getRetryDelay(error: TranslateError): number {
       return 0;
   }
 }
+
+/**
+ * Context for error report generation
+ */
+export interface ErrorReportContext {
+  model?: string;
+  appVersion?: string;
+}
+
+/**
+ * Generate a GitHub Issue-ready error report
+ */
+export function generateErrorReport(error: TranslateError, context?: ErrorReportContext): string {
+  const timestamp = new Date().toISOString();
+  const lines = [
+    "## Error Report",
+    "",
+    `**Type**: \`${error.type}\``,
+    `**Message**: ${getUserMessage(error)}`,
+    `**Time**: ${timestamp}`,
+  ];
+
+  if (context?.model) {
+    lines.push(`**Model**: ${context.model}`);
+  }
+  if (context?.appVersion) {
+    lines.push(`**Version**: ${context.appVersion}`);
+  }
+
+  // Add technical details for errors with data
+  if ("data" in error) {
+    lines.push("", "### Details", "```json", JSON.stringify(error.data, null, 2), "```");
+  }
+
+  return lines.join("\n");
+}

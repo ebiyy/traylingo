@@ -68,8 +68,7 @@ Root files:
 ## Documentation
 ```
 docs/
-├── architecture.md     # System architecture overview
-├── icon-design.md      # Menu bar icon design details
+\1\n├── error-management.md # Error handling strategy and logging\n\2      # Menu bar icon design details
 ├── screenshot.png      # Application screenshot
 └── screenshot-popup.png # Quick popup screenshot
 

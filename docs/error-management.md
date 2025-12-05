@@ -164,21 +164,45 @@ fn main() {
 
 **Privacy note**: Filter out API keys and sensitive data before sending to Sentry.
 
+## Error Reporting for GitHub Issues
+
+Users can copy error details directly from the error display for bug reports.
+
+### Usage
+
+When an error occurs, click the "Copy Report" button to copy a GitHub Issue-ready report:
+
+```markdown
+## Error Report
+
+**Type**: `RateLimitExceeded`
+**Message**: Rate limit exceeded. Please wait 30 seconds.
+**Time**: 2025-12-05T18:00:00.000Z
+**Model**: claude-haiku-4-5-20251001
+
+### Details
+```json
+{
+  "retry_after_secs": 30
+}
+```
+```
+
+### Implementation
+
+```typescript
+import { generateErrorReport, ErrorReportContext } from './types/error';
+
+const context: ErrorReportContext = { model: 'claude-haiku-4-5-20251001' };
+const report = generateErrorReport(error, context);
+```
+
 ## Known Gaps & Future Improvements
-
-### High Priority
-
-| Gap | Issue | Solution |
-|-----|-------|----------|
-| Streaming errors use string | Loses error structure | Use `TranslateError::NetworkError` |
-| Empty input not validated | Can trigger unnecessary API call | Add frontend guard |
-| Logs not used | Plugin configured but unused | Add `log::*` calls |
 
 ### Medium Priority
 
 | Gap | Issue | Solution |
 |-----|-------|----------|
-| ParseError never fires | Silent JSON parse failures | Emit on parse error |
 | Incomplete response | No warning if stream cuts | Detect missing `message_stop` |
 | No error history | Can't see past errors | Store last N errors locally |
 
@@ -188,6 +212,16 @@ fn main() {
 |-----|-------|----------|
 | Offline detection | Request starts then fails | Check network before request |
 | Content policy | Generic ApiError for violations | Parse error response for type |
+
+### Completed
+
+| Gap | Status |
+|-----|--------|
+| Streaming errors use string | ✅ Now uses `TranslateError::NetworkError` |
+| Empty input not validated | ✅ Frontend guard added |
+| Logs not used | ✅ `log::info!`, `error!`, `warn!` added |
+| ParseError never fires | ✅ Now emits on JSON parse failure |
+| Error report for issues | ✅ Copy Report button added |
 
 ## Error Handling Checklist
 
