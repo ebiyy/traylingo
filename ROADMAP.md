@@ -5,10 +5,21 @@
 
 ## In Progress
 
-- [ ] Fix: Popup close causes other app to come to foreground
+- [x] Fix: Popup close causes other app to come to foreground
+
+## Pre-Release (v0.1.0 Blockers)
+
+Security and bug fixes required before public release:
+
+- [x] Security: Enable CSP in tauri.conf.json (currently `null`)
+- [x] Security: Mask sensitive data (clipboard text) in Sentry PII
+- [x] Bug: Update event listeners not cleaned up in App.tsx (memory leak on HMR)
+- [x] Consistency: Japanese error message in PopupView.tsx (should be English)
 
 ## Next Release
 
+- [ ] Refactor: Extract system prompt constant (duplicated in translate_stream/translate_once)
+- [ ] Fix: Log format order in app_log (timestamp should come first)
 - [ ] Sentry: Add error capture at appropriate locations (API errors, panics, etc.) via sentry-cli
 - [x] Auto-update via tauri-plugin-updater (Check for Updates in tray menu)
 
@@ -25,6 +36,9 @@
 ## Future
 
 - [ ] Language auto-detection improvements
+- [ ] Use tauri-plugin-shell for external links (Settings.tsx Anthropic Console link)
+- [ ] Configurable popup auto-close delay (currently hardcoded 8s)
+- [ ] Clean up dead code: `message_stopped` variable in anthropic.rs
 
 ## Under Consideration
 

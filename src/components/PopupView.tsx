@@ -74,11 +74,7 @@ export function PopupView() {
         setText(result);
       } else {
         Logger.warn("ui", "clipboard empty", undefined, correlationId);
-        setError(
-          parseError(
-            "クリップボードにテキストがありません。テキストを選択してから再度お試しください。",
-          ),
-        );
+        setError(parseError("No text in clipboard. Please select text and try again."));
       }
     } catch (e) {
       Logger.error("ipc", "quick_translate failed", { error: String(e) }, correlationId);

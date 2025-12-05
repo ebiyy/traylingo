@@ -7,7 +7,19 @@ import { PopupView } from "./components/PopupView";
 
 Sentry.init({
   dsn: "https://12cc4e2328693a567ba7580e40f8b3f1@o4503930312261632.ingest.us.sentry.io/4510482273009664",
-  sendDefaultPii: true,
+  beforeSend(event) {
+    // Scrub clipboard/translation text from breadcrumbs to protect user privacy
+    if (event.breadcrumbs) {
+      for (const breadcrumb of event.breadcrumbs) {
+        if (breadcrumb.data) {
+          delete breadcrumb.data.text;
+          delete breadcrumb.data.translation;
+          delete breadcrumb.data.clipboard;
+        }
+      }
+    }
+    return event;
+  },
 });
 
 const root = document.getElementById("root") as HTMLElement;

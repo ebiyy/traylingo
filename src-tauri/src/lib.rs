@@ -1,4 +1,5 @@
 use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::Arc;
 use std::time::{Duration, Instant};
 use tauri::{
     image::Image,
@@ -395,7 +396,13 @@ pub fn run() {
         "https://7a8f51076788f70a7a7caaa5841f436b@o4503930312261632.ingest.us.sentry.io/4510482334482432",
         sentry::ClientOptions {
             release: sentry::release_name!(),
-            send_default_pii: true,
+            before_send: Some(Arc::new(|mut event| {
+                // Remove any text data that might contain user content to protect privacy
+                event.extra.remove("text");
+                event.extra.remove("translation");
+                event.extra.remove("clipboard");
+                Some(event)
+            })),
             ..Default::default()
         },
     ));
