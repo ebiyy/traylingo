@@ -63,11 +63,14 @@
 
 ```
 src-tauri/icons/
-├── traylingo-icon.svg    # Source SVG (edit this)
+├── traylingo-icon.svg    # Source SVG for app icon (edit this)
+├── trayTemplate.svg      # Source SVG for menu bar icon
+├── trayTemplate.png      # Menu bar icon 22x22
+├── trayTemplate@2x.png   # Menu bar icon 44x44
 ├── icon.png              # Generated from SVG
 ├── icon.icns             # macOS app icon
 ├── icon.ico              # Windows app icon
-├── 32x32.png             # Menu bar icon
+├── 32x32.png
 ├── 128x128.png
 └── 128x128@2x.png
 ```
@@ -87,14 +90,25 @@ src-tauri/icons/
 
 **Note**: Use `rsvg-convert` (not ImageMagick) for accurate font/filter rendering.
 
-## Menu Bar Icon (Future)
+## Menu Bar Icon
 
-For macOS menu bar, consider creating a **template image**:
-- Monochrome (black only)
-- Transparent background
-- Size: 22x22 (@1x), 44x44 (@2x)
-- Filename: `iconTemplate.png`, `iconTemplate@2x.png`
-- Auto-inverts for dark/light mode
+The menu bar uses `trayTemplate.svg` with the following design:
+- **White filled apple** with text cut out (transparent)
+- Text "A" and "あ" appear as negative space
+- Works on dark menu bar backgrounds
+
+### Regenerating Menu Bar Icon
+
+```bash
+cd src-tauri/icons
+rsvg-convert -w 22 -h 22 trayTemplate.svg -o trayTemplate.png
+rsvg-convert -w 44 -h 44 trayTemplate.svg -o trayTemplate@2x.png
+```
+
+### Design Notes
+- White fill ensures visibility on dark menu bars
+- Text as cutout (mask) creates clean negative space effect
+- Simplified apple outline (no emboss) for small size clarity
 
 ## AI Prompt Reference (Recraft AI)
 
