@@ -114,6 +114,26 @@ fn wait_for_clipboard_change(timeout_ms: u64) -> bool {
     false
 }
 
+/// Simulate ⌘C to copy selected text.
+/// Releases Option, Shift, and Control keys first to prevent modifier key interference
+/// (e.g., when triggered via ⌘⌥J, the Option key might still be held down).
+#[cfg(target_os = "macos")]
+fn simulate_copy() {
+    use std::process::Command;
+    // WHY: Release modifier keys before sending ⌘C
+    // When user triggers ⌘⌥J, the Option key is still held down.
+    // Some apps (e.g., VSCode webview) interpret ⌘⌥C differently than ⌘C.
+    let _ = Command::new("osascript")
+        .args([
+            "-e",
+            r#"tell application "System Events"
+    key up {option, shift, control}
+    keystroke "c" using command down
+end tell"#,
+        ])
+        .output();
+}
+
 #[tauri::command]
 fn popup_ready() {
     POPUP_READY.store(true, Ordering::SeqCst);
@@ -211,14 +231,8 @@ pub fn run() {
             // Register ⌘J global shortcut (main window)
             let shortcut = Shortcut::new(Some(Modifiers::SUPER), Code::KeyJ);
             app.global_shortcut().on_shortcut(shortcut, |app, _shortcut, _event| {
-                // Simulate ⌘C to copy selected text
                 #[cfg(target_os = "macos")]
-                {
-                    use std::process::Command;
-                    let _ = Command::new("osascript")
-                        .args(["-e", "tell application \"System Events\" to keystroke \"c\" using command down"])
-                        .output();
-                }
+                simulate_copy();
 
                 // Poll for clipboard change (max 500ms)
                 let _ = wait_for_clipboard_change(500);
@@ -232,17 +246,8 @@ pub fn run() {
                 Shortcut::new(Some(Modifiers::SUPER | Modifiers::ALT), Code::KeyJ);
             app.global_shortcut()
                 .on_shortcut(popup_shortcut, |app, _shortcut, _event| {
-                    // Simulate ⌘C to copy selected text
                     #[cfg(target_os = "macos")]
-                    {
-                        use std::process::Command;
-                        let _ = Command::new("osascript")
-                            .args([
-                                "-e",
-                                "tell application \"System Events\" to keystroke \"c\" using command down",
-                            ])
-                            .output();
-                    }
+                    simulate_copy();
 
                     // Poll for clipboard change (max 500ms)
                     let _ = wait_for_clipboard_change(500);
