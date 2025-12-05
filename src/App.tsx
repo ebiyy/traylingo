@@ -226,9 +226,7 @@ function App() {
           await relaunch();
         }
       } catch (err) {
-        // TODO: Replace with Logger.error when migrating to unified logging
-        // biome-ignore lint/suspicious/noConsole: Legacy code, will migrate later
-        console.error("Failed to install update:", err);
+        Logger.error("lifecycle", "Failed to install update", { error: String(err) });
         await notify("Update Failed", `Failed to install update: ${err}`);
       }
     });

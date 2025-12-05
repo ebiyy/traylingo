@@ -1,6 +1,7 @@
 import { invoke } from "@tauri-apps/api/core";
 import { X } from "lucide-solid";
 import { createEffect, createResource, createSignal, For, Show } from "solid-js";
+import { Logger } from "../utils/logger";
 
 interface SettingsData {
   api_key: string;
@@ -42,9 +43,7 @@ export function Settings(props: SettingsProps) {
       setSaved(true);
       setTimeout(() => setSaved(false), 2000);
     } catch (err) {
-      // TODO: Replace with Logger.error when migrating to unified logging
-      // biome-ignore lint/suspicious/noConsole: Legacy code, will migrate later
-      console.error("Failed to save settings:", err);
+      Logger.error("ipc", "Failed to save settings", { error: String(err) });
     } finally {
       setSaving(false);
     }
