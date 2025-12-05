@@ -53,6 +53,14 @@ docs/                   # Documentation
 - **Rust**: Run `cargo fmt` and `cargo clippy` before committing
 - **Commits**: Use conventional commits (feat:, fix:, docs:, etc.)
 
+## Git Workflow
+
+- **Branches**: `main` (protected) ← `develop` (default) ← feature branches
+- **Pull strategy**: `pull.rebase true` is configured for this repo
+- **PRs**: Target `develop`, not `main`
+
+See [CONTRIBUTING.md](CONTRIBUTING.md#git-workflow) for details.
+
 ## Testing Strategy
 
 ### When to Add/Update Tests

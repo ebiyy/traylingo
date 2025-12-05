@@ -19,7 +19,12 @@ Thank you for your interest in contributing to TrayLingo! This document provides
    cd traylingo
    ```
 
-2. Install dependencies:
+2. Configure git (recommended):
+   ```bash
+   git config pull.rebase true
+   ```
+
+3. Install dependencies:
    ```bash
    pnpm install
    ```
@@ -66,6 +71,38 @@ traylingo/
 - Write clear, concise commit messages
 - Use conventional commits when possible (feat:, fix:, docs:, etc.)
 
+## Git Workflow
+
+### Branch Strategy
+
+- **`main`**: Protected branch, production-ready code only
+- **`develop`**: Main development branch, PRs are merged here
+- **Feature branches**: Create from `develop` for new work
+
+### Recommended Git Config
+
+Set rebase as default for pull to avoid merge commits:
+
+```bash
+git config pull.rebase true
+```
+
+This prevents divergent branch issues when pulling changes while you have local commits.
+
+### Workflow Example
+
+```bash
+# Start new feature
+git checkout develop
+git pull
+git checkout -b feature/your-feature
+
+# Work on feature...
+# When ready to push
+git push -u origin feature/your-feature
+# Create PR to develop
+```
+
 ## How to Contribute
 
 ### Reporting Bugs
@@ -85,8 +122,10 @@ traylingo/
 
 ### Submitting Pull Requests
 
-1. Create a new branch from `main`:
+1. Create a new branch from `develop`:
    ```bash
+   git checkout develop
+   git pull
    git checkout -b feature/your-feature-name
    ```
 
@@ -107,10 +146,11 @@ traylingo/
 
 5. Commit your changes
 
-6. Push and create a Pull Request
+6. Push and create a Pull Request to `develop`
 
 ### PR Guidelines
 
+- **Target `develop` branch** (not `main`)
 - Keep PRs focused on a single feature or fix
 - Update documentation if needed
 - Add tests if applicable

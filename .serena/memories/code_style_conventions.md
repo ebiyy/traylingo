@@ -75,6 +75,20 @@
 - Already clear variable/function names
 - Implementation details that code shows clearly
 
+## Git Workflow
+
+### Branch Strategy
+- **`main`**: Protected branch, production-ready code only
+- **`develop`**: Main development branch, PRs are merged here
+- **Feature branches**: Create from `develop` for new work
+
+### Pull Configuration
+- **Rebase by default**: `pull.rebase true` is configured for this repo
+- This prevents divergent branch issues when pulling with local commits
+
+### PR Target
+- Always target `develop` branch (not `main`)
+
 ## Commit Conventions
 
 Use conventional commits:
