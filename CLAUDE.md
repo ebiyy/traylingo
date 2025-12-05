@@ -61,6 +61,7 @@ Tools are managed via `.tool-versions` (asdf/mise compatible) for consistent ver
 | **taplo** | TOML formatter (Cargo.toml) | Yes (pre-commit) |
 | **knip** | Unused code/dependency detection | Manual |
 | **Biome** | TS/JS lint & format | Yes (pre-commit) |
+| **cargo-deny** | Rust vulnerability & license audit | Yes (CI only) |
 | **cargo-watch** | Rust auto-rebuild (optional) | Manual |
 | **sentry-cli** | Error monitoring CLI | Manual |
 
@@ -273,8 +274,21 @@ When suggesting changes, consider these OSS best practices:
 - Add screenshots/GIFs for UI changes
 
 ### Code Quality
-- Ensure CI passes before merging (lint, typecheck, cargo check)
+- Ensure CI passes before merging (lint, typecheck, cargo check, cargo-deny)
 - Follow existing code patterns
+
+### Dependency Security (cargo-deny)
+
+CI runs `cargo deny check` to audit Rust dependencies for:
+- **Vulnerabilities**: Known security issues in RustSec advisory database
+- **Licenses**: Ensures all crates use permissive licenses (MIT, Apache-2.0, etc.)
+
+Config: [src-tauri/deny.toml](src-tauri/deny.toml)
+
+**If CI fails due to new advisory:**
+1. Check if it's a transitive dependency (from Tauri, etc.)
+2. If uncontrollable, add to `ignore` list in `deny.toml` with comment
+3. If controllable, update the dependency or find alternative
 
 ### Self-Documenting Code
 
