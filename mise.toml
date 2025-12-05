@@ -2,3 +2,5 @@
 node = "24.11.1"
 pnpm = "10.24.0"
 rust = "stable"
+lefthook = "2.0.7"
+taplo = "0.10.0"

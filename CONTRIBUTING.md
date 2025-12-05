@@ -29,21 +29,22 @@ Thank you for your interest in contributing to TrayLingo! This document provides
    pnpm install
    ```
 
-4. Set up git hooks (recommended):
+4. Install development tools:
    ```bash
-   # Install lefthook (choose one)
-   mise use -g lefthook  # or: brew install lefthook
+   mise install  # Installs lefthook, taplo, etc.
+   ```
 
-   # Install hooks
+5. Set up git hooks:
+   ```bash
    lefthook install
    ```
 
-5. Run in development mode:
+6. Run in development mode:
    ```bash
    pnpm tauri dev
    ```
 
-6. Configure API key:
+7. Configure API key:
    - Click the gear icon (⚙️) in the app footer
    - Enter your Anthropic API key from [console.anthropic.com](https://console.anthropic.com/)
 
