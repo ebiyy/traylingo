@@ -24,10 +24,12 @@ src/
 │   ├── PopupView.tsx       # Quick popup view component
 │   └── ErrorDisplay.tsx    # Error display component
 ├── types/
-│   └── error.ts            # Error type definitions
+│   ├── error.ts            # Error type definitions
+│   └── logging.ts          # Logging types (LogLevel, LogScope, LogEntry)
 └── utils/
     ├── formatText.ts       # Text formatting utilities (isJapanese, etc.)
-    └── formatText.test.ts  # Tests for formatText utilities
+    ├── formatText.test.ts  # Tests for formatText utilities
+    └── logger.ts           # Unified logging utility (Logger.info/warn/error)
 ```
 
 ## Backend (src-tauri/)
@@ -39,6 +41,8 @@ src-tauri/
 │   │                   # Modules: anthropic, macos, settings, error
 │   │                   # Functions: translate, toggle_window,
 │   │                   #            show_window, hide_window, run
+│   │                   # macOS module: set_dock_visible, save_frontmost_app,
+│   │                   #               restore_frontmost_app (focus management)
 │   ├── anthropic.rs    # Anthropic Claude API integration
 │   │                   # Structs: MessageRequest, Message, StreamEvent,
 │   │                   #          ContentDelta, Usage, NonStreamResponse, etc.
@@ -68,7 +72,10 @@ Root files:
 ## Documentation
 ```
 docs/
-\1\n├── error-management.md # Error handling strategy and logging\n\2      # Menu bar icon design details
+├── architecture.md     # High-level architecture overview
+├── error-management.md # Error handling strategy
+├── logging.md          # Unified logging layer documentation
+├── icon-design.md      # Menu bar icon design details
 ├── screenshot.png      # Application screenshot
 └── screenshot-popup.png # Quick popup screenshot
 
@@ -86,7 +93,7 @@ Root docs:
 ## Key Architecture Points
 
 ### Communication Flow
-1. User presses `⌘J` (main window) or `⌘⌥J` (quick popup)
+1. User presses `⌘J` (main window) or `⌃⌥J` (quick popup)
 2. Frontend receives global shortcut event
 3. Clipboard content read via Tauri plugin
 4. `translate` command called to backend
@@ -103,4 +110,7 @@ Root docs:
 ### macOS Specific
 - System tray (NSStatusItem) integration
 - Dock hiding/showing
-- objc2 bindings for native APIs
+- Focus management (NSWorkspace, NSRunningApplication)
+  - Saves frontmost app before showing popup
+  - Restores focus when popup is hidden
+- objc2/objc2-app-kit bindings for native APIs

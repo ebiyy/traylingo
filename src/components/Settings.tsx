@@ -1,10 +1,13 @@
 import { invoke } from "@tauri-apps/api/core";
 import { X } from "lucide-solid";
-import { createEffect, createResource, createSignal, For, Show } from "solid-js";
+import { createEffect, createMemo, createResource, createSignal, For, Show } from "solid-js";
+import { setTelemetryEnabled } from "../index";
+import { Logger } from "../utils/logger";
 
 interface SettingsData {
   api_key: string;
   model: string;
+  send_telemetry?: boolean;
 }
 
 interface SettingsProps {
@@ -12,14 +15,26 @@ interface SettingsProps {
 }
 
 export function Settings(props: SettingsProps) {
-  const [settings] = createResource<SettingsData>(() => invoke("get_settings"));
+  const [settings, { refetch }] = createResource<SettingsData>(() => invoke("get_settings"));
   const [models] = createResource<[string, string][]>(() => invoke("get_available_models"));
 
   const [apiKey, setApiKey] = createSignal("");
   const [model, setModel] = createSignal("claude-haiku-4-5-20251001");
+  const [sendTelemetry, setSendTelemetry] = createSignal(true);
   const [saving, setSaving] = createSignal(false);
   const [saved, setSaved] = createSignal(false);
   const [showKey, setShowKey] = createSignal(false);
+
+  // Track if there are unsaved changes
+  const hasChanges = createMemo(() => {
+    const s = settings();
+    if (!s) return false;
+    return (
+      apiKey() !== s.api_key ||
+      model() !== s.model ||
+      sendTelemetry() !== (s.send_telemetry ?? true)
+    );
+  });
 
   // Initialize form when settings load
   createEffect(() => {
@@ -27,8 +42,15 @@ export function Settings(props: SettingsProps) {
     if (s) {
       setApiKey(s.api_key);
       setModel(s.model);
+      setSendTelemetry(s.send_telemetry ?? true);
     }
   });
+
+  const openExternalUrl = (url: string) => {
+    invoke("open_external_url", { url }).catch((err) => {
+      Logger.error("ipc", "Failed to open external URL", { error: String(err), url });
+    });
+  };
 
   const handleSave = async () => {
     setSaving(true);
@@ -37,12 +59,17 @@ export function Settings(props: SettingsProps) {
         newSettings: {
           api_key: apiKey(),
           model: model(),
+          send_telemetry: sendTelemetry(),
         },
       });
+      // Update frontend telemetry flag immediately
+      setTelemetryEnabled(sendTelemetry());
+      // Refetch settings to update hasChanges comparison
+      await refetch();
       setSaved(true);
       setTimeout(() => setSaved(false), 2000);
     } catch (err) {
-      console.error("Failed to save settings:", err);
+      Logger.error("ipc", "Failed to save settings", { error: String(err) });
     } finally {
       setSaving(false);
     }
@@ -95,14 +122,13 @@ export function Settings(props: SettingsProps) {
             </div>
             <p class="mt-1 text-xs text-[var(--text-muted)]">
               Get your API key from{" "}
-              <a
-                href="https://console.anthropic.com/settings/keys"
-                target="_blank"
-                rel="noopener noreferrer"
+              <button
+                type="button"
+                onClick={() => openExternalUrl("https://console.anthropic.com/settings/keys")}
                 class="text-[var(--accent-secondary)] hover:underline"
               >
                 Anthropic Console
-              </a>
+              </button>
             </p>
           </div>
 
@@ -124,6 +150,35 @@ export function Settings(props: SettingsProps) {
             </select>
           </div>
 
+          {/* Error Reporting */}
+          <div class="mb-6">
+            <label class="flex items-center gap-3 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={sendTelemetry()}
+                onChange={(e) => setSendTelemetry(e.currentTarget.checked)}
+                class="w-4 h-4 rounded border-[var(--border-primary)] bg-[var(--bg-secondary)] text-[var(--accent-primary)] focus:ring-[var(--accent-primary)] focus:ring-offset-0"
+              />
+              <span class="text-sm text-[var(--text-secondary)]">
+                Send error reports to help improve the app
+              </span>
+            </label>
+            <p class="mt-2 text-xs text-[var(--text-muted)] ml-7">
+              Error reports help us fix bugs. No translation content is sent.
+              <br />
+              Changes take effect after restarting the app.{" "}
+              <button
+                type="button"
+                onClick={() =>
+                  openExternalUrl("https://github.com/ebiyy/traylingo/blob/main/PRIVACY.md")
+                }
+                class="text-[var(--accent-secondary)] hover:underline"
+              >
+                Privacy Policy
+              </button>
+            </p>
+          </div>
+
           {/* Security Note */}
           <div class="p-3 bg-[var(--accent-secondary-muted)] rounded-md border border-[var(--border-primary)]">
             <p class="text-xs text-[var(--text-secondary)]">
@@ -135,22 +190,34 @@ export function Settings(props: SettingsProps) {
       </div>
 
       {/* Footer */}
-      <div class="flex items-center justify-end gap-3 p-4 border-t border-[var(--border-primary)]">
-        <button
-          type="button"
-          onClick={props.onClose}
-          class="px-4 py-2 text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-theme text-sm"
-        >
-          Cancel
-        </button>
-        <button
-          type="button"
-          onClick={handleSave}
-          disabled={saving()}
-          class="px-4 py-2 bg-[var(--accent-primary)] hover:bg-[var(--accent-primary-hover)] disabled:opacity-50 text-white rounded-md transition-theme text-sm"
-        >
-          {saving() ? "Saving..." : saved() ? "Saved!" : "Save"}
-        </button>
+      <div class="flex items-center justify-between p-4 border-t border-[var(--border-primary)]">
+        <Show when={hasChanges() && !saved()}>
+          <span class="text-xs text-[var(--accent-warning)]">Unsaved changes</span>
+        </Show>
+        <Show when={!hasChanges() || saved()}>
+          <span />
+        </Show>
+        <div class="flex items-center gap-3">
+          <button
+            type="button"
+            onClick={props.onClose}
+            class="px-4 py-2 text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-theme text-sm"
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            onClick={handleSave}
+            disabled={saving()}
+            class={`px-4 py-2 rounded-md transition-theme text-sm ${
+              hasChanges() && !saving()
+                ? "bg-[var(--accent-primary)] hover:bg-[var(--accent-primary-hover)] text-white animate-pulse"
+                : "bg-[var(--accent-primary)] hover:bg-[var(--accent-primary-hover)] disabled:opacity-50 text-white"
+            }`}
+          >
+            {saving() ? "Saving..." : saved() ? "Saved!" : "Save"}
+          </button>
+        </div>
       </div>
     </div>
   );
