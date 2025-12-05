@@ -212,34 +212,40 @@ function App() {
   // Setup update event listeners
   const setupUpdateNotifications = async () => {
     // Update available - offer to download and install
-    await listen<{ version: string; body: string | null }>("update-available", async (event) => {
-      const { version } = event.payload;
-      await notify("Update Available", `Version ${version} is available. Downloading...`);
+    globalUnlistenFns.push(
+      await listen<{ version: string; body: string | null }>("update-available", async (event) => {
+        const { version } = event.payload;
+        await notify("Update Available", `Version ${version} is available. Downloading...`);
 
-      // Download and install the update
-      try {
-        const update = await check();
-        if (update) {
-          await update.downloadAndInstall();
-          await notify("Update Ready", "Update installed. Restart to apply changes.");
-          // Optionally relaunch automatically
-          await relaunch();
+        // Download and install the update
+        try {
+          const update = await check();
+          if (update) {
+            await update.downloadAndInstall();
+            await notify("Update Ready", "Update installed. Restart to apply changes.");
+            // Optionally relaunch automatically
+            await relaunch();
+          }
+        } catch (err) {
+          Logger.error("lifecycle", "Failed to install update", { error: String(err) });
+          await notify("Update Failed", `Failed to install update: ${err}`);
         }
-      } catch (err) {
-        Logger.error("lifecycle", "Failed to install update", { error: String(err) });
-        await notify("Update Failed", `Failed to install update: ${err}`);
-      }
-    });
+      }),
+    );
 
     // No update available
-    await listen("update-not-available", async () => {
-      await notify("No Updates", "You're running the latest version.");
-    });
+    globalUnlistenFns.push(
+      await listen("update-not-available", async () => {
+        await notify("No Updates", "You're running the latest version.");
+      }),
+    );
 
     // Update check error
-    await listen<string>("update-error", async (event) => {
-      await notify("Update Check Failed", event.payload);
-    });
+    globalUnlistenFns.push(
+      await listen<string>("update-error", async (event) => {
+        await notify("Update Check Failed", event.payload);
+      }),
+    );
   };
 
   return (
