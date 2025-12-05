@@ -19,7 +19,12 @@ Thank you for your interest in contributing to TrayLingo! This document provides
    cd traylingo
    ```
 
-2. Install dependencies:
+2. Configure git (recommended):
+   ```bash
+   git config pull.rebase true
+   ```
+
+3. Install dependencies:
    ```bash
    pnpm install
    ```
@@ -66,6 +71,72 @@ traylingo/
 - Write clear, concise commit messages
 - Use conventional commits when possible (feat:, fix:, docs:, etc.)
 
+## Git Workflow
+
+### Branch Strategy
+
+- **`main`**: Protected branch, production-ready code only
+- **`develop`**: Main development branch, PRs are merged here
+- **Feature branches**: Create from `develop` for new work
+
+### Recommended Git Config
+
+Set rebase as default for pull to avoid merge commits:
+
+```bash
+git config pull.rebase true
+```
+
+This prevents divergent branch issues when pulling changes while you have local commits.
+
+### Workflow Example
+
+```bash
+# Start new feature
+git checkout develop
+git pull
+git checkout -b feature/your-feature
+
+# Work on feature...
+# When ready to push
+git push -u origin feature/your-feature
+# Create PR to develop
+```
+
+## Release Process
+
+TrayLingo uses Git Flow release branches for version releases.
+
+### Release Workflow
+
+```
+develop → release/vX.Y.Z → PR to main → tag → GitHub Release
+                               ↓
+                        merge back to develop
+```
+
+### Steps
+
+1. **Create release branch** from `develop`: `release/v{version}`
+2. **Bump versions** in all 3 files (must match):
+   - `package.json`
+   - `src-tauri/Cargo.toml`
+   - `src-tauri/tauri.conf.json`
+3. **Update CHANGELOG.md**: Move `[Unreleased]` to `[version]`
+4. **Create PR** to `main`
+5. **After merge**: Tag `v{version}` (triggers release build)
+6. **Merge back** to `develop`
+7. **Delete** release branch
+
+### Branch Naming
+
+| Type | Pattern | Example |
+|------|---------|---------|
+| Feature | `feature/{name}` | `feature/dark-mode` |
+| Fix | `fix/issue-{n}` | `fix/issue-42` |
+| Release | `release/v{version}` | `release/v0.2.0` |
+| Hotfix | `hotfix/v{version}` | `hotfix/v0.2.1` |
+
 ## How to Contribute
 
 ### Reporting Bugs
@@ -85,8 +156,10 @@ traylingo/
 
 ### Submitting Pull Requests
 
-1. Create a new branch from `main`:
+1. Create a new branch from `develop`:
    ```bash
+   git checkout develop
+   git pull
    git checkout -b feature/your-feature-name
    ```
 
@@ -107,10 +180,11 @@ traylingo/
 
 5. Commit your changes
 
-6. Push and create a Pull Request
+6. Push and create a Pull Request to `develop`
 
 ### PR Guidelines
 
+- **Target `develop` branch** (not `main`)
 - Keep PRs focused on a single feature or fix
 - Update documentation if needed
 - Add tests if applicable
