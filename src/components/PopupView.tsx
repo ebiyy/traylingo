@@ -1,7 +1,7 @@
 import { invoke } from "@tauri-apps/api/core";
 import { listen, type UnlistenFn } from "@tauri-apps/api/event";
 import { getCurrentWindow, PhysicalSize } from "@tauri-apps/api/window";
-import { readText, writeText } from "@tauri-apps/plugin-clipboard-manager";
+import { writeText } from "@tauri-apps/plugin-clipboard-manager";
 import { Check, Copy, X } from "lucide-solid";
 import { createEffect, createSignal, onCleanup, onMount, Show } from "solid-js";
 import type { TranslateError } from "../types/error";
@@ -51,26 +51,12 @@ export function PopupView() {
     }
   };
 
-  const runTranslation = async () => {
+  const runTranslation = async (clipboardText: string | null) => {
     setText("");
     setError(null);
     setIsLoading(true);
 
     try {
-      let clipboardText: string | null = null;
-      try {
-        clipboardText = await readText();
-      } catch {
-        // Clipboard read failed - might be empty or non-text content
-        setError(
-          parseError(
-            "クリップボードにテキストがありません。テキストを選択してから再度お試しください。",
-          ),
-        );
-        setIsLoading(false);
-        return;
-      }
-
       if (clipboardText?.trim()) {
         const result = await invoke<string>("quick_translate", {
           text: clipboardText,
@@ -122,8 +108,9 @@ export function PopupView() {
     document.addEventListener("keydown", handleKeyDown);
 
     // Listen for popup-shown event from Rust (emitted in show_popup)
-    unlistenPopupShown = await listen("popup-shown", () => {
-      runTranslation();
+    // Payload contains clipboard text read by Rust to avoid race condition
+    unlistenPopupShown = await listen<string | null>("popup-shown", (event) => {
+      runTranslation(event.payload);
     });
   });
 
