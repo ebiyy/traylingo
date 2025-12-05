@@ -201,6 +201,42 @@ fn close_popup(app: tauri::AppHandle) {
     hide_popup(&app);
 }
 
+/// Check for updates and notify user of result.
+/// Spawns an async task to avoid blocking the menu event handler.
+fn check_for_updates(app: tauri::AppHandle) {
+    use tauri_plugin_updater::UpdaterExt;
+
+    tauri::async_runtime::spawn(async move {
+        match app.updater() {
+            Ok(updater) => match updater.check().await {
+                Ok(Some(update)) => {
+                    log::info!("Update available: {}", update.version);
+                    // Emit event to frontend to show update dialog
+                    let _ = app.emit(
+                        "update-available",
+                        serde_json::json!({
+                            "version": update.version,
+                            "body": update.body
+                        }),
+                    );
+                }
+                Ok(None) => {
+                    log::info!("No update available");
+                    let _ = app.emit("update-not-available", ());
+                }
+                Err(e) => {
+                    log::error!("Failed to check for updates: {}", e);
+                    let _ = app.emit("update-error", e.to_string());
+                }
+            },
+            Err(e) => {
+                log::error!("Failed to get updater: {}", e);
+                let _ = app.emit("update-error", e.to_string());
+            }
+        }
+    });
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     let _sentry_guard = sentry::init((
@@ -217,6 +253,8 @@ pub fn run() {
         .plugin(tauri_plugin_clipboard_manager::init())
         .plugin(tauri_plugin_notification::init())
         .plugin(tauri_plugin_store::Builder::new().build())
+        .plugin(tauri_plugin_updater::Builder::new().build())
+        .plugin(tauri_plugin_process::init())
         .invoke_handler(tauri::generate_handler![
             translate,
             get_settings,
@@ -232,7 +270,14 @@ pub fn run() {
             // Create tray menu
             let quit = MenuItem::with_id(app, "quit", "Quit", true, None::<&str>)?;
             let show = MenuItem::with_id(app, "show", "Show Window", true, None::<&str>)?;
-            let menu = Menu::with_items(app, &[&show, &quit])?;
+            let check_update = MenuItem::with_id(
+                app,
+                "check_update",
+                "Check for Updates...",
+                true,
+                None::<&str>,
+            )?;
+            let menu = Menu::with_items(app, &[&show, &check_update, &quit])?;
 
             // Load tray icon from embedded bytes (monochrome template)
             let icon = Image::from_bytes(include_bytes!("../icons/trayTemplate@2x.png"))
@@ -248,6 +293,9 @@ pub fn run() {
                     }
                     "show" => {
                         show_window(app);
+                    }
+                    "check_update" => {
+                        check_for_updates(app.clone());
                     }
                     _ => {}
                 })
