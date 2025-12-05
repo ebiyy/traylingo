@@ -31,13 +31,19 @@ Thank you for your interest in contributing to TrayLingo! This document provides
 
 4. Install development tools:
    ```bash
+   # Option A: With mise (recommended)
    mise install  # Installs lefthook, taplo, etc.
+
+   # Option B: Without mise
+   brew install lefthook          # or: go install github.com/evilmartians/lefthook@latest
+   brew install taplo             # optional: TOML formatter
    ```
 
 5. Set up git hooks:
    ```bash
    lefthook install
    ```
+   > Note: If taplo is not installed, the TOML format check will be skipped automatically.
 
 6. Run in development mode:
    ```bash

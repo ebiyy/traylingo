@@ -15,6 +15,14 @@ lefthook install  # Enable git hooks
 pnpm tauri dev    # Start development
 ```
 
+**Without mise:**
+```bash
+pnpm install
+brew install lefthook taplo  # or just lefthook (taplo is optional)
+lefthook install
+pnpm tauri dev
+```
+
 ## Development Commands
 
 ```bash

@@ -10,4 +10,6 @@ pre-commit:
     rust-clippy:
       run: cargo clippy --manifest-path src-tauri/Cargo.toml -- -D warnings
     toml-fmt:
-      run: mise exec -- taplo fmt --check src-tauri/Cargo.toml
+      run: taplo fmt --check src-tauri/Cargo.toml
+      skip:
+        - run: "! command -v taplo > /dev/null"
