@@ -13,6 +13,7 @@
 - [ ] Improve dark theme styling ([#8](https://github.com/ebiyy/traylingo/issues/8))
 - [ ] Persist and display cumulative AI cost (tauri-plugin-store)
 - [ ] Sentry: Add error capture at appropriate locations (API errors, panics, etc.) via sentry-cli
+- [x] Auto-update via tauri-plugin-updater (Check for Updates in tray menu)
 
 ## Future
 
