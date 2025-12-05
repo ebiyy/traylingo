@@ -138,24 +138,24 @@ export function PopupView() {
   });
 
   return (
-    <div class="bg-gray-900 text-gray-100 flex flex-col overflow-hidden">
+    <div class="bg-gradient-subtle text-[var(--text-primary)] flex flex-col overflow-hidden">
       {/* Header with icons */}
-      <div class="flex items-center justify-end gap-1 px-2 py-1 bg-gray-800 border-b border-gray-700">
+      <div class="flex items-center justify-end gap-1 px-2 py-1 bg-[var(--bg-secondary)] border-b border-[var(--border-primary)]">
         <button
           type="button"
           onClick={copyText}
           disabled={isLoading() || !!error()}
-          class="p-1.5 rounded hover:bg-gray-700 text-gray-400 hover:text-gray-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          class="p-1.5 rounded hover:bg-[var(--bg-elevated)] text-[var(--text-muted)] hover:text-[var(--text-secondary)] disabled:opacity-50 disabled:cursor-not-allowed transition-theme"
           title="Copy"
         >
           <Show when={copied()} fallback={<Copy size={14} />}>
-            <Check size={14} class="text-green-400" />
+            <Check size={14} class="text-[var(--success)]" />
           </Show>
         </button>
         <button
           type="button"
           onClick={closePopup}
-          class="p-1.5 rounded hover:bg-gray-700 text-gray-400 hover:text-gray-200 transition-colors"
+          class="p-1.5 rounded hover:bg-[var(--bg-elevated)] text-[var(--text-muted)] hover:text-[var(--text-secondary)] transition-theme"
           title="Close (Esc)"
         >
           <X size={14} />
@@ -171,16 +171,18 @@ export function PopupView() {
         <Show
           when={!isLoading()}
           fallback={
-            <div class="space-y-2 animate-pulse">
-              <div class="h-3 bg-gray-700 rounded w-3/4" />
-              <div class="h-3 bg-gray-700 rounded w-full" />
-              <div class="h-3 bg-gray-700 rounded w-5/6" />
+            <div class="space-y-2">
+              <div class="h-3 rounded w-3/4 animate-skeleton" />
+              <div class="h-3 rounded w-full animate-skeleton" />
+              <div class="h-3 rounded w-5/6 animate-skeleton" />
             </div>
           }
         >
           <Show
             when={!error()}
-            fallback={<p class="text-red-400">{getUserMessage(error() as TranslateError)}</p>}
+            fallback={
+              <p class="text-[var(--error)]">{getUserMessage(error() as TranslateError)}</p>
+            }
           >
             <p class="leading-relaxed whitespace-pre-wrap wrap-break-word animate-fade-in">
               {formatText(text())}

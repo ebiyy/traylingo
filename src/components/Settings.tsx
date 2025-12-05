@@ -49,14 +49,14 @@ export function Settings(props: SettingsProps) {
   };
 
   return (
-    <div class="flex flex-col h-full bg-gray-900">
+    <div class="flex flex-col h-full bg-gradient-subtle text-[var(--text-primary)]">
       {/* Header */}
-      <div class="flex items-center justify-between p-3 border-b border-gray-800">
-        <h2 class="text-sm font-medium text-[#E8A091]">Settings</h2>
+      <div class="flex items-center justify-between p-3 border-b border-[var(--border-primary)]">
+        <h2 class="text-sm font-medium text-[var(--accent-secondary)]">Settings</h2>
         <button
           type="button"
           onClick={props.onClose}
-          class="text-gray-400 hover:text-white transition-colors"
+          class="text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-theme"
         >
           <X size={20} />
         </button>
@@ -64,10 +64,16 @@ export function Settings(props: SettingsProps) {
 
       {/* Content */}
       <div class="flex-1 overflow-y-auto p-6">
-        <Show when={!settings.loading} fallback={<p class="text-gray-500">Loading...</p>}>
+        <Show
+          when={!settings.loading}
+          fallback={<p class="text-[var(--text-muted)]">Loading...</p>}
+        >
           {/* API Key */}
           <div class="mb-6">
-            <label for="api-key" class="block text-sm font-medium text-gray-300 mb-2">
+            <label
+              for="api-key"
+              class="block text-sm font-medium text-[var(--text-secondary)] mb-2"
+            >
               Anthropic API Key
             </label>
             <div class="relative">
@@ -77,23 +83,23 @@ export function Settings(props: SettingsProps) {
                 value={apiKey()}
                 onInput={(e) => setApiKey(e.currentTarget.value)}
                 placeholder="sk-ant-..."
-                class="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-md text-gray-100 placeholder-gray-500 focus:outline-none focus:border-[#8B4557] text-sm"
+                class="w-full px-3 py-2 bg-[var(--bg-secondary)] border border-[var(--border-primary)] rounded-md text-[var(--text-primary)] placeholder-[var(--text-placeholder)] focus:outline-none focus:border-[var(--accent-primary)] transition-theme text-sm"
               />
               <button
                 type="button"
                 onClick={() => setShowKey(!showKey())}
-                class="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white text-xs"
+                class="absolute right-2 top-1/2 -translate-y-1/2 text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-theme text-xs"
               >
                 {showKey() ? "Hide" : "Show"}
               </button>
             </div>
-            <p class="mt-1 text-xs text-gray-500">
+            <p class="mt-1 text-xs text-[var(--text-muted)]">
               Get your API key from{" "}
               <a
                 href="https://console.anthropic.com/settings/keys"
                 target="_blank"
                 rel="noopener noreferrer"
-                class="text-[#E8A091] hover:underline"
+                class="text-[var(--accent-secondary)] hover:underline"
               >
                 Anthropic Console
               </a>
@@ -102,35 +108,38 @@ export function Settings(props: SettingsProps) {
 
           {/* Model Selection */}
           <div class="mb-6">
-            <label for="model-select" class="block text-sm font-medium text-gray-300 mb-2">
+            <label
+              for="model-select"
+              class="block text-sm font-medium text-[var(--text-secondary)] mb-2"
+            >
               Model
             </label>
             <select
               id="model-select"
               value={model()}
               onChange={(e) => setModel(e.currentTarget.value)}
-              class="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-md text-gray-100 focus:outline-none focus:border-[#8B4557] text-sm"
+              class="w-full px-3 py-2 bg-[var(--bg-secondary)] border border-[var(--border-primary)] rounded-md text-[var(--text-primary)] focus:outline-none focus:border-[var(--accent-primary)] transition-theme text-sm"
             >
               <For each={models()}>{([id, name]) => <option value={id}>{name}</option>}</For>
             </select>
           </div>
 
           {/* Security Note */}
-          <div class="p-3 bg-gray-800/50 rounded-md border border-gray-700">
-            <p class="text-xs text-gray-400">
-              <span class="text-[#E8A091]">Security:</span> Your API key is stored locally on your
-              device and never sent anywhere except to Anthropic's API.
+          <div class="p-3 bg-[var(--accent-secondary-muted)] rounded-md border border-[var(--border-primary)]">
+            <p class="text-xs text-[var(--text-secondary)]">
+              <span class="text-[var(--accent-secondary)]">Security:</span> Your API key is stored
+              locally on your device and never sent anywhere except to Anthropic's API.
             </p>
           </div>
         </Show>
       </div>
 
       {/* Footer */}
-      <div class="flex items-center justify-end gap-3 p-4 border-t border-gray-800">
+      <div class="flex items-center justify-end gap-3 p-4 border-t border-[var(--border-primary)]">
         <button
           type="button"
           onClick={props.onClose}
-          class="px-4 py-2 text-gray-300 hover:text-white transition-colors text-sm"
+          class="px-4 py-2 text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-theme text-sm"
         >
           Cancel
         </button>
@@ -138,7 +147,7 @@ export function Settings(props: SettingsProps) {
           type="button"
           onClick={handleSave}
           disabled={saving()}
-          class="px-4 py-2 bg-[#8B4557] hover:bg-[#9B5567] disabled:opacity-50 text-white rounded-md transition-colors text-sm"
+          class="px-4 py-2 bg-[var(--accent-primary)] hover:bg-[var(--accent-primary-hover)] disabled:opacity-50 text-white rounded-md transition-theme text-sm"
         >
           {saving() ? "Saving..." : saved() ? "Saved!" : "Save"}
         </button>
