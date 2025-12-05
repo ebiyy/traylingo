@@ -144,6 +144,42 @@ pub fn clear_error_history(app: &AppHandle) -> Result<(), String> {
     Ok(())
 }
 
+// ==================== Window Position ====================
+
+/// Window position for persistence
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct WindowPosition {
+    pub x: i32,
+    pub y: i32,
+}
+
+/// Get saved window position for a window
+pub fn get_window_position(app: &AppHandle, window_label: &str) -> Option<WindowPosition> {
+    let key = format!("window_position_{}", window_label);
+    app.store(STORE_PATH)
+        .ok()
+        .and_then(|s| s.get(&key))
+        .and_then(|v| serde_json::from_value(v).ok())
+}
+
+/// Save window position
+pub fn save_window_position(
+    app: &AppHandle,
+    window_label: &str,
+    x: i32,
+    y: i32,
+) -> Result<(), String> {
+    let store = app.store(STORE_PATH).map_err(|e| e.to_string())?;
+    let key = format!("window_position_{}", window_label);
+    let position = WindowPosition { x, y };
+    store.set(
+        &key,
+        serde_json::to_value(&position).map_err(|e| e.to_string())?,
+    );
+    store.save().map_err(|e| e.to_string())?;
+    Ok(())
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

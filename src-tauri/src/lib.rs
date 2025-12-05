@@ -85,6 +85,13 @@ fn show_window(app: &tauri::AppHandle) {
         #[cfg(target_os = "macos")]
         macos::set_dock_visible(true);
 
+        // Restore saved position if available
+        if let Some(pos) = settings::get_window_position(app, "main") {
+            let _ = window.set_position(tauri::Position::Physical(tauri::PhysicalPosition::new(
+                pos.x, pos.y,
+            )));
+        }
+
         let _ = window.show();
         let _ = window.set_focus();
     }
@@ -151,15 +158,22 @@ fn popup_ready() {
 
 fn show_popup(app: &tauri::AppHandle) {
     if let Some(window) = app.get_webview_window("popup") {
-        #[cfg(target_os = "macos")]
-        {
-            if let Ok(Some(monitor)) = window.primary_monitor() {
-                let size = monitor.size();
-                let x = (size.width as i32) - 420;
-                let y = 30;
-                let _ = window.set_position(tauri::Position::Physical(
-                    tauri::PhysicalPosition::new(x, y),
-                ));
+        // Restore saved position if available, otherwise use top-right corner
+        if let Some(pos) = settings::get_window_position(app, "popup") {
+            let _ = window.set_position(tauri::Position::Physical(tauri::PhysicalPosition::new(
+                pos.x, pos.y,
+            )));
+        } else {
+            #[cfg(target_os = "macos")]
+            {
+                if let Ok(Some(monitor)) = window.primary_monitor() {
+                    let size = monitor.size();
+                    let x = (size.width as i32) - 420;
+                    let y = 30;
+                    let _ = window.set_position(tauri::Position::Physical(
+                        tauri::PhysicalPosition::new(x, y),
+                    ));
+                }
             }
         }
         let _ = window.show();
@@ -299,13 +313,20 @@ pub fn run() {
     app.run(|app_handle, event| {
         match event {
             RunEvent::WindowEvent { label, event, .. } => match label.as_str() {
-                "main" => {
-                    if let WindowEvent::CloseRequested { api, .. } = event {
+                "main" => match event {
+                    WindowEvent::CloseRequested { api, .. } => {
                         // Prevent window from closing, hide instead
                         api.prevent_close();
                         hide_window(app_handle);
                     }
-                }
+                    WindowEvent::Moved(position) => {
+                        // Save window position when moved
+                        let _ = settings::save_window_position(
+                            app_handle, "main", position.x, position.y,
+                        );
+                    }
+                    _ => {}
+                },
                 "popup" => match event {
                     WindowEvent::CloseRequested { api, .. } => {
                         api.prevent_close();
@@ -314,6 +335,12 @@ pub fn run() {
                     WindowEvent::Focused(false) => {
                         // Hide popup when it loses focus (click outside)
                         hide_popup(app_handle);
+                    }
+                    WindowEvent::Moved(position) => {
+                        // Save popup position when moved
+                        let _ = settings::save_window_position(
+                            app_handle, "popup", position.x, position.y,
+                        );
                     }
                     _ => {}
                 },
