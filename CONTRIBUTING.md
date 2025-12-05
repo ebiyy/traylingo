@@ -76,6 +76,18 @@ traylingo/
 - Run `cargo fmt` before committing
 - Run `cargo clippy` to check for common issues
 
+### Optional Tools
+
+```bash
+# cargo-watch: Auto-rebuild on file changes
+cargo install cargo-watch
+cargo watch -C src-tauri -x check
+
+# taplo: TOML formatter (for Cargo.toml)
+mise use -g taplo  # or: cargo install taplo-cli
+taplo fmt src-tauri/Cargo.toml
+```
+
 ### Commits
 - Write clear, concise commit messages
 - Use conventional commits when possible (feat:, fix:, docs:, etc.)

@@ -99,6 +99,21 @@ lefthook install
 lefthook run pre-commit
 ```
 
+## Code Quality Tools
+
+```bash
+# knip: Find unused code/dependencies
+pnpm knip
+
+# cargo-watch: Auto-rebuild on file changes
+cargo watch -C src-tauri -x check
+cargo watch -C src-tauri -x clippy
+
+# taplo: TOML formatter
+taplo fmt src-tauri/Cargo.toml
+taplo fmt --check src-tauri/Cargo.toml
+```
+
 ## Git Workflow
 
 ```bash

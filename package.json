@@ -15,7 +15,8 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:rust": "cargo test --manifest-path src-tauri/Cargo.toml",
-    "test:all": "pnpm test && pnpm test:rust"
+    "test:all": "pnpm test && pnpm test:rust",
+    "knip": "knip"
   },
   "keywords": [
     "tauri",
@@ -38,6 +39,7 @@
     "@biomejs/biome": "^2.3.8",
     "@tailwindcss/vite": "^4.1.17",
     "@tauri-apps/cli": "^2.9.5",
+    "knip": "^5.71.0",
     "tailwindcss": "^4.1.17",
     "typescript": "^5.9.3",
     "vite": "^7.2.6",
