@@ -7,7 +7,7 @@ use serde::{Deserialize, Serialize};
 use tauri::{AppHandle, Emitter};
 
 use crate::error::TranslateError;
-use crate::settings::get_model_pricing;
+use crate::settings::{get_model_pricing, save_error, ErrorHistoryEntry};
 
 const REQUEST_TIMEOUT_SECS: u64 = 30;
 
@@ -71,6 +71,26 @@ fn calculate_cost(prompt_tokens: u32, completion_tokens: u32, model: &str) -> f6
     input_cost + output_cost
 }
 
+/// Log error to history storage
+fn log_error_to_history(app: &AppHandle, error: &TranslateError, input_length: usize, model: &str) {
+    let entry = ErrorHistoryEntry {
+        timestamp: std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .map(|d| d.as_secs() as i64)
+            .unwrap_or(0),
+        error_type: format!("{:?}", error)
+            .split_whitespace()
+            .next()
+            .unwrap_or("Unknown")
+            .to_string(),
+        error_message: error.user_message(),
+        input_length,
+        model: model.to_string(),
+    };
+    // Ignore save errors (best effort logging)
+    let _ = save_error(app, entry);
+}
+
 // Event payload with session ID for filtering
 #[derive(Serialize, Clone)]
 struct ChunkPayload {
@@ -107,8 +127,9 @@ pub async fn translate_stream(
     // Check API key
     if api_key.is_empty() {
         error!("API key missing");
-        return Err(serde_json::to_string(&TranslateError::ApiKeyMissing)
-            .unwrap_or_else(|_| "API key missing".to_string()));
+        let err = TranslateError::ApiKeyMissing;
+        log_error_to_history(&app, &err, text.len(), &model);
+        return Err(serde_json::to_string(&err).unwrap_or_else(|_| "API key missing".to_string()));
     }
 
     let client = Client::builder()
@@ -220,12 +241,14 @@ OUTPUT FORMAT:
                 }
             }
         };
+        log_error_to_history(&app, &error, text.len(), &model);
         return Err(serde_json::to_string(&error).unwrap_or_else(|_| error.to_string()));
     }
 
     let mut stream = response.bytes_stream();
     let mut last_usage: Option<Usage> = None;
     let mut buffer = String::new();
+    let mut message_stopped = false;
 
     while let Some(chunk) = stream.next().await {
         let chunk = chunk.map_err(|e| {
@@ -276,6 +299,7 @@ OUTPUT FORMAT:
                             }
                         }
                         "message_stop" => {
+                            message_stopped = true;
                             // Emit usage info before done
                             if let Some(usage) = &last_usage {
                                 let cost =
@@ -306,6 +330,15 @@ OUTPUT FORMAT:
         }
     }
 
+    // Stream ended without message_stop - incomplete response
+    if !message_stopped {
+        warn!("Stream ended without message_stop event");
+        let error = TranslateError::IncompleteResponse;
+        log_error_to_history(&app, &error, text.len(), &model);
+        return Err(serde_json::to_string(&error).unwrap_or_else(|_| error.to_string()));
+    }
+
+    // Fallback: should not reach here (message_stop returns early)
     let _ = app.emit(
         "translate-done",
         DonePayload {

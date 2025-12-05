@@ -44,6 +44,7 @@ flowchart TB
 | `ApiError` | Other API errors | 4xx/5xx | Depends |
 | `ParseError` | Invalid response format | - | Yes |
 | `Unknown` | Unexpected errors | - | No |
+| `IncompleteResponse` | Stream ended without `message_stop` | - | Yes |
 
 ### File Locations
 
@@ -197,14 +198,43 @@ const context: ErrorReportContext = { model: 'claude-haiku-4-5-20251001' };
 const report = generateErrorReport(error, context);
 ```
 
+## Error History Storage
+
+Errors are automatically logged to local storage for debugging patterns.
+
+### Storage Location
+
+Stored in `settings.json` under `error_history` key (same file as app settings).
+
+### Data Structure
+
+```typescript
+interface ErrorHistoryEntry {
+  timestamp: number;      // Unix timestamp (seconds)
+  error_type: string;     // "RateLimitExceeded", "Timeout", etc.
+  error_message: string;  // User-friendly message
+  input_length: number;   // Length of text that triggered error
+  model: string;          // Model used when error occurred
+}
+```
+
+### Access via Tauri Commands
+
+```typescript
+// Get all error history (last 50 entries)
+const history = await invoke<ErrorHistoryEntry[]>("get_error_history");
+
+// Clear error history
+await invoke("clear_error_history");
+```
+
+### Use Cases
+
+- Debug recurring issues
+- Identify patterns (e.g., "model X always times out with long texts")
+- Provide context when reporting bugs
+
 ## Known Gaps & Future Improvements
-
-### Medium Priority
-
-| Gap | Issue | Solution |
-|-----|-------|----------|
-| Incomplete response | No warning if stream cuts | Detect missing `message_stop` |
-| No error history | Can't see past errors | Store last N errors locally |
 
 ### Low Priority
 
@@ -222,6 +252,8 @@ const report = generateErrorReport(error, context);
 | Logs not used | ✅ `log::info!`, `error!`, `warn!` added |
 | ParseError never fires | ✅ Now emits on JSON parse failure |
 | Error report for issues | ✅ Copy Report button added |
+| Incomplete response | ✅ `IncompleteResponse` error type + `message_stop` detection ([#13](https://github.com/ebiyy/traylingo/issues/13)) |
+| No error history | ✅ Last 50 errors stored locally ([#14](https://github.com/ebiyy/traylingo/issues/14)) |
 
 ## Error Handling Checklist
 

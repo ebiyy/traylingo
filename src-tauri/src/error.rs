@@ -30,6 +30,9 @@ pub enum TranslateError {
 
     /// Generic/unknown error
     Unknown { message: String },
+
+    /// Stream ended without message_stop (incomplete response)
+    IncompleteResponse,
 }
 
 impl TranslateError {
@@ -61,6 +64,10 @@ impl TranslateError {
             Self::ApiError { status, message } => format!("API error ({}): {}", status, message),
             Self::ParseError { .. } => "Failed to parse API response. Please try again.".into(),
             Self::Unknown { message } => format!("An error occurred: {}", message),
+            Self::IncompleteResponse => {
+                "Translation was interrupted. The response may be incomplete. Please try again."
+                    .into()
+            }
         }
     }
 }

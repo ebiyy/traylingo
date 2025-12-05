@@ -41,6 +41,16 @@ fn get_available_models() -> Vec<(String, String)> {
         .collect()
 }
 
+#[tauri::command]
+fn get_error_history(app: tauri::AppHandle) -> Vec<settings::ErrorHistoryEntry> {
+    settings::get_error_history(&app)
+}
+
+#[tauri::command]
+fn clear_error_history(app: tauri::AppHandle) -> Result<(), String> {
+    settings::clear_error_history(&app)
+}
+
 /// macOS: Control dock icon visibility
 #[cfg(target_os = "macos")]
 mod macos {
@@ -189,6 +199,8 @@ pub fn run() {
             get_settings,
             save_settings,
             get_available_models,
+            get_error_history,
+            clear_error_history,
             quick_translate,
             close_popup,
             popup_ready
@@ -230,20 +242,20 @@ pub fn run() {
 
             // Register ⌘J global shortcut (main window)
             let shortcut = Shortcut::new(Some(Modifiers::SUPER), Code::KeyJ);
-            app.global_shortcut().on_shortcut(shortcut, |app, _shortcut, _event| {
-                #[cfg(target_os = "macos")]
-                simulate_copy();
+            app.global_shortcut()
+                .on_shortcut(shortcut, |app, _shortcut, _event| {
+                    #[cfg(target_os = "macos")]
+                    simulate_copy();
 
-                // Poll for clipboard change (max 500ms)
-                let _ = wait_for_clipboard_change(500);
+                    // Poll for clipboard change (max 500ms)
+                    let _ = wait_for_clipboard_change(500);
 
-                show_window(app);
-                let _ = app.emit("shortcut-triggered", ());
-            })?;
+                    show_window(app);
+                    let _ = app.emit("shortcut-triggered", ());
+                })?;
 
             // Register ⌘⌥J global shortcut (popup window)
-            let popup_shortcut =
-                Shortcut::new(Some(Modifiers::SUPER | Modifiers::ALT), Code::KeyJ);
+            let popup_shortcut = Shortcut::new(Some(Modifiers::SUPER | Modifiers::ALT), Code::KeyJ);
             app.global_shortcut()
                 .on_shortcut(popup_shortcut, |app, _shortcut, _event| {
                     #[cfg(target_os = "macos")]
@@ -263,9 +275,7 @@ pub fn run() {
 
                 // Wait for frontend ready signal (max 2000ms)
                 let start = Instant::now();
-                while !POPUP_READY.load(Ordering::SeqCst)
-                    && start.elapsed().as_millis() < 2000
-                {
+                while !POPUP_READY.load(Ordering::SeqCst) && start.elapsed().as_millis() < 2000 {
                     std::thread::sleep(Duration::from_millis(10));
                 }
 

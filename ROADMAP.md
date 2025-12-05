@@ -64,5 +64,8 @@ Items requiring ROI evaluation before implementation:
 - [x] Custom tray icon (A/あ design)
 - [x] App screenshot in docs/
 - [x] Update CODE_OF_CONDUCT.md contact method
+- [x] Error report copy feature (Copy Report button for GitHub Issues)
+- [x] Incomplete response detection ([#13](https://github.com/ebiyy/traylingo/issues/13))
+- [x] Error history local storage ([#14](https://github.com/ebiyy/traylingo/issues/14))
 
 </details>
