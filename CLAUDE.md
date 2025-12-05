@@ -211,6 +211,44 @@ sentry-cli projects list --org ORG_SLUG   # List projects
 
 See [docs/error-management.md](docs/error-management.md) for details.
 
+## Unified Logging (Development)
+
+TrayLingo uses a unified logging layer that consolidates frontend and backend logs into the Rust terminal.
+
+### Usage
+
+```typescript
+// Frontend - use Logger instead of console.log
+import { Logger } from "../utils/logger";
+Logger.info("ui", "button clicked", { button: "translate" });
+Logger.error("ipc", "command failed", { error: "timeout" }, correlationId);
+```
+
+```rust
+// Backend - use log crate
+log::info!("Starting translation: {} chars", text.len());
+```
+
+### Log Scopes
+
+| Scope | Usage |
+|-------|-------|
+| `ui` | User interactions (clicks, shortcuts) |
+| `ipc` | Tauri invoke/event |
+| `command` | Rust command internals |
+| `network` | External API calls |
+| `lifecycle` | App startup, shutdown |
+
+### Key Files
+
+| File | Purpose |
+|------|---------|
+| `src/utils/logger.ts` | Frontend Logger |
+| `src/types/logging.ts` | TypeScript types |
+| `src-tauri/src/lib.rs` | `app_log` command |
+
+See [docs/logging.md](docs/logging.md) for details.
+
 ## API Cost Optimization
 
 TrayLingo is designed as a **low-cost translation app**. When modifying translation-related code, always consider API cost impact.
