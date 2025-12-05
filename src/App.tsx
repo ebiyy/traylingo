@@ -1,7 +1,14 @@
 import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
 import { readText, writeText } from "@tauri-apps/plugin-clipboard-manager";
-import { Check, Copy, Settings as SettingsIcon } from "lucide-solid";
+import {
+  isPermissionGranted,
+  requestPermission,
+  sendNotification,
+} from "@tauri-apps/plugin-notification";
+import { relaunch } from "@tauri-apps/plugin-process";
+import { check } from "@tauri-apps/plugin-updater";
+import { Check as CheckIcon, Copy, Settings as SettingsIcon } from "lucide-solid";
 import { createMemo, createSignal, onMount, Show } from "solid-js";
 import { ErrorDisplay } from "./components/ErrorDisplay";
 import { Settings } from "./components/Settings";
@@ -153,7 +160,55 @@ function App() {
         setSessionCost((prev) => prev + event.payload.estimated_cost);
       }
     });
+
+    // Setup update notifications
+    await setupUpdateNotifications();
   });
+
+  // Helper to send system notification
+  const notify = async (title: string, body: string) => {
+    let permissionGranted = await isPermissionGranted();
+    if (!permissionGranted) {
+      const permission = await requestPermission();
+      permissionGranted = permission === "granted";
+    }
+    if (permissionGranted) {
+      sendNotification({ title, body });
+    }
+  };
+
+  // Setup update event listeners
+  const setupUpdateNotifications = async () => {
+    // Update available - offer to download and install
+    await listen<{ version: string; body: string | null }>("update-available", async (event) => {
+      const { version } = event.payload;
+      await notify("Update Available", `Version ${version} is available. Downloading...`);
+
+      // Download and install the update
+      try {
+        const update = await check();
+        if (update) {
+          await update.downloadAndInstall();
+          await notify("Update Ready", "Update installed. Restart to apply changes.");
+          // Optionally relaunch automatically
+          await relaunch();
+        }
+      } catch (err) {
+        console.error("Failed to install update:", err);
+        await notify("Update Failed", `Failed to install update: ${err}`);
+      }
+    });
+
+    // No update available
+    await listen("update-not-available", async () => {
+      await notify("No Updates", "You're running the latest version.");
+    });
+
+    // Update check error
+    await listen<string>("update-error", async (event) => {
+      await notify("Update Check Failed", event.payload);
+    });
+  };
 
   return (
     <Show
@@ -205,7 +260,7 @@ function App() {
                   title={copied() ? "Copied!" : "Copy to clipboard"}
                 >
                   <Show when={copied()} fallback={<Copy size={14} />}>
-                    <Check size={14} class="text-[var(--success)]" />
+                    <CheckIcon size={14} class="text-[var(--success)]" />
                   </Show>
                 </button>
               </Show>
