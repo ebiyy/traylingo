@@ -46,6 +46,12 @@ export function Settings(props: SettingsProps) {
     }
   });
 
+  const openExternalUrl = (url: string) => {
+    invoke("open_external_url", { url }).catch((err) => {
+      Logger.error("ipc", "Failed to open external URL", { error: String(err), url });
+    });
+  };
+
   const handleSave = async () => {
     setSaving(true);
     try {
@@ -116,14 +122,13 @@ export function Settings(props: SettingsProps) {
             </div>
             <p class="mt-1 text-xs text-[var(--text-muted)]">
               Get your API key from{" "}
-              <a
-                href="https://console.anthropic.com/settings/keys"
-                target="_blank"
-                rel="noopener noreferrer"
+              <button
+                type="button"
+                onClick={() => openExternalUrl("https://console.anthropic.com/settings/keys")}
                 class="text-[var(--accent-secondary)] hover:underline"
               >
                 Anthropic Console
-              </a>
+              </button>
             </p>
           </div>
 
@@ -162,14 +167,15 @@ export function Settings(props: SettingsProps) {
               Error reports help us fix bugs. No translation content is sent.
               <br />
               Changes take effect after restarting the app.{" "}
-              <a
-                href="https://github.com/ebiyy/traylingo/blob/main/PRIVACY.md"
-                target="_blank"
-                rel="noopener noreferrer"
+              <button
+                type="button"
+                onClick={() =>
+                  openExternalUrl("https://github.com/ebiyy/traylingo/blob/main/PRIVACY.md")
+                }
                 class="text-[var(--accent-secondary)] hover:underline"
               >
                 Privacy Policy
-              </a>
+              </button>
             </p>
           </div>
 
