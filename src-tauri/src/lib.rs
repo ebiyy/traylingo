@@ -354,6 +354,11 @@ fn app_log(entry: LogEntry) {
     }
 }
 
+#[tauri::command]
+fn open_external_url(url: String) -> Result<(), String> {
+    open::that(&url).map_err(|e| e.to_string())
+}
+
 /// Check for updates and notify user of result.
 /// Spawns an async task to avoid blocking the menu event handler.
 fn check_for_updates(app: tauri::AppHandle) {
@@ -412,7 +417,8 @@ pub fn run() {
             quick_translate,
             close_popup,
             popup_ready,
-            app_log
+            app_log,
+            open_external_url
         ])
         .setup(|app| {
             // =============================================================================

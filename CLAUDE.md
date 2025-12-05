@@ -90,6 +90,7 @@ docs/                   # Documentation
 - **TypeScript**: Follow existing patterns, use TypeScript for all frontend code
 - **Rust**: Run `cargo fmt` and `cargo clippy` before committing
 - **Commits**: Use conventional commits (feat:, fix:, docs:, etc.)
+- **External Links**: NEVER open links inside the WebView. Always use `invoke("open_external_url", { url })` to open in the system browser. This is a menu bar app - internal browsing is not appropriate.
 
 ## Git Workflow
 
