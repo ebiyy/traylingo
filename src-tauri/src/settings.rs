@@ -16,10 +16,18 @@ pub struct Settings {
     /// Selected model
     #[serde(default = "default_model")]
     pub model: String,
+
+    /// Send error reports to Sentry (opt-out: enabled by default)
+    #[serde(default = "default_send_telemetry")]
+    pub send_telemetry: bool,
 }
 
 fn default_model() -> String {
     "claude-haiku-4-5-20251001".to_string()
+}
+
+fn default_send_telemetry() -> bool {
+    true // Opt-out: enabled by default
 }
 
 impl Default for Settings {
@@ -27,6 +35,7 @@ impl Default for Settings {
         Self {
             api_key: String::new(),
             model: default_model(),
+            send_telemetry: default_send_telemetry(),
         }
     }
 }
@@ -355,6 +364,7 @@ mod tests {
         let settings = Settings::default();
         assert!(settings.api_key.is_empty());
         assert_eq!(settings.model, "claude-haiku-4-5-20251001");
+        assert!(settings.send_telemetry); // Default: enabled (opt-out)
     }
 
     #[test]

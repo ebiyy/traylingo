@@ -1,12 +1,13 @@
 import { invoke } from "@tauri-apps/api/core";
 import { listen, type UnlistenFn } from "@tauri-apps/api/event";
 import { getCurrentWindow, PhysicalSize } from "@tauri-apps/api/window";
-import { readText, writeText } from "@tauri-apps/plugin-clipboard-manager";
+import { writeText } from "@tauri-apps/plugin-clipboard-manager";
 import { Check, Copy, X } from "lucide-solid";
 import { createEffect, createSignal, onCleanup, onMount, Show } from "solid-js";
 import type { TranslateError } from "../types/error";
 import { getUserMessage, parseError } from "../types/error";
 import { formatText } from "../utils/formatText";
+import { Logger } from "../utils/logger";
 
 const MIN_HEIGHT = 80; // 2 lines + header
 const MAX_HEIGHT = 400;
@@ -51,39 +52,32 @@ export function PopupView() {
     }
   };
 
-  const runTranslation = async () => {
+  const runTranslation = async (clipboardText: string | null) => {
     setText("");
     setError(null);
     setIsLoading(true);
 
-    try {
-      let clipboardText: string | null = null;
-      try {
-        clipboardText = await readText();
-      } catch {
-        // Clipboard read failed - might be empty or non-text content
-        setError(
-          parseError(
-            "クリップボードにテキストがありません。テキストを選択してから再度お試しください。",
-          ),
-        );
-        setIsLoading(false);
-        return;
-      }
+    const correlationId = crypto.randomUUID();
+    Logger.info(
+      "ipc",
+      "quick_translate start",
+      { textLength: clipboardText?.length ?? 0 },
+      correlationId,
+    );
 
+    try {
       if (clipboardText?.trim()) {
         const result = await invoke<string>("quick_translate", {
           text: clipboardText,
         });
+        Logger.info("ipc", "quick_translate done", { resultLength: result.length }, correlationId);
         setText(result);
       } else {
-        setError(
-          parseError(
-            "クリップボードにテキストがありません。テキストを選択してから再度お試しください。",
-          ),
-        );
+        Logger.warn("ui", "clipboard empty", undefined, correlationId);
+        setError(parseError("No text in clipboard. Please select text and try again."));
       }
     } catch (e) {
+      Logger.error("ipc", "quick_translate failed", { error: String(e) }, correlationId);
       setError(parseError(e));
     } finally {
       setIsLoading(false);
@@ -116,14 +110,17 @@ export function PopupView() {
   });
 
   onMount(async () => {
+    Logger.info("lifecycle", "PopupView mounted");
     // Signal to Rust that frontend is ready
     await invoke("popup_ready");
 
     document.addEventListener("keydown", handleKeyDown);
 
     // Listen for popup-shown event from Rust (emitted in show_popup)
-    unlistenPopupShown = await listen("popup-shown", () => {
-      runTranslation();
+    // Payload contains clipboard text read by Rust to avoid race condition
+    unlistenPopupShown = await listen<string | null>("popup-shown", (event) => {
+      Logger.info("ui", "popup shown (⌃⌥J)", { hasClipboard: !!event.payload });
+      runTranslation(event.payload);
     });
   });
 

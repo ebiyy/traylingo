@@ -10,6 +10,12 @@
   - `pnpm format` - Format code
 - **Config**: `biome.json`
 
+### Console Usage
+- **Rule**: `noConsole: error` - Direct console.log/warn/error is prohibited
+- **Use Instead**: `Logger` from `src/utils/logger.ts`
+- **Reason**: Unified logging to Rust terminal for development debugging
+- **Exception**: Add `biome-ignore` comment with justification if truly needed
+
 ### tsconfig.json Settings
 - **Target**: ES2020
 - **Module**: ESNext

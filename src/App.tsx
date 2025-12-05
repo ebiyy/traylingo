@@ -1,4 +1,5 @@
 import { invoke } from "@tauri-apps/api/core";
+import type { UnlistenFn } from "@tauri-apps/api/event";
 import { listen } from "@tauri-apps/api/event";
 import { readText, writeText } from "@tauri-apps/plugin-clipboard-manager";
 import {
@@ -9,12 +10,16 @@ import {
 import { relaunch } from "@tauri-apps/plugin-process";
 import { check } from "@tauri-apps/plugin-updater";
 import { Check as CheckIcon, Copy, Settings as SettingsIcon } from "lucide-solid";
-import { createMemo, createSignal, onMount, Show } from "solid-js";
+import { createMemo, createSignal, onCleanup, onMount, Show } from "solid-js";
 import { ErrorDisplay } from "./components/ErrorDisplay";
 import { Settings } from "./components/Settings";
 import type { TranslateError } from "./types/error";
 import { parseError } from "./types/error";
 import { formatText } from "./utils/formatText";
+import { Logger } from "./utils/logger";
+
+// Module-level state to prevent duplicate listeners during HMR
+let globalUnlistenFns: UnlistenFn[] = [];
 
 // Event payloads with session ID
 interface ChunkPayload {
@@ -82,9 +87,12 @@ function App() {
     setUsage(null);
     setError(null);
 
+    Logger.info("ipc", "translate start", { textLength: text.length }, sessionId);
+
     try {
       await invoke("translate", { text, sessionId });
     } catch (err) {
+      Logger.error("ipc", "translate failed", { error: String(err) }, sessionId);
       setError(parseError(err));
       setIsTranslating(false);
     }
@@ -128,41 +136,65 @@ function App() {
   };
 
   onMount(async () => {
+    // Clean up any existing listeners from HMR
+    for (const unlisten of globalUnlistenFns) {
+      unlisten();
+    }
+    globalUnlistenFns = [];
+
+    Logger.info("lifecycle", "App mounted");
     await loadSettings();
 
     // Listen for shortcut trigger
-    await listen("shortcut-triggered", async () => {
-      const text = await readText();
-      if (text) {
-        setOriginal(text);
-        triggerTranslation(text, true);
-      }
-    });
+    globalUnlistenFns.push(
+      await listen("shortcut-triggered", async () => {
+        Logger.info("ui", "shortcut triggered (⌘J)");
+        const text = await readText();
+        if (text) {
+          setOriginal(text);
+          triggerTranslation(text, true);
+        }
+      }),
+    );
 
     // Listen for translation chunks (filter by session ID)
-    await listen<ChunkPayload>("translate-chunk", (event) => {
-      if (event.payload.session_id === currentSessionId()) {
-        setTranslated((prev) => prev + event.payload.text);
-      }
-    });
+    globalUnlistenFns.push(
+      await listen<ChunkPayload>("translate-chunk", (event) => {
+        if (event.payload.session_id === currentSessionId()) {
+          setTranslated((prev) => prev + event.payload.text);
+        }
+      }),
+    );
 
     // Listen for translation completion (filter by session ID)
-    await listen<DonePayload>("translate-done", (event) => {
-      if (event.payload.session_id === currentSessionId()) {
-        setIsTranslating(false);
-      }
-    });
+    globalUnlistenFns.push(
+      await listen<DonePayload>("translate-done", (event) => {
+        if (event.payload.session_id === currentSessionId()) {
+          Logger.info("ipc", "translate done", undefined, event.payload.session_id);
+          setIsTranslating(false);
+        }
+      }),
+    );
 
     // Listen for usage info (filter by session ID)
-    await listen<UsagePayload>("translate-usage", (event) => {
-      if (event.payload.session_id === currentSessionId()) {
-        setUsage(event.payload);
-        setSessionCost((prev) => prev + event.payload.estimated_cost);
-      }
-    });
+    globalUnlistenFns.push(
+      await listen<UsagePayload>("translate-usage", (event) => {
+        if (event.payload.session_id === currentSessionId()) {
+          setUsage(event.payload);
+          setSessionCost((prev) => prev + event.payload.estimated_cost);
+        }
+      }),
+    );
 
     // Setup update notifications
     await setupUpdateNotifications();
+  });
+
+  onCleanup(() => {
+    for (const unlisten of globalUnlistenFns) {
+      unlisten();
+    }
+    globalUnlistenFns = [];
   });
 
   // Helper to send system notification
@@ -180,34 +212,40 @@ function App() {
   // Setup update event listeners
   const setupUpdateNotifications = async () => {
     // Update available - offer to download and install
-    await listen<{ version: string; body: string | null }>("update-available", async (event) => {
-      const { version } = event.payload;
-      await notify("Update Available", `Version ${version} is available. Downloading...`);
+    globalUnlistenFns.push(
+      await listen<{ version: string; body: string | null }>("update-available", async (event) => {
+        const { version } = event.payload;
+        await notify("Update Available", `Version ${version} is available. Downloading...`);
 
-      // Download and install the update
-      try {
-        const update = await check();
-        if (update) {
-          await update.downloadAndInstall();
-          await notify("Update Ready", "Update installed. Restart to apply changes.");
-          // Optionally relaunch automatically
-          await relaunch();
+        // Download and install the update
+        try {
+          const update = await check();
+          if (update) {
+            await update.downloadAndInstall();
+            await notify("Update Ready", "Update installed. Restart to apply changes.");
+            // Optionally relaunch automatically
+            await relaunch();
+          }
+        } catch (err) {
+          Logger.error("lifecycle", "Failed to install update", { error: String(err) });
+          await notify("Update Failed", `Failed to install update: ${err}`);
         }
-      } catch (err) {
-        console.error("Failed to install update:", err);
-        await notify("Update Failed", `Failed to install update: ${err}`);
-      }
-    });
+      }),
+    );
 
     // No update available
-    await listen("update-not-available", async () => {
-      await notify("No Updates", "You're running the latest version.");
-    });
+    globalUnlistenFns.push(
+      await listen("update-not-available", async () => {
+        await notify("No Updates", "You're running the latest version.");
+      }),
+    );
 
     // Update check error
-    await listen<string>("update-error", async (event) => {
-      await notify("Update Check Failed", event.payload);
-    });
+    globalUnlistenFns.push(
+      await listen<string>("update-error", async (event) => {
+        await notify("Update Check Failed", event.payload);
+      }),
+    );
   };
 
   return (
@@ -230,7 +268,7 @@ function App() {
             <div class="flex items-center justify-between p-3 border-b border-[var(--border-primary)]">
               <h2 class="text-sm font-medium text-[var(--text-muted)]">Original</h2>
             </div>
-            <div class="flex-1 overflow-y-auto overflow-x-hidden p-4">
+            <div class="flex-1 overflow-hidden p-4">
               <textarea
                 class="w-full h-full bg-transparent text-base leading-relaxed resize-none outline-none placeholder:text-[var(--text-placeholder)] focus-ring"
                 placeholder="Select text and press ⌘J, or paste/type here"
@@ -314,16 +352,6 @@ function App() {
               title="Settings"
             >
               <SettingsIcon size={16} />
-            </button>
-            {/* TODO: Remove after Sentry verification */}
-            <button
-              type="button"
-              onClick={() => {
-                throw new Error("Sentry Frontend Error");
-              }}
-              class="text-red-500 hover:text-red-400 text-xs"
-            >
-              Test Sentry
             </button>
             <Show when={usage()}>
               <Show
