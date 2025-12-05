@@ -65,7 +65,7 @@ Items requiring ROI evaluation before implementation:
 - [x] Skeleton loading during translation
 - [x] Icon-based copy button (lucide-solid)
 - [x] Replace inline SVGs with lucide-solid
-- [x] Quick Popup (⌘⌥J) - mini translation popup ([#6](https://github.com/ebiyy/traylingo/issues/6))
+- [x] Quick Popup (⌃⌥J) - mini translation popup ([#6](https://github.com/ebiyy/traylingo/issues/6))
 - [x] Fix: VSCode webview panels copy internal ID instead of selected text ([#7](https://github.com/ebiyy/traylingo/issues/7))
 - [x] Custom tray icon (A/あ design)
 - [x] App screenshot in docs/
