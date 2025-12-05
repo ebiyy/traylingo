@@ -45,11 +45,17 @@ Consider updating these files if relevant:
 ## Pull Request Checklist
 
 - [ ] Code compiles without errors
-- [ ] All checks pass (typecheck, cargo check, clippy)
+- [ ] All checks pass (typecheck, cargo check, clippy, cargo-deny)
 - [ ] Code is properly formatted (cargo fmt)
 - [ ] No API keys or secrets committed
 - [ ] Documentation updated if needed
 - [ ] PR has clear description
+
+## CI Checks (Automated)
+
+These run automatically on PR:
+- `cargo deny check` - Vulnerability & license audit
+- If new advisory appears, check if it's controllable or add to ignore list
 
 ## Security Review
 

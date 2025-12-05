@@ -98,6 +98,7 @@ If an error occurs, click the **"Copy Report"** button to copy error details. Yo
 - **Frontend**: [Solid.js](https://www.solidjs.com/) + [Tailwind CSS v4](https://tailwindcss.com/)
 - **Backend**: Rust
 - **AI**: Claude Haiku 4.5 (Anthropic)
+- **Error Monitoring**: [Sentry](https://sentry.io/)
 
 ## Configuration
 
