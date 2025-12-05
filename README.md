@@ -61,7 +61,8 @@ The built app will be in `src-tauri/target/release/bundle/`.
 
 - **Left-click** on tray icon: Toggle window visibility
 - **Right-click** on tray icon: Open menu (Quit)
-- **Cmd+J**: Translate selected text
+- **Cmd+J**: Translate selected text (main window)
+- **Cmd+Option+J**: Quick translate popup (minimal UI, auto-closes)
 
 ## Tech Stack
 

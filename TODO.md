@@ -25,20 +25,19 @@
 - [x] 翻訳中スケルトンローディング表示 (lucide-solid)
 - [x] コピーボタンをアイコン化 (lucide-solid Copy/Check)
 - [x] インラインSVGをlucide-solidに置換 (Settings, X, AlertTriangle)
-- [x] Quick Popup (⌘⇧J) - 画面右上にミニ翻訳ポップアップ表示
+- [x] Quick Popup (⌘⌥J) - 画面右上にミニ翻訳ポップアップ表示
 
 ---
 
 ## In Progress
 
 ### Quick Popup 改善
-- [ ] ショートカットキー再検討 (⌘⇧J が他アプリと競合: Finder, IntelliJ など)
-  - 候補: ⌘⇧T, ⌘⌥J, ⌘⌥T, カスタマイズ可能化
+- [x] ショートカットキー再検討 → ⌘⌥J に変更 (Finder/IntelliJ 競合回避)
 - [ ] ポップアップを閉じた時に他アプリが前面に来る問題
 
 ### OSS Release Preparation
-- [ ] Add app screenshot to docs/screenshot.png
-- [ ] Update CODE_OF_CONDUCT.md contact method
+- [x] Add app screenshot to docs/
+- [x] Update CODE_OF_CONDUCT.md contact method (GitHub Issues + private vulnerability reporting)
 
 ---
 
@@ -46,15 +45,10 @@
 
 ### Features (Priority: Medium)
 - [ ] AI利用コストの永続化と累積表示 (tauri-plugin-store活用)
-- [ ] Notification support (translation complete)
 - [ ] Language auto-detection improvements
 
 ### Polish (Priority: Low)
-- [ ] Improve dark theme styling (more refined)
-- [ ] Custom tray icon (A/あ design)
-- [ ] Keyboard shortcuts for copy/clear
-- [ ] Window position memory
-- [ ] Animation for streaming text
+- [x] Custom tray icon (A/あ design)
 
 ### Distribution
 - [ ] Homebrew tap setup
@@ -88,7 +82,7 @@
 
 ## Technical Debt
 
-### Quick Popup タイミング依存の実装 (⌘⇧J)
+### Quick Popup タイミング依存の実装 (⌘⌥J)
 
 現在の実装は複数のマジックナンバー（固定遅延時間）に依存しており、環境によっては不安定になる可能性がある。
 
@@ -113,5 +107,5 @@
 3. **単一トリガー**: イベントとフォーカスの両方ではなく、1つに統一してデバウンス不要に
 
 #### 関連ファイル
-- `src-tauri/src/lib.rs`: show_popup, ⌘⇧J ショートカット, プリロード
+- `src-tauri/src/lib.rs`: show_popup, ⌘⌥J ショートカット, プリロード
 - `src/components/PopupView.tsx`: 翻訳トリガー, デバウンス処理

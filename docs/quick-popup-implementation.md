@@ -1,10 +1,10 @@
 # Quick Popup Feature: Implementation Journey
 
-This document chronicles the implementation of the Quick Popup feature (⌘⇧J) in TrayLingo, including failed approaches, lessons learned, and technical debt incurred.
+This document chronicles the implementation of the Quick Popup feature (⌘⌥J) in TrayLingo, including failed approaches, lessons learned, and technical debt incurred.
 
 ## The Goal
 
-Add a quick translate popup that appears when pressing ⌘⇧J. Unlike the main window (⌘J), this popup should be:
+Add a quick translate popup that appears when pressing ⌘⌥J. Unlike the main window (⌘J), this popup should be:
 - Minimal and focused on showing translation results only
 - 400×300, positioned top-right near the tray icon
 - Borderless, always on top
@@ -82,7 +82,7 @@ async fn quick_translate(app: tauri::AppHandle, text: String) -> Result<String, 
 
 ### Issue 1: First Launch Not Working
 
-**Symptom**: First ⌘⇧J shows nothing, second shows untranslated text, clicking area triggers translation.
+**Symptom**: First ⌘⌥J shows nothing, second shows untranslated text, clicking area triggers translation.
 
 **Root Cause**: Tauri v2 webview JS doesn't load until window is first shown.
 
@@ -138,7 +138,7 @@ The current implementation relies on magic numbers (fixed delays) that may be fr
 
 ## Remaining Issues
 
-1. **Shortcut conflict**: ⌘⇧J conflicts with Finder, IntelliJ, and other apps
+1. **Shortcut conflict**: ⌘⌥J conflicts with Finder, IntelliJ, and other apps
 2. **Foreground issue**: Closing popup brings other app to foreground
 
 ## Lessons Learned
