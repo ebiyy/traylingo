@@ -62,6 +62,7 @@ Tools are managed via `.tool-versions` (asdf/mise compatible) for consistent ver
 | **knip** | Unused code/dependency detection | Manual |
 | **Biome** | TS/JS lint & format | Yes (pre-commit) |
 | **cargo-watch** | Rust auto-rebuild (optional) | Manual |
+| **sentry-cli** | Error monitoring CLI | Manual |
 
 ### Pre-commit Checks (lefthook)
 
@@ -183,6 +184,31 @@ When implementing error-related code, follow [docs/error-management.md](docs/err
 3. Add user message in `getUserMessage()`
 4. Update `isRetryable()` and `needsSettings()` if applicable
 5. Add `log::error!` or `log::warn!` at error site
+
+## Error Monitoring (Sentry)
+
+TrayLingo uses Sentry for error monitoring.
+
+| Component | Project | Package |
+|-----------|---------|---------|
+| Frontend | `traylingo-frontend` | `@sentry/solid` |
+| Backend | `traylingo-backend` | `sentry` (Rust) |
+
+### Key Files
+
+| File | Purpose |
+|------|---------|
+| `src/index.tsx` | Frontend Sentry init |
+| `src-tauri/src/lib.rs` | Backend Sentry init |
+
+### sentry-cli Commands
+
+```bash
+sentry-cli info                           # Check connection
+sentry-cli projects list --org ORG_SLUG   # List projects
+```
+
+See [docs/error-management.md](docs/error-management.md) for details.
 
 ## API Cost Optimization
 
