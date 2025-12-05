@@ -8,7 +8,8 @@ export type TranslateError =
   | { type: "NetworkError"; data: { message: string } }
   | { type: "ApiError"; data: { status: number; message: string } }
   | { type: "ParseError"; data: { message: string } }
-  | { type: "Unknown"; data: { message: string } };
+  | { type: "Unknown"; data: { message: string } }
+  | { type: "IncompleteResponse" };
 
 /**
  * Parse error from backend - can be JSON or plain string
@@ -54,6 +55,8 @@ export function getUserMessage(error: TranslateError): string {
       return "Failed to parse API response. Please try again.";
     case "Unknown":
       return error.data.message || "An unknown error occurred.";
+    case "IncompleteResponse":
+      return "Translation was interrupted. The response may be incomplete. Please try again.";
   }
 }
 
@@ -61,7 +64,13 @@ export function getUserMessage(error: TranslateError): string {
  * Check if error is retryable
  */
 export function isRetryable(error: TranslateError): boolean {
-  return ["RateLimitExceeded", "Overloaded", "Timeout", "NetworkError"].includes(error.type);
+  return [
+    "RateLimitExceeded",
+    "Overloaded",
+    "Timeout",
+    "NetworkError",
+    "IncompleteResponse",
+  ].includes(error.type);
 }
 
 /**

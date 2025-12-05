@@ -3,6 +3,7 @@ use tauri::AppHandle;
 use tauri_plugin_store::StoreExt;
 
 const STORE_PATH: &str = "settings.json";
+const MAX_ERROR_HISTORY: usize = 50;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Settings {
@@ -80,6 +81,67 @@ pub fn get_api_key(app: &AppHandle) -> String {
 /// Get model from settings
 pub fn get_model(app: &AppHandle) -> String {
     get_settings(app).model
+}
+
+// ==================== Error History ====================
+
+/// Entry for error history storage
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ErrorHistoryEntry {
+    /// Unix timestamp in seconds
+    pub timestamp: i64,
+    /// Error type (e.g., "RateLimitExceeded", "Timeout")
+    pub error_type: String,
+    /// User-friendly error message
+    pub error_message: String,
+    /// Length of input text that triggered the error
+    pub input_length: usize,
+    /// Model used when error occurred
+    pub model: String,
+}
+
+/// Save an error to history (keeps last MAX_ERROR_HISTORY entries)
+pub fn save_error(app: &AppHandle, entry: ErrorHistoryEntry) -> Result<(), String> {
+    let store = app.store(STORE_PATH).map_err(|e| e.to_string())?;
+
+    let mut history: Vec<ErrorHistoryEntry> = store
+        .get("error_history")
+        .and_then(|v| serde_json::from_value(v).ok())
+        .unwrap_or_default();
+
+    history.push(entry);
+
+    // Keep only the last MAX_ERROR_HISTORY entries
+    if history.len() > MAX_ERROR_HISTORY {
+        history.drain(0..(history.len() - MAX_ERROR_HISTORY));
+    }
+
+    store.set(
+        "error_history",
+        serde_json::to_value(&history).map_err(|e| e.to_string())?,
+    );
+    store.save().map_err(|e| e.to_string())?;
+    Ok(())
+}
+
+/// Get all error history entries
+pub fn get_error_history(app: &AppHandle) -> Vec<ErrorHistoryEntry> {
+    app.store(STORE_PATH)
+        .ok()
+        .and_then(|s| s.get("error_history"))
+        .and_then(|v| serde_json::from_value(v).ok())
+        .unwrap_or_default()
+}
+
+/// Clear all error history
+pub fn clear_error_history(app: &AppHandle) -> Result<(), String> {
+    let store = app.store(STORE_PATH).map_err(|e| e.to_string())?;
+    store.set(
+        "error_history",
+        serde_json::to_value::<Vec<ErrorHistoryEntry>>(vec![]).map_err(|e| e.to_string())?,
+    );
+    store.save().map_err(|e| e.to_string())?;
+    Ok(())
 }
 
 #[cfg(test)]
