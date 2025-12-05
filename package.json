@@ -16,7 +16,8 @@
     "test:watch": "vitest",
     "test:rust": "cargo test --manifest-path src-tauri/Cargo.toml",
     "test:all": "pnpm test && pnpm test:rust",
-    "knip": "knip"
+    "knip": "knip",
+    "clean": "cargo clean --manifest-path src-tauri/Cargo.toml && rm -rf node_modules"
   },
   "keywords": [
     "tauri",
