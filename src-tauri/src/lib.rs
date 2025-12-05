@@ -158,12 +158,35 @@ fn popup_ready() {
 
 fn show_popup(app: &tauri::AppHandle) {
     if let Some(window) = app.get_webview_window("popup") {
-        // Restore saved position if available, otherwise use top-right corner
+        let mut use_saved_position = false;
+
+        // Restore saved position if available AND within primary monitor bounds
         if let Some(pos) = settings::get_window_position(app, "popup") {
-            let _ = window.set_position(tauri::Position::Physical(tauri::PhysicalPosition::new(
-                pos.x, pos.y,
-            )));
-        } else {
+            #[cfg(target_os = "macos")]
+            {
+                if let Ok(Some(monitor)) = window.primary_monitor() {
+                    let size = monitor.size();
+                    // WHY: Validate saved position is within primary monitor bounds
+                    // to prevent popup appearing on disconnected/different monitors
+                    if pos.x >= 0 && pos.x < size.width as i32 && pos.y >= 0 {
+                        let _ = window.set_position(tauri::Position::Physical(
+                            tauri::PhysicalPosition::new(pos.x, pos.y),
+                        ));
+                        use_saved_position = true;
+                    }
+                }
+            }
+            #[cfg(not(target_os = "macos"))]
+            {
+                let _ = window.set_position(tauri::Position::Physical(
+                    tauri::PhysicalPosition::new(pos.x, pos.y),
+                ));
+                use_saved_position = true;
+            }
+        }
+
+        // Use default position (top-right corner of primary monitor) if saved position is invalid
+        if !use_saved_position {
             #[cfg(target_os = "macos")]
             {
                 if let Ok(Some(monitor)) = window.primary_monitor() {
@@ -176,6 +199,7 @@ fn show_popup(app: &tauri::AppHandle) {
                 }
             }
         }
+
         let _ = window.show();
         let _ = window.set_focus();
         // Emit event to trigger translation (backup for focus event)
