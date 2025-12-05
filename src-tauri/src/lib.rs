@@ -51,11 +51,21 @@ fn clear_error_history(app: tauri::AppHandle) -> Result<(), String> {
     settings::clear_error_history(&app)
 }
 
-/// macOS: Control dock icon visibility
+/// macOS: Control dock icon visibility and app focus
 #[cfg(target_os = "macos")]
 mod macos {
+    use objc2::rc::Retained;
     use objc2::MainThreadMarker;
-    use objc2_app_kit::{NSApplication, NSApplicationActivationPolicy};
+    use objc2_app_kit::{
+        NSApplication, NSApplicationActivationOptions, NSApplicationActivationPolicy,
+        NSRunningApplication, NSWorkspace,
+    };
+    use std::sync::Mutex;
+
+    /// Stores the app that was active before showing the popup.
+    /// WHY: When popup closes, macOS focuses a random window. We need to restore
+    /// focus to the original app. This is cleared by restore_frontmost_app().
+    static PREVIOUS_APP: Mutex<Option<Retained<NSRunningApplication>>> = Mutex::new(None);
 
     pub fn set_dock_visible(visible: bool) {
         if let Some(mtm) = MainThreadMarker::new() {
@@ -66,6 +76,39 @@ mod macos {
             } else {
                 app.setActivationPolicy(NSApplicationActivationPolicy::Accessory);
             }
+        }
+    }
+
+    /// Save the currently frontmost application before showing popup.
+    ///
+    /// WHY check is_some(): The global shortcut can trigger show_popup() multiple times
+    /// in quick succession. Without this guard, the second call would overwrite the
+    /// saved app with "traylingo" itself (since popup is now frontmost), breaking
+    /// the restore logic.
+    pub fn save_frontmost_app() {
+        let mut prev = PREVIOUS_APP.lock().unwrap();
+        if prev.is_some() {
+            return;
+        }
+
+        let workspace = NSWorkspace::sharedWorkspace();
+        if let Some(app) = workspace.frontmostApplication() {
+            *prev = Some(app);
+        }
+    }
+
+    /// Restore focus to the previously saved application.
+    ///
+    /// WHY use take(): Consumes the stored app reference so subsequent calls are no-ops.
+    /// This handles cases where hide_popup() is called multiple times (e.g., Escape key
+    /// followed by focus loss event).
+    pub fn restore_frontmost_app() {
+        let app = {
+            let mut prev = PREVIOUS_APP.lock().unwrap();
+            prev.take()
+        };
+        if let Some(app) = app {
+            app.activateWithOptions(NSApplicationActivationOptions::empty());
         }
     }
 }
@@ -225,6 +268,10 @@ fn calculate_popup_position(app: &tauri::AppHandle) -> Option<(i32, i32)> {
 
 fn show_popup(app: &tauri::AppHandle, clipboard_text: Option<String>) {
     if let Some(window) = app.get_webview_window("popup") {
+        // Save frontmost app before showing popup
+        #[cfg(target_os = "macos")]
+        macos::save_frontmost_app();
+
         // Position popup near cursor
         #[cfg(target_os = "macos")]
         {
@@ -252,6 +299,10 @@ fn show_popup(app: &tauri::AppHandle, clipboard_text: Option<String>) {
 fn hide_popup(app: &tauri::AppHandle) {
     if let Some(window) = app.get_webview_window("popup") {
         let _ = window.hide();
+
+        // Restore focus to the previously frontmost app
+        #[cfg(target_os = "macos")]
+        macos::restore_frontmost_app();
     }
 }
 
