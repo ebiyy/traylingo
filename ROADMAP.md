@@ -90,5 +90,6 @@ Items requiring ROI evaluation before implementation:
 - [x] Animation for streaming text ([#10](https://github.com/ebiyy/traylingo/issues/10))
 - [x] Window position memory ([#9](https://github.com/ebiyy/traylingo/issues/9))
 - [x] Improve dark theme styling ([#8](https://github.com/ebiyy/traylingo/issues/8))
+- [x] Privacy Policy (PRIVACY.md) and Sentry opt-out toggle in Settings
 
 </details>

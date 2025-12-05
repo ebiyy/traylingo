@@ -6,6 +6,7 @@ TrayLingo is a macOS menu bar (system tray) application for instant translation 
 - **Target Platform**: macOS 10.15+ (currently macOS only)
 
 ## Key Features
+- **Privacy**: Sentry error monitoring (opt-out in Settings), no translation content collected
 - **Global Shortcuts**:
   - `⌘J` - Translate selected text (main window)
   - `⌃⌥J` - Quick popup translation
