@@ -80,6 +80,33 @@ Propose adding tests when:
 - UI components (small app, manual testing sufficient)
 - E2E (complex setup, low ROI)
 
+## Error Handling Implementation
+
+When implementing error-related code, follow [docs/error-management.md](docs/error-management.md).
+
+### Workflow
+
+1. **Reference the doc** - Check existing error types and patterns in `error-management.md`
+2. **Implement** - Follow the Error Handling Checklist in the doc
+3. **Verify** - Test error paths manually (`pnpm tauri dev`)
+4. **Propose refactoring** - After confirming it works, suggest improvements if code can be cleaner
+
+### Key Files
+
+| File | Purpose |
+|------|---------|
+| `src-tauri/src/error.rs` | Rust `TranslateError` enum |
+| `src/types/error.ts` | TypeScript types + utilities |
+| `src/components/ErrorDisplay.tsx` | Error UI component |
+
+### Adding New Error Types
+
+1. Add variant to `TranslateError` enum in `error.rs`
+2. Mirror the type in `src/types/error.ts`
+3. Add user message in `getUserMessage()`
+4. Update `isRetryable()` and `needsSettings()` if applicable
+5. Add `log::error!` or `log::warn!` at error site
+
 ## Environment Setup
 
 API key is configured via in-app Settings UI (gear icon). No `.env` file or environment variable fallback.
