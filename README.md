@@ -118,10 +118,17 @@ Available models (configurable in Settings):
 
 Your API key and settings are stored locally on your device.
 
+## Privacy
+
+See [PRIVACY.md](PRIVACY.md) for our privacy policy.
+
+**TL;DR:** Error reports are sent to Sentry by default to help improve the app. No translation content is ever collected. You can disable error reporting in Settings.
+
 ## Documentation
 
 - [Architecture](docs/architecture.md) - System design and module structure
 - [Error Management](docs/error-management.md) - Error handling strategy and logging
+- [Privacy Policy](PRIVACY.md) - Data collection and opt-out options
 - [Roadmap](ROADMAP.md) - Planned features and progress
 
 Documentation is written in English to welcome global contributors. We keep docs minimal: architecture overview + specific technical topics only.
