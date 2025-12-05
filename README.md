@@ -86,6 +86,7 @@ Your API key and settings are stored locally on your device.
 ## Documentation
 
 - [Architecture](docs/architecture.md) - System design and module structure
+- [Roadmap](ROADMAP.md) - Planned features and progress
 
 Documentation is written in English to welcome global contributors. We keep docs minimal: architecture overview + specific technical topics only.
 
