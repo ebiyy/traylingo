@@ -64,6 +64,10 @@ The built app will be in `src-tauri/target/release/bundle/`.
 - **Cmd+J**: Translate selected text (main window)
 - **Cmd+Option+J**: Quick translate popup (minimal UI, auto-closes)
 
+### Troubleshooting
+
+If an error occurs, click the **"Copy Report"** button to copy error details. You can paste this directly into a [GitHub Issue](https://github.com/ebiyy/traylingo/issues) for support.
+
 ## Tech Stack
 
 - **Framework**: [Tauri v2](https://tauri.app/)
@@ -86,6 +90,7 @@ Your API key and settings are stored locally on your device.
 ## Documentation
 
 - [Architecture](docs/architecture.md) - System design and module structure
+- [Error Management](docs/error-management.md) - Error handling strategy and logging
 - [Roadmap](ROADMAP.md) - Planned features and progress
 
 Documentation is written in English to welcome global contributors. We keep docs minimal: architecture overview + specific technical topics only.
