@@ -224,7 +224,9 @@ function App() {
                 <Show
                   when={isTranslating() && !translated()}
                   fallback={
-                    <div class="text-base leading-relaxed whitespace-pre-wrap">
+                    <div
+                      class={`text-base leading-relaxed whitespace-pre-wrap animate-fade-in ${isTranslating() ? "streaming-cursor" : ""}`}
+                    >
                       {formattedTranslation() || (
                         <span class="text-gray-500">Translation will appear here...</span>
                       )}

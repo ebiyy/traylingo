@@ -182,7 +182,9 @@ export function PopupView() {
             when={!error()}
             fallback={<p class="text-red-400">{getUserMessage(error() as TranslateError)}</p>}
           >
-            <p class="leading-relaxed whitespace-pre-wrap wrap-break-word">{formatText(text())}</p>
+            <p class="leading-relaxed whitespace-pre-wrap wrap-break-word animate-fade-in">
+              {formatText(text())}
+            </p>
           </Show>
         </Show>
       </div>
