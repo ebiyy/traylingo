@@ -96,6 +96,7 @@ docs/                   # Documentation
 
 - **Branches**: `main` (protected) ← `develop` (default) ← feature branches
 - **Pull strategy**: `pull.rebase true` is configured for this repo
+- **Merge policy**: Merge commits only (squash disabled)
 - **PRs**: Target `develop`, not `main`
 
 See [CONTRIBUTING.md](CONTRIBUTING.md#git-workflow) for details.

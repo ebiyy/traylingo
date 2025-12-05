@@ -117,6 +117,12 @@ git config pull.rebase true
 
 This prevents divergent branch issues when pulling changes while you have local commits.
 
+### PR Merge Policy
+
+- **Use merge commits only** (squash merge is disabled)
+- Keep commits clean before creating PR (use `git rebase -i` if needed)
+- This preserves meaningful commit history and avoids branch sync issues
+
 ### Workflow Example
 
 ```bash
