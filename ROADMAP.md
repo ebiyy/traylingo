@@ -11,7 +11,6 @@
 
 - [ ] Window position memory ([#9](https://github.com/ebiyy/traylingo/issues/9))
 - [ ] Improve dark theme styling ([#8](https://github.com/ebiyy/traylingo/issues/8))
-- [ ] Animation for streaming text ([#10](https://github.com/ebiyy/traylingo/issues/10))
 - [ ] Persist and display cumulative AI cost (tauri-plugin-store)
 
 ## Future
@@ -67,5 +66,6 @@ Items requiring ROI evaluation before implementation:
 - [x] Error report copy feature (Copy Report button for GitHub Issues)
 - [x] Incomplete response detection ([#13](https://github.com/ebiyy/traylingo/issues/13))
 - [x] Error history local storage ([#14](https://github.com/ebiyy/traylingo/issues/14))
+- [x] Animation for streaming text ([#10](https://github.com/ebiyy/traylingo/issues/10))
 
 </details>

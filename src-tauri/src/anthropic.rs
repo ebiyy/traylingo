@@ -248,7 +248,7 @@ OUTPUT FORMAT:
     let mut stream = response.bytes_stream();
     let mut last_usage: Option<Usage> = None;
     let mut buffer = String::new();
-    let mut message_stopped = false;
+    let message_stopped = false;
 
     while let Some(chunk) = stream.next().await {
         let chunk = chunk.map_err(|e| {
@@ -299,7 +299,6 @@ OUTPUT FORMAT:
                             }
                         }
                         "message_stop" => {
-                            message_stopped = true;
                             // Emit usage info before done
                             if let Some(usage) = &last_usage {
                                 let cost =
