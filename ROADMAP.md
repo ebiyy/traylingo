@@ -9,27 +9,26 @@
 
 ## Next Release
 
-- [ ] Window position memory ([#9](https://github.com/ebiyy/traylingo/issues/9))
-- [ ] Improve dark theme styling ([#8](https://github.com/ebiyy/traylingo/issues/8))
-- [ ] Persist and display cumulative AI cost (tauri-plugin-store)
 - [ ] Sentry: Add error capture at appropriate locations (API errors, panics, etc.) via sentry-cli
 - [x] Auto-update via tauri-plugin-updater (Check for Updates in tray menu)
 
+## v0.2.0
+
+- [ ] Persist and display cumulative AI cost (tauri-plugin-store)
+- [ ] Usage history for token/cost analysis ([#20](https://github.com/ebiyy/traylingo/issues/20))
+
+## v0.1.0
+
+- [ ] First release via GitHub Actions
+- [ ] Homebrew tap setup
+
 ## Future
 
-- [ ] Notification support - translation complete ([#11](https://github.com/ebiyy/traylingo/issues/11))
-- [ ] First release (v0.1.0) via GitHub Actions
-- [ ] Homebrew tap setup
 - [ ] Language auto-detection improvements
 
 ## Under Consideration
 
 Items requiring ROI evaluation before implementation:
-
-- [ ] Translation history - store and search past translations
-  - Pros: User convenience, avoid re-translation
-  - Cons: Storage management, UI complexity, search implementation
-  - Decision: Re-evaluate post-MVP
 
 - [ ] Markdown rendering for translated text
   - Pros: Better readability for technical docs, syntax highlighting
@@ -75,5 +74,7 @@ Items requiring ROI evaluation before implementation:
 - [x] Incomplete response detection ([#13](https://github.com/ebiyy/traylingo/issues/13))
 - [x] Error history local storage ([#14](https://github.com/ebiyy/traylingo/issues/14))
 - [x] Animation for streaming text ([#10](https://github.com/ebiyy/traylingo/issues/10))
+- [x] Window position memory ([#9](https://github.com/ebiyy/traylingo/issues/9))
+- [x] Improve dark theme styling ([#8](https://github.com/ebiyy/traylingo/issues/8))
 
 </details>
