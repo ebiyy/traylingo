@@ -24,6 +24,7 @@ interface UsagePayload {
   prompt_tokens: number;
   completion_tokens: number;
   estimated_cost: number;
+  cached?: boolean;
 }
 
 // Generate unique session ID
@@ -260,12 +261,22 @@ function App() {
               <SettingsIcon size={16} />
             </button>
             <Show when={usage()}>
-              <span>
-                Tokens: {usage()?.prompt_tokens} in / {usage()?.completion_tokens} out
-              </span>
-              <span class="text-[var(--accent-primary)]">
-                ${usage()?.estimated_cost.toFixed(6)}
-              </span>
+              <Show
+                when={usage()?.cached}
+                fallback={
+                  <>
+                    <span>
+                      Tokens: {usage()?.prompt_tokens} in / {usage()?.completion_tokens} out
+                    </span>
+                    <span class="text-[var(--accent-primary)]">
+                      ${usage()?.estimated_cost.toFixed(6)}
+                    </span>
+                  </>
+                }
+              >
+                <span class="text-[var(--success)]">Cached</span>
+                <span class="text-[var(--accent-primary)]">$0.00</span>
+              </Show>
             </Show>
           </div>
           <Show when={sessionCost() > 0}>

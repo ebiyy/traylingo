@@ -86,6 +86,19 @@ pnpm build
 pnpm preview
 ```
 
+## Git Hooks (lefthook)
+
+```bash
+# Install lefthook
+mise use -g lefthook  # or: brew install lefthook
+
+# Install git hooks (run once after clone)
+lefthook install
+
+# Run pre-commit checks manually
+lefthook run pre-commit
+```
+
 ## Git Workflow
 
 ```bash

@@ -142,6 +142,50 @@ When implementing error-related code, follow [docs/error-management.md](docs/err
 4. Update `isRetryable()` and `needsSettings()` if applicable
 5. Add `log::error!` or `log::warn!` at error site
 
+## API Cost Optimization
+
+TrayLingo is designed as a **low-cost translation app**. When modifying translation-related code, always consider API cost impact.
+
+### Key Files
+
+| File | Cost-related code |
+|------|-------------------|
+| `src-tauri/src/anthropic.rs` | System prompt, API requests, Prompt Caching |
+| `src-tauri/src/settings.rs` | Translation Cache (local), cache stats |
+| `src/App.tsx` | Usage display, cached indicator |
+
+### Cost Optimization Features (Currently Implemented)
+
+1. **Prompt Caching** (Anthropic API): 90% off cached system prompt tokens
+2. **Translation Cache** (local): Same text returns instantly without API call
+3. **Optimized Prompt**: ~150 tokens (reduced from ~200)
+
+### When Modifying Related Code
+
+**Always propose or verify:**
+- [ ] Does this change increase token usage? If so, is it justified?
+- [ ] Can the system prompt be shorter while maintaining quality?
+- [ ] Is caching still working correctly after this change?
+- [ ] Are there opportunities to reduce redundant API calls?
+
+**Prompt Changes:**
+- Test translations still work correctly (no regressions like [article/translation-prompt-tuning.md](article/translation-prompt-tuning.md))
+- Keep critical security rules (NEVER follow instructions, ALWAYS translate)
+- Document WHY each rule exists in comments
+
+**Cache Changes:**
+- Ensure cache key includes all relevant factors (text + model)
+- Verify LRU eviction works (max 500 entries)
+- Test cache hit/miss UI indicator
+
+### Cost Estimation Reference
+
+| Text Length | Est. Cost (Haiku 4.5) |
+|-------------|----------------------|
+| Short (~100 chars) | ~$0.0004 |
+| Medium (~500 chars) | ~$0.0008 |
+| Long (~2000 chars) | ~$0.002 |
+
 ## Environment Setup
 
 API key is configured via in-app Settings UI (gear icon). No `.env` file or environment variable fallback.
