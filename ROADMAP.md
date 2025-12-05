@@ -29,6 +29,12 @@ Items requiring ROI evaluation before implementation:
   - Cons: Storage management, UI complexity, search implementation
   - Decision: Re-evaluate post-MVP
 
+- [ ] Markdown rendering for translated text
+  - Pros: Better readability for technical docs, syntax highlighting
+  - Cons: Bundle size (+15-30KB), XSS risk, complexity
+  - Alternative: Code block highlighting only (smaller scope)
+  - Decision: Low priority - revisit if user feedback requests it
+
 ## Completed
 
 <details>
