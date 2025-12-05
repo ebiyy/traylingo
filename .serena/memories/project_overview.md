@@ -14,6 +14,7 @@ TrayLingo is a macOS menu bar (system tray) application for instant translation 
 - **Code Block Preservation**: Technical content remains intact
 - **Token Usage Tracking**: API cost monitoring per request/session
 - **Menu Bar Integration**: Lives in system tray
+- **Focus Restoration**: Automatically returns focus to previous app after popup closes
 - **Settings UI**: In-app configuration (gear icon)
 - **Cost Optimizations**:
   - Prompt Caching (Anthropic API) - 90% off cached system prompt tokens

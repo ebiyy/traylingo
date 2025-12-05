@@ -41,6 +41,8 @@ src-tauri/
 │   │                   # Modules: anthropic, macos, settings, error
 │   │                   # Functions: translate, toggle_window,
 │   │                   #            show_window, hide_window, run
+│   │                   # macOS module: set_dock_visible, save_frontmost_app,
+│   │                   #               restore_frontmost_app (focus management)
 │   ├── anthropic.rs    # Anthropic Claude API integration
 │   │                   # Structs: MessageRequest, Message, StreamEvent,
 │   │                   #          ContentDelta, Usage, NonStreamResponse, etc.
@@ -108,4 +110,7 @@ Root docs:
 ### macOS Specific
 - System tray (NSStatusItem) integration
 - Dock hiding/showing
-- objc2 bindings for native APIs
+- Focus management (NSWorkspace, NSRunningApplication)
+  - Saves frontmost app before showing popup
+  - Restores focus when popup is hidden
+- objc2/objc2-app-kit bindings for native APIs
