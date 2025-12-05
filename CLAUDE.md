@@ -6,25 +6,27 @@
 
 TrayLingo is a macOS menu bar translation app built with Tauri v2, Solid.js, and Tailwind CSS v4.
 
+## Quick Start (New Contributors)
+
+```bash
+pnpm install      # Install Node dependencies
+mise install      # Install dev tools (lefthook, taplo)
+lefthook install  # Enable git hooks
+pnpm tauri dev    # Start development
+```
+
 ## Development Commands
 
 ```bash
-# Install dependencies
-pnpm install
+# Daily development
+pnpm tauri dev         # Run in development mode
+pnpm tauri build       # Build for production
 
-# Run in development mode
-pnpm tauri dev
-
-# Build for production
-pnpm tauri build
-
-# Type check
-pnpm typecheck
-
-# Lint & Format (Biome)
-pnpm lint
-pnpm lint:fix
-pnpm format
+# Code quality (auto-run by lefthook pre-commit)
+pnpm typecheck         # Type check
+pnpm lint              # Lint (Biome)
+pnpm lint:fix          # Fix lint issues
+pnpm format            # Format code
 
 # Rust checks
 cargo check --manifest-path src-tauri/Cargo.toml
@@ -36,7 +38,33 @@ pnpm test              # Frontend tests (Vitest)
 pnpm test:watch        # Watch mode
 pnpm test:rust         # Rust tests
 pnpm test:all          # All tests
+
+# Code analysis
+pnpm knip              # Find unused code/dependencies
 ```
+
+## Development Tools
+
+Tools are managed via `mise.toml` for consistent versions across contributors.
+
+| Tool | Purpose | Auto-run |
+|------|---------|----------|
+| **lefthook** | Git hooks (pre-commit checks) | Yes (on commit) |
+| **taplo** | TOML formatter (Cargo.toml) | Yes (pre-commit) |
+| **knip** | Unused code/dependency detection | Manual |
+| **Biome** | TS/JS lint & format | Yes (pre-commit) |
+| **cargo-watch** | Rust auto-rebuild (optional) | Manual |
+
+### Pre-commit Checks (lefthook)
+
+On every commit, these checks run automatically:
+- `pnpm typecheck` - TypeScript type check
+- `pnpm lint` - Biome lint
+- `cargo fmt --check` - Rust format check
+- `cargo clippy` - Rust lint
+- `taplo fmt --check` - TOML format check
+
+If any check fails, the commit is blocked. Fix issues before committing.
 
 ## Project Structure
 
@@ -72,7 +100,13 @@ See [CONTRIBUTING.md](CONTRIBUTING.md#git-workflow) for details.
 
 ### Release Workflow
 
-1. Create `release/v{version}` branch from `develop`
+**Automated (release-please):**
+- On push to `main`, release-please creates/updates a Release PR
+- PR includes version bumps and CHANGELOG updates
+- Merge the PR to trigger the release
+
+**Manual (via slash command):**
+1. `/release {version}` - Creates release branch from `develop`
 2. Bump versions in: `package.json`, `src-tauri/Cargo.toml`, `src-tauri/tauri.conf.json`
 3. Update CHANGELOG.md (move [Unreleased] to [version])
 4. Create PR to `main`

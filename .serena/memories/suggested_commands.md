@@ -1,11 +1,17 @@
 # TrayLingo Development Commands
 
+## Quick Start (New Contributors)
+
+```bash
+pnpm install      # Install Node dependencies
+mise install      # Install dev tools (lefthook, taplo)
+lefthook install  # Enable git hooks
+pnpm tauri dev    # Start development
+```
+
 ## Daily Development
 
 ```bash
-# Install all dependencies
-pnpm install
-
 # Run development mode (frontend + backend)
 pnpm tauri dev
 
