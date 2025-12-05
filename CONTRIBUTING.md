@@ -103,6 +103,40 @@ git push -u origin feature/your-feature
 # Create PR to develop
 ```
 
+## Release Process
+
+TrayLingo uses Git Flow release branches for version releases.
+
+### Release Workflow
+
+```
+develop → release/vX.Y.Z → PR to main → tag → GitHub Release
+                               ↓
+                        merge back to develop
+```
+
+### Steps
+
+1. **Create release branch** from `develop`: `release/v{version}`
+2. **Bump versions** in all 3 files (must match):
+   - `package.json`
+   - `src-tauri/Cargo.toml`
+   - `src-tauri/tauri.conf.json`
+3. **Update CHANGELOG.md**: Move `[Unreleased]` to `[version]`
+4. **Create PR** to `main`
+5. **After merge**: Tag `v{version}` (triggers release build)
+6. **Merge back** to `develop`
+7. **Delete** release branch
+
+### Branch Naming
+
+| Type | Pattern | Example |
+|------|---------|---------|
+| Feature | `feature/{name}` | `feature/dark-mode` |
+| Fix | `fix/issue-{n}` | `fix/issue-42` |
+| Release | `release/v{version}` | `release/v0.2.0` |
+| Hotfix | `hotfix/v{version}` | `hotfix/v0.2.1` |
+
 ## How to Contribute
 
 ### Reporting Bugs

@@ -88,6 +88,18 @@
 
 ### PR Target
 - Always target `develop` branch (not `main`)
+- Exception: Release branches target `main`
+
+### Release Branch Workflow
+- **Create**: `release/v{version}` from `develop`
+- **Purpose**: Version bump, CHANGELOG update, final testing
+- **Merge**: To `main` (squash), then back to `develop`
+- **Tag**: After merge to main, triggers release build
+
+### Version Files (must all match)
+- `package.json`
+- `src-tauri/Cargo.toml`
+- `src-tauri/tauri.conf.json`
 
 ## Commit Conventions
 

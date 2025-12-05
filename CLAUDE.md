@@ -61,6 +61,33 @@ docs/                   # Documentation
 
 See [CONTRIBUTING.md](CONTRIBUTING.md#git-workflow) for details.
 
+## Release Management
+
+### Slash Commands
+
+| Command | Purpose |
+|---------|---------|
+| `/fix-issue {n}` | Fix GitHub issue in worktree |
+| `/release {version}` | Create release branch and PR |
+
+### Release Workflow
+
+1. Create `release/v{version}` branch from `develop`
+2. Bump versions in: `package.json`, `src-tauri/Cargo.toml`, `src-tauri/tauri.conf.json`
+3. Update CHANGELOG.md (move [Unreleased] to [version])
+4. Create PR to `main`
+5. After merge: tag `v{version}` (triggers release build)
+6. Merge back to `develop`
+
+### Version Verification
+
+```bash
+# Check all versions match
+node -p "require('./package.json').version"
+grep -m1 '^version' src-tauri/Cargo.toml | cut -d'\"' -f2
+node -p "require('./src-tauri/tauri.conf.json').version"
+```
+
 ## Testing Strategy
 
 ### When to Add/Update Tests
