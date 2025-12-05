@@ -111,6 +111,10 @@ lefthook run pre-commit
 # knip: Find unused code/dependencies
 pnpm knip
 
+# cargo-deny: Vulnerability & license audit (runs in CI)
+cargo deny check  # Run from src-tauri directory
+# Config: src-tauri/deny.toml
+
 # cargo-watch: Auto-rebuild on file changes
 cargo watch -C src-tauri -x check
 cargo watch -C src-tauri -x clippy

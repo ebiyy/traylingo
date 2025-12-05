@@ -3,3 +3,4 @@ pnpm 10.24.0
 rust stable
 lefthook 2.0.7
 taplo 0.10.0
+sentry-cli 2.58.2

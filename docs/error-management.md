@@ -115,55 +115,58 @@ debug!("Stream chunk received: {} bytes", chunk.len());
 
 ## Error Monitoring Tools
 
-### Do We Need Sentry?
+### Sentry Integration
 
-**For TrayLingo: Not recommended at this stage.**
+TrayLingo uses Sentry for error monitoring on both frontend and backend.
 
-| Consideration | Assessment |
-|---------------|------------|
-| App type | Local menu bar utility |
-| User base | Personal/small OSS |
-| Error frequency | Low (API errors mostly) |
-| Privacy | API keys in error context = risk |
-| Maintenance | Extra dependency to maintain |
+| Component | Project | Package |
+|-----------|---------|---------|
+| Frontend (Solid.js) | `traylingo-frontend` | `@sentry/solid` |
+| Backend (Rust) | `traylingo-backend` | `sentry` |
 
-### When Sentry Makes Sense
+### Configuration
 
-- Large user base needing crash analytics
-- Complex error patterns to analyze
-- Team needing shared error visibility
-- Production stability monitoring
+**Frontend** (`src/index.tsx`):
+```typescript
+import * as Sentry from "@sentry/solid";
 
-### Alternatives for TrayLingo
-
-| Option | Pros | Cons |
-|--------|------|------|
-| **Local logs (current)** | Simple, private, no cost | Manual inspection |
-| **Console export** | User can share logs | Manual process |
-| **GitHub Issues** | Community-driven | Requires user action |
-
-### If You Want Sentry Later
-
-```toml
-# Cargo.toml
-[dependencies]
-sentry = "0.34"
-sentry-tauri = "0.3"
+Sentry.init({
+  dsn: "YOUR_FRONTEND_DSN",
+  sendDefaultPii: true,
+});
 ```
 
+**Backend** (`src-tauri/src/lib.rs`):
 ```rust
-// lib.rs
-fn main() {
-    let _guard = sentry::init(("DSN_HERE", sentry::ClientOptions {
+let _sentry_guard = sentry::init((
+    "YOUR_BACKEND_DSN",
+    sentry::ClientOptions {
         release: sentry::release_name!(),
+        send_default_pii: true,
         ..Default::default()
-    }));
-
-    // Tauri app setup...
-}
+    },
+));
 ```
 
-**Privacy note**: Filter out API keys and sensitive data before sending to Sentry.
+### sentry-cli
+
+The project uses `sentry-cli` for release management and source map uploads.
+
+```bash
+# Check connection
+sentry-cli info
+
+# List projects
+sentry-cli projects list --org YOUR_ORG
+```
+
+Install via mise (configured in `.tool-versions`).
+
+### Privacy Considerations
+
+- DSN is public (designed for client-side use)
+- Configure **Allowed Domains** in Sentry dashboard to prevent abuse
+- API keys should be filtered before sending to Sentry
 
 ## Error Reporting for GitHub Issues
 
