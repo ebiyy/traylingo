@@ -21,13 +21,6 @@ export function PopupView() {
   let contentRef: HTMLDivElement | undefined;
   let autoCloseTimer: ReturnType<typeof setTimeout> | undefined;
   let unlistenPopupShown: UnlistenFn | undefined;
-  // TECH_DEBT: Debounce to prevent double-trigger from popup-shown + onFocusChanged
-  // WHY: Both events fire when popup is shown, causing race condition
-  // RISK: 500ms may block legitimate rapid consecutive translations
-  // IMPROVEMENT: Use single trigger (event OR focus, not both) to eliminate need for debounce
-  // SEE: TODO.md "Technical Debt" section
-  let lastTranslationTime = 0;
-  const DEBOUNCE_MS = 500;
 
   const closePopup = async () => {
     await invoke("close_popup");
@@ -59,13 +52,6 @@ export function PopupView() {
   };
 
   const runTranslation = async () => {
-    // Debounce: skip if called too quickly (prevents double-trigger from event + focus)
-    const now = Date.now();
-    if (now - lastTranslationTime < DEBOUNCE_MS) {
-      return;
-    }
-    lastTranslationTime = now;
-
     setText("");
     setError(null);
     setIsLoading(true);
@@ -130,23 +116,14 @@ export function PopupView() {
   });
 
   onMount(async () => {
+    // Signal to Rust that frontend is ready
+    await invoke("popup_ready");
+
     document.addEventListener("keydown", handleKeyDown);
 
-    // TECH_DEBT: Dual trigger system - both may fire simultaneously
-    // Primary: popup-shown event from Rust (emitted in show_popup)
-    // Backup: onFocusChanged (fires when window gains focus)
-    // WHY: Needed because focus events alone were unreliable after window hide/show cycle
-    // RISK: Both fire together → debounce needed above
-    // IMPROVEMENT: Use only one reliable trigger mechanism
+    // Listen for popup-shown event from Rust (emitted in show_popup)
     unlistenPopupShown = await listen("popup-shown", () => {
       runTranslation();
-    });
-
-    const currentWindow = getCurrentWindow();
-    await currentWindow.onFocusChanged(({ payload: focused }) => {
-      if (focused) {
-        runTranslation();
-      }
     });
   });
 
