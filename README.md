@@ -1,5 +1,11 @@
 # TrayLingo
 
+[![License](https://img.shields.io/github/license/ebiyy/traylingo)](LICENSE)
+[![CI](https://img.shields.io/github/actions/workflow/status/ebiyy/traylingo/ci.yml?branch=main&label=CI)](https://github.com/ebiyy/traylingo/actions/workflows/ci.yml)
+[![Release](https://img.shields.io/github/v/release/ebiyy/traylingo)](https://github.com/ebiyy/traylingo/releases)
+[![macOS](https://img.shields.io/badge/platform-macOS-blue?logo=apple)](https://github.com/ebiyy/traylingo)
+[![Downloads](https://img.shields.io/github/downloads/ebiyy/traylingo/total)](https://github.com/ebiyy/traylingo/releases)
+
 A lightweight macOS menu bar app for instant translation powered by Claude AI.
 
 **Tray** (system tray) + **Lingo** (language/words) = TrayLingo
