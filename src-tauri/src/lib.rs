@@ -193,7 +193,7 @@ fn hide_popup(app: &tauri::AppHandle) {
 async fn quick_translate(app: tauri::AppHandle, text: String) -> Result<String, String> {
     let api_key = settings::get_api_key(&app);
     let model = settings::get_model(&app);
-    anthropic::translate_once(text, api_key, model).await
+    anthropic::translate_once(&app, text, api_key, model).await
 }
 
 #[tauri::command]

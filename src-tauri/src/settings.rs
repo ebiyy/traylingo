@@ -1,9 +1,11 @@
 use serde::{Deserialize, Serialize};
+use sha2::{Digest, Sha256};
 use tauri::AppHandle;
 use tauri_plugin_store::StoreExt;
 
 const STORE_PATH: &str = "settings.json";
 const MAX_ERROR_HISTORY: usize = 50;
+const MAX_TRANSLATION_CACHE: usize = 500;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Settings {
@@ -175,6 +177,170 @@ pub fn save_window_position(
     store.set(
         &key,
         serde_json::to_value(&position).map_err(|e| e.to_string())?,
+    );
+    store.save().map_err(|e| e.to_string())?;
+    Ok(())
+}
+
+// ==================== Translation Cache ====================
+
+/// Cached translation entry
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct CachedTranslation {
+    /// SHA256 hash of source text (for lookup)
+    pub source_hash: String,
+    /// Original source text (truncated for storage, first 100 chars)
+    pub source_preview: String,
+    /// Translated text
+    pub translated_text: String,
+    /// Model used for translation
+    pub model: String,
+    /// Unix timestamp when cached
+    pub timestamp: i64,
+}
+
+/// Cache statistics
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+pub struct CacheStats {
+    /// Total entries in cache
+    pub entry_count: usize,
+    /// Cache hits (translations served from cache)
+    pub hits: u64,
+    /// Cache misses (new translations)
+    pub misses: u64,
+}
+
+/// Generate SHA256 hash for cache key
+fn hash_text(text: &str) -> String {
+    let mut hasher = Sha256::new();
+    hasher.update(text.as_bytes());
+    format!("{:x}", hasher.finalize())
+}
+
+/// Get cached translation if exists
+pub fn get_cached_translation(app: &AppHandle, text: &str, model: &str) -> Option<String> {
+    let store = app.store(STORE_PATH).ok()?;
+    let hash = hash_text(text);
+
+    let cache: Vec<CachedTranslation> = store
+        .get("translation_cache")
+        .and_then(|v| serde_json::from_value(v).ok())
+        .unwrap_or_default();
+
+    // Find matching entry (same hash and model)
+    let result = cache
+        .iter()
+        .find(|entry| entry.source_hash == hash && entry.model == model)
+        .map(|entry| entry.translated_text.clone());
+
+    // Update stats
+    if let Ok(store) = app.store(STORE_PATH) {
+        let mut stats: CacheStats = store
+            .get("cache_stats")
+            .and_then(|v| serde_json::from_value(v).ok())
+            .unwrap_or_default();
+
+        if result.is_some() {
+            stats.hits += 1;
+        } else {
+            stats.misses += 1;
+        }
+
+        if let Ok(value) = serde_json::to_value(&stats) {
+            store.set("cache_stats", value);
+            let _ = store.save();
+        }
+    }
+
+    result
+}
+
+/// Save translation to cache (LRU eviction when full)
+pub fn save_cached_translation(
+    app: &AppHandle,
+    text: &str,
+    translated_text: &str,
+    model: &str,
+) -> Result<(), String> {
+    let store = app.store(STORE_PATH).map_err(|e| e.to_string())?;
+    let hash = hash_text(text);
+
+    let mut cache: Vec<CachedTranslation> = store
+        .get("translation_cache")
+        .and_then(|v| serde_json::from_value(v).ok())
+        .unwrap_or_default();
+
+    // Check if already exists (update timestamp if so)
+    if let Some(entry) = cache
+        .iter_mut()
+        .find(|e| e.source_hash == hash && e.model == model)
+    {
+        entry.timestamp = std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .map(|d| d.as_secs() as i64)
+            .unwrap_or(0);
+        entry.translated_text = translated_text.to_string();
+    } else {
+        // Add new entry
+        let entry = CachedTranslation {
+            source_hash: hash,
+            source_preview: text.chars().take(100).collect(),
+            translated_text: translated_text.to_string(),
+            model: model.to_string(),
+            timestamp: std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .map(|d| d.as_secs() as i64)
+                .unwrap_or(0),
+        };
+        cache.push(entry);
+    }
+
+    // LRU eviction: remove oldest entries if over limit
+    if cache.len() > MAX_TRANSLATION_CACHE {
+        cache.sort_by(|a, b| b.timestamp.cmp(&a.timestamp)); // newest first
+        cache.truncate(MAX_TRANSLATION_CACHE);
+    }
+
+    // Update entry count in stats
+    let mut stats: CacheStats = store
+        .get("cache_stats")
+        .and_then(|v| serde_json::from_value(v).ok())
+        .unwrap_or_default();
+    stats.entry_count = cache.len();
+
+    store.set(
+        "translation_cache",
+        serde_json::to_value(&cache).map_err(|e| e.to_string())?,
+    );
+    store.set(
+        "cache_stats",
+        serde_json::to_value(&stats).map_err(|e| e.to_string())?,
+    );
+    store.save().map_err(|e| e.to_string())?;
+    Ok(())
+}
+
+/// Get cache statistics
+#[allow(dead_code)] // For future UI feature
+pub fn get_cache_stats(app: &AppHandle) -> CacheStats {
+    app.store(STORE_PATH)
+        .ok()
+        .and_then(|s| s.get("cache_stats"))
+        .and_then(|v| serde_json::from_value(v).ok())
+        .unwrap_or_default()
+}
+
+/// Clear translation cache
+#[allow(dead_code)] // For future UI feature
+pub fn clear_translation_cache(app: &AppHandle) -> Result<(), String> {
+    let store = app.store(STORE_PATH).map_err(|e| e.to_string())?;
+    store.set(
+        "translation_cache",
+        serde_json::to_value::<Vec<CachedTranslation>>(vec![]).map_err(|e| e.to_string())?,
+    );
+    store.set(
+        "cache_stats",
+        serde_json::to_value(CacheStats::default()).map_err(|e| e.to_string())?,
     );
     store.save().map_err(|e| e.to_string())?;
     Ok(())

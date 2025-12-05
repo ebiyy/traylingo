@@ -24,6 +24,7 @@ interface UsagePayload {
   prompt_tokens: number;
   completion_tokens: number;
   estimated_cost: number;
+  cached?: boolean;
 }
 
 // Generate unique session ID
@@ -259,13 +260,33 @@ function App() {
             >
               <SettingsIcon size={16} />
             </button>
+            {/* TODO: Remove after Sentry verification */}
+            <button
+              type="button"
+              onClick={() => {
+                throw new Error("Sentry Frontend Error");
+              }}
+              class="text-red-500 hover:text-red-400 text-xs"
+            >
+              Test Sentry
+            </button>
             <Show when={usage()}>
-              <span>
-                Tokens: {usage()?.prompt_tokens} in / {usage()?.completion_tokens} out
-              </span>
-              <span class="text-[var(--accent-primary)]">
-                ${usage()?.estimated_cost.toFixed(6)}
-              </span>
+              <Show
+                when={usage()?.cached}
+                fallback={
+                  <>
+                    <span>
+                      Tokens: {usage()?.prompt_tokens} in / {usage()?.completion_tokens} out
+                    </span>
+                    <span class="text-[var(--accent-primary)]">
+                      ${usage()?.estimated_cost.toFixed(6)}
+                    </span>
+                  </>
+                }
+              >
+                <span class="text-[var(--success)]">Cached</span>
+                <span class="text-[var(--accent-primary)]">$0.00</span>
+              </Show>
             </Show>
           </div>
           <Show when={sessionCost() > 0}>

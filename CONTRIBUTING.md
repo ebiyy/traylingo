@@ -29,12 +29,28 @@ Thank you for your interest in contributing to TrayLingo! This document provides
    pnpm install
    ```
 
-3. Run in development mode:
+4. Install development tools:
+   ```bash
+   # Option A: With mise or asdf (recommended)
+   mise install  # or: asdf install
+
+   # Option B: Without mise/asdf
+   brew install lefthook          # or: go install github.com/evilmartians/lefthook@latest
+   brew install taplo             # optional: TOML formatter
+   ```
+
+5. Set up git hooks:
+   ```bash
+   lefthook install
+   ```
+   > Note: If taplo is not installed, the TOML format check will be skipped automatically.
+
+6. Run in development mode:
    ```bash
    pnpm tauri dev
    ```
 
-4. Configure API key:
+7. Configure API key:
    - Click the gear icon (⚙️) in the app footer
    - Enter your Anthropic API key from [console.anthropic.com](https://console.anthropic.com/)
 
@@ -66,6 +82,18 @@ traylingo/
 ### Rust
 - Run `cargo fmt` before committing
 - Run `cargo clippy` to check for common issues
+
+### Optional Tools
+
+```bash
+# cargo-watch: Auto-rebuild on file changes
+cargo install cargo-watch
+cargo watch -C src-tauri -x check
+
+# taplo: TOML formatter (for Cargo.toml)
+mise use -g taplo  # or: cargo install taplo-cli
+taplo fmt src-tauri/Cargo.toml
+```
 
 ### Commits
 - Write clear, concise commit messages

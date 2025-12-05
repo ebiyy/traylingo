@@ -1,11 +1,17 @@
 # TrayLingo Development Commands
 
+## Quick Start (New Contributors)
+
+```bash
+pnpm install      # Install Node dependencies
+mise install      # Install dev tools (lefthook, taplo)
+lefthook install  # Enable git hooks
+pnpm tauri dev    # Start development
+```
+
 ## Daily Development
 
 ```bash
-# Install all dependencies
-pnpm install
-
 # Run development mode (frontend + backend)
 pnpm tauri dev
 
@@ -84,6 +90,34 @@ pnpm build
 
 # Preview production build
 pnpm preview
+```
+
+## Git Hooks (lefthook)
+
+```bash
+# Install lefthook
+mise use -g lefthook  # or: brew install lefthook
+
+# Install git hooks (run once after clone)
+lefthook install
+
+# Run pre-commit checks manually
+lefthook run pre-commit
+```
+
+## Code Quality Tools
+
+```bash
+# knip: Find unused code/dependencies
+pnpm knip
+
+# cargo-watch: Auto-rebuild on file changes
+cargo watch -C src-tauri -x check
+cargo watch -C src-tauri -x clippy
+
+# taplo: TOML formatter
+taplo fmt src-tauri/Cargo.toml
+taplo fmt --check src-tauri/Cargo.toml
 ```
 
 ## Git Workflow
