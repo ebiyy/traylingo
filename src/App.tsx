@@ -260,16 +260,6 @@ function App() {
             >
               <SettingsIcon size={16} />
             </button>
-            {/* TODO: Remove after Sentry verification */}
-            <button
-              type="button"
-              onClick={() => {
-                throw new Error("Sentry Frontend Error");
-              }}
-              class="text-red-500 hover:text-red-400 text-xs"
-            >
-              Test Sentry
-            </button>
             <Show when={usage()}>
               <Show
                 when={usage()?.cached}
