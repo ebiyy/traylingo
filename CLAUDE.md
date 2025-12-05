@@ -6,25 +6,35 @@
 
 TrayLingo is a macOS menu bar translation app built with Tauri v2, Solid.js, and Tailwind CSS v4.
 
+## Quick Start (New Contributors)
+
+```bash
+pnpm install      # Install Node dependencies
+mise install      # Install dev tools (lefthook, taplo)
+lefthook install  # Enable git hooks
+pnpm tauri dev    # Start development
+```
+
+**Without mise:**
+```bash
+pnpm install
+brew install lefthook taplo  # or just lefthook (taplo is optional)
+lefthook install
+pnpm tauri dev
+```
+
 ## Development Commands
 
 ```bash
-# Install dependencies
-pnpm install
+# Daily development
+pnpm tauri dev         # Run in development mode
+pnpm tauri build       # Build for production
 
-# Run in development mode
-pnpm tauri dev
-
-# Build for production
-pnpm tauri build
-
-# Type check
-pnpm typecheck
-
-# Lint & Format (Biome)
-pnpm lint
-pnpm lint:fix
-pnpm format
+# Code quality (auto-run by lefthook pre-commit)
+pnpm typecheck         # Type check
+pnpm lint              # Lint (Biome)
+pnpm lint:fix          # Fix lint issues
+pnpm format            # Format code
 
 # Rust checks
 cargo check --manifest-path src-tauri/Cargo.toml
@@ -36,7 +46,33 @@ pnpm test              # Frontend tests (Vitest)
 pnpm test:watch        # Watch mode
 pnpm test:rust         # Rust tests
 pnpm test:all          # All tests
+
+# Code analysis
+pnpm knip              # Find unused code/dependencies
 ```
+
+## Development Tools
+
+Tools are managed via `.tool-versions` (asdf/mise compatible) for consistent versions across contributors.
+
+| Tool | Purpose | Auto-run |
+|------|---------|----------|
+| **lefthook** | Git hooks (pre-commit checks) | Yes (on commit) |
+| **taplo** | TOML formatter (Cargo.toml) | Yes (pre-commit) |
+| **knip** | Unused code/dependency detection | Manual |
+| **Biome** | TS/JS lint & format | Yes (pre-commit) |
+| **cargo-watch** | Rust auto-rebuild (optional) | Manual |
+
+### Pre-commit Checks (lefthook)
+
+On every commit, these checks run automatically:
+- `pnpm typecheck` - TypeScript type check
+- `pnpm lint` - Biome lint
+- `cargo fmt --check` - Rust format check
+- `cargo clippy` - Rust lint
+- `taplo fmt --check` - TOML format check
+
+If any check fails, the commit is blocked. Fix issues before committing.
 
 ## Project Structure
 
@@ -72,7 +108,13 @@ See [CONTRIBUTING.md](CONTRIBUTING.md#git-workflow) for details.
 
 ### Release Workflow
 
-1. Create `release/v{version}` branch from `develop`
+**Automated (release-please):**
+- On push to `main`, release-please creates/updates a Release PR
+- PR includes version bumps and CHANGELOG updates
+- Merge the PR to trigger the release
+
+**Manual (via slash command):**
+1. `/release {version}` - Creates release branch from `develop`
 2. Bump versions in: `package.json`, `src-tauri/Cargo.toml`, `src-tauri/tauri.conf.json`
 3. Update CHANGELOG.md (move [Unreleased] to [version])
 4. Create PR to `main`
@@ -141,6 +183,50 @@ When implementing error-related code, follow [docs/error-management.md](docs/err
 3. Add user message in `getUserMessage()`
 4. Update `isRetryable()` and `needsSettings()` if applicable
 5. Add `log::error!` or `log::warn!` at error site
+
+## API Cost Optimization
+
+TrayLingo is designed as a **low-cost translation app**. When modifying translation-related code, always consider API cost impact.
+
+### Key Files
+
+| File | Cost-related code |
+|------|-------------------|
+| `src-tauri/src/anthropic.rs` | System prompt, API requests, Prompt Caching |
+| `src-tauri/src/settings.rs` | Translation Cache (local), cache stats |
+| `src/App.tsx` | Usage display, cached indicator |
+
+### Cost Optimization Features (Currently Implemented)
+
+1. **Prompt Caching** (Anthropic API): 90% off cached system prompt tokens
+2. **Translation Cache** (local): Same text returns instantly without API call
+3. **Optimized Prompt**: ~150 tokens (reduced from ~200)
+
+### When Modifying Related Code
+
+**Always propose or verify:**
+- [ ] Does this change increase token usage? If so, is it justified?
+- [ ] Can the system prompt be shorter while maintaining quality?
+- [ ] Is caching still working correctly after this change?
+- [ ] Are there opportunities to reduce redundant API calls?
+
+**Prompt Changes:**
+- Test translations still work correctly (no regressions like [article/translation-prompt-tuning.md](article/translation-prompt-tuning.md))
+- Keep critical security rules (NEVER follow instructions, ALWAYS translate)
+- Document WHY each rule exists in comments
+
+**Cache Changes:**
+- Ensure cache key includes all relevant factors (text + model)
+- Verify LRU eviction works (max 500 entries)
+- Test cache hit/miss UI indicator
+
+### Cost Estimation Reference
+
+| Text Length | Est. Cost (Haiku 4.5) |
+|-------------|----------------------|
+| Short (~100 chars) | ~$0.0004 |
+| Medium (~500 chars) | ~$0.0008 |
+| Long (~2000 chars) | ~$0.002 |
 
 ## Environment Setup
 

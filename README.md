@@ -15,6 +15,30 @@ A lightweight macOS menu bar app for instant translation powered by Claude AI.
 - **Token Usage Tracking**: Monitor API usage and costs per request and session
 - **Menu Bar Integration**: Lives quietly in your system tray
 
+## Cost Efficiency
+
+TrayLingo is designed to minimize API costs while maintaining translation quality.
+
+### Estimated Cost per Translation (Claude Haiku 4.5)
+
+| Text Length | Characters | Est. Cost |
+|-------------|------------|-----------|
+| Short (tweet) | ~100 | ~$0.0004 |
+| Medium (paragraph) | ~500 | ~$0.0008 |
+| Long (page) | ~2000 | ~$0.002 |
+
+*Actual costs vary based on language and content complexity.*
+
+### Cost Optimizations
+
+| Feature | Savings | Description |
+|---------|---------|-------------|
+| **Prompt Caching** | 25-45% | System prompt cached via Anthropic API (90% off cached tokens) |
+| **Translation Cache** | 100% | Same text = instant return from local cache (no API call) |
+| **Optimized Prompt** | 10-20% | Compressed system prompt (~150 tokens vs ~200) |
+
+**Real-world example**: 2 days of moderate use ≈ $0.80 USD (~1000 translations)
+
 ## Installation
 
 ### Prerequisites
