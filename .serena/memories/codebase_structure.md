@@ -16,29 +16,39 @@ traylingo/
 ## Frontend (src/)
 ```
 src/
-├── App.tsx         # Main UI component
-│                   # Symbols: parts, isJapanese, formattedTranslation,
-│                   #          copyTranslation, text[0], text[1]
-├── index.tsx       # Application entry point
-└── index.css       # Tailwind CSS styles
+├── App.tsx                 # Main UI component
+├── index.tsx               # Application entry point
+├── index.css               # Tailwind CSS styles
+├── components/
+│   ├── Settings.tsx        # Settings panel component
+│   ├── PopupView.tsx       # Quick popup view component
+│   └── ErrorDisplay.tsx    # Error display component
+├── types/
+│   └── error.ts            # Error type definitions
+└── utils/
+    ├── formatText.ts       # Text formatting utilities (isJapanese, etc.)
+    └── formatText.test.ts  # Tests for formatText utilities
 ```
 
 ## Backend (src-tauri/)
 ```
 src-tauri/
 ├── src/
-│   ├── main.rs     # Rust entry point
-│   ├── lib.rs      # Tauri app setup & commands
-│   │               # Modules: openai, macos
-│   │               # Functions: translate, toggle_window,
-│   │               #            show_window, hide_window, run
-│   └── openai.rs   # OpenAI API integration
-│                   # Structs: ChatRequest, StreamOptions, Message,
-│                   #          ChatChunk, Choice, Delta, Usage, UsageInfo
-│                   # Functions: calculate_cost, translate_stream
-│                   # Constants: INPUT_PRICE_PER_MILLION, OUTPUT_PRICE_PER_MILLION
-├── Cargo.toml      # Rust dependencies
-└── tauri.conf.json # Tauri configuration
+│   ├── main.rs         # Rust entry point
+│   ├── lib.rs          # Tauri app setup & commands
+│   │                   # Modules: anthropic, macos, settings, error
+│   │                   # Functions: translate, toggle_window,
+│   │                   #            show_window, hide_window, run
+│   ├── anthropic.rs    # Anthropic Claude API integration
+│   │                   # Structs: MessageRequest, Message, StreamEvent,
+│   │                   #          ContentDelta, Usage, NonStreamResponse, etc.
+│   │                   # Functions: calculate_cost, translate_stream, translate_once
+│   ├── settings.rs     # Settings management
+│   │                   # Functions: get_model_pricing
+│   │                   # Supported models: claude-haiku-4-5, claude-sonnet-4-5
+│   └── error.rs        # Error handling types
+├── Cargo.toml          # Rust dependencies
+└── tauri.conf.json     # Tauri configuration
 ```
 
 ## Configuration Files
@@ -48,16 +58,20 @@ Root files:
 ├── pnpm-lock.yaml      # Locked dependency versions
 ├── tsconfig.json       # TypeScript configuration
 ├── vite.config.ts      # Vite bundler configuration
+├── vitest.config.ts    # Vitest test configuration
+├── biome.json          # Biome linter/formatter config
 ├── index.html          # HTML entry point
 ├── mise.toml           # mise runtime manager config
-├── .gitignore          # Git ignore rules
-└── .gitignore          # Git ignore patterns
+└── .gitignore          # Git ignore rules
 ```
 
 ## Documentation
 ```
 docs/
-└── screenshot.png      # Application screenshot
+├── architecture.md     # System architecture overview
+├── icon-design.md      # Menu bar icon design details
+├── screenshot.png      # Application screenshot
+└── screenshot-popup.png # Quick popup screenshot
 
 Root docs:
 ├── README.md           # Project overview
@@ -65,18 +79,19 @@ Root docs:
 ├── SECURITY.md         # Security policy
 ├── CODE_OF_CONDUCT.md  # Community guidelines
 ├── LICENSE             # MIT license
-├── TODO.md             # Task tracking
+├── ROADMAP.md          # Roadmap & GitHub Issues tracking
+├── CHANGELOG.md        # Version changelog
 └── CLAUDE.md           # Claude Code instructions
 ```
 
 ## Key Architecture Points
 
 ### Communication Flow
-1. User presses `Cmd+J`
+1. User presses `⌘J` (main window) or `⌘⌥J` (quick popup)
 2. Frontend receives global shortcut event
 3. Clipboard content read via Tauri plugin
 4. `translate` command called to backend
-5. Backend streams response from OpenAI
+5. Backend streams response from Anthropic Claude API
 6. Frontend displays streaming translation
 7. Token usage tracked and displayed
 

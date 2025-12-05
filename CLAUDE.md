@@ -188,16 +188,18 @@ When changes cause divergence from learned knowledge, propose updating the relev
 ### When to Update Serena Memories
 
 Propose `mcp__serena__edit_memory` or `mcp__serena__write_memory` when:
-- **Commands change**: New scripts in package.json, new CLI tools (e.g., Biome added)
-- **Structure changes**: New directories, file reorganization
-- **Tech stack changes**: New dependencies, framework updates
+- **Commands change**: New scripts in package.json, new CLI tools
+- **Structure changes**: New directories, files renamed/moved, new components
+- **Tech stack changes**: API provider changes (e.g., OpenAI → Anthropic), new dependencies, model updates
+- **Features change**: New features added, shortcuts changed, UI components added
 - **Conventions change**: New linting rules, code style updates
+- **Other divergence**: Changes that don't fit above but would make memories stale (always propose if unsure)
 
 ### Memory Files Reference
 | File | Update When |
 |------|-------------|
 | `suggested_commands.md` | Scripts/commands added or changed |
 | `code_style_conventions.md` | Linting, formatting, or style rules change |
-| `codebase_structure.md` | Directory structure or architecture changes |
-| `project_overview.md` | Tech stack or major features change |
+| `codebase_structure.md` | Directory structure, files renamed/moved, new modules/components |
+| `project_overview.md` | Tech stack, API provider, models, features, or shortcuts change |
 | `task_completion_checklist.md` | CI/CD or review process changes |
