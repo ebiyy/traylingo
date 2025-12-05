@@ -71,7 +71,7 @@ export function PopupView() {
         return;
       }
 
-      if (clipboardText) {
+      if (clipboardText?.trim()) {
         const result = await invoke<string>("quick_translate", {
           text: clipboardText,
         });

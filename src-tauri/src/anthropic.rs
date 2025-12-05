@@ -1,6 +1,7 @@
 use std::time::Duration;
 
 use futures::StreamExt;
+use log::{error, info, warn};
 use reqwest::Client;
 use serde::{Deserialize, Serialize};
 use tauri::{AppHandle, Emitter};
@@ -97,8 +98,15 @@ pub async fn translate_stream(
     api_key: String,
     model: String,
 ) -> Result<(), String> {
+    info!(
+        "Starting translation: {} chars, model={}",
+        text.len(),
+        model
+    );
+
     // Check API key
     if api_key.is_empty() {
+        error!("API key missing");
         return Err(serde_json::to_string(&TranslateError::ApiKeyMissing)
             .unwrap_or_else(|_| "API key missing".to_string()));
     }
@@ -190,15 +198,27 @@ OUTPUT FORMAT:
         let body = response.text().await.unwrap_or_default();
 
         let error = match status {
-            401 => TranslateError::AuthenticationFailed { message: body },
-            429 => TranslateError::RateLimitExceeded {
-                retry_after_secs: retry_after,
-            },
-            529 => TranslateError::Overloaded,
-            _ => TranslateError::ApiError {
-                status,
-                message: body,
-            },
+            401 => {
+                error!("Authentication failed: {}", body);
+                TranslateError::AuthenticationFailed { message: body }
+            }
+            429 => {
+                warn!("Rate limited, retry_after={:?}", retry_after);
+                TranslateError::RateLimitExceeded {
+                    retry_after_secs: retry_after,
+                }
+            }
+            529 => {
+                warn!("API overloaded");
+                TranslateError::Overloaded
+            }
+            _ => {
+                error!("API error: status={}, body={}", status, body);
+                TranslateError::ApiError {
+                    status,
+                    message: body,
+                }
+            }
         };
         return Err(serde_json::to_string(&error).unwrap_or_else(|_| error.to_string()));
     }
@@ -208,7 +228,13 @@ OUTPUT FORMAT:
     let mut buffer = String::new();
 
     while let Some(chunk) = stream.next().await {
-        let chunk = chunk.map_err(|e| e.to_string())?;
+        let chunk = chunk.map_err(|e| {
+            error!("Stream error: {}", e);
+            let err = TranslateError::NetworkError {
+                message: e.to_string(),
+            };
+            serde_json::to_string(&err).unwrap_or_else(|_| e.to_string())
+        })?;
         let chunk_str = String::from_utf8_lossy(&chunk);
         // Normalize line endings
         buffer.push_str(&chunk_str.replace("\r\n", "\n").replace('\r', "\n"));
@@ -270,6 +296,7 @@ OUTPUT FORMAT:
                                     session_id: session_id.clone(),
                                 },
                             );
+                            info!("Translation completed successfully");
                             return Ok(());
                         }
                         _ => {}
@@ -294,7 +321,14 @@ pub async fn translate_once(
     api_key: String,
     model: String,
 ) -> Result<String, String> {
+    info!(
+        "Starting popup translation: {} chars, model={}",
+        text.len(),
+        model
+    );
+
     if api_key.is_empty() {
+        error!("API key missing");
         return Err(serde_json::to_string(&TranslateError::ApiKeyMissing)
             .unwrap_or_else(|_| "API key missing".to_string()));
     }
@@ -375,21 +409,34 @@ OUTPUT FORMAT:
         let body = response.text().await.unwrap_or_default();
 
         let error = match status {
-            401 => TranslateError::AuthenticationFailed { message: body },
-            429 => TranslateError::RateLimitExceeded {
-                retry_after_secs: retry_after,
-            },
-            529 => TranslateError::Overloaded,
-            _ => TranslateError::ApiError {
-                status,
-                message: body,
-            },
+            401 => {
+                error!("Authentication failed: {}", body);
+                TranslateError::AuthenticationFailed { message: body }
+            }
+            429 => {
+                warn!("Rate limited, retry_after={:?}", retry_after);
+                TranslateError::RateLimitExceeded {
+                    retry_after_secs: retry_after,
+                }
+            }
+            529 => {
+                warn!("API overloaded");
+                TranslateError::Overloaded
+            }
+            _ => {
+                error!("API error: status={}, body={}", status, body);
+                TranslateError::ApiError {
+                    status,
+                    message: body,
+                }
+            }
         };
         return Err(serde_json::to_string(&error).unwrap_or_else(|_| error.to_string()));
     }
 
     let response_body: NonStreamResponse = response.json().await.map_err(|e| {
-        serde_json::to_string(&TranslateError::NetworkError {
+        error!("Failed to parse response: {}", e);
+        serde_json::to_string(&TranslateError::ParseError {
             message: e.to_string(),
         })
         .unwrap_or_else(|_| e.to_string())
@@ -404,6 +451,7 @@ OUTPUT FORMAT:
         .collect::<Vec<_>>()
         .join("");
 
+    info!("Popup translation completed successfully");
     Ok(result)
 }
 
