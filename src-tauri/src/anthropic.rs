@@ -348,12 +348,9 @@ OUTPUT:
                         "message_stop" => {
                             // Save to cache before emitting done
                             if !full_translation.is_empty() {
-                                if let Err(e) = save_cached_translation(
-                                    &app,
-                                    &text,
-                                    &full_translation,
-                                    &model,
-                                ) {
+                                if let Err(e) =
+                                    save_cached_translation(&app, &text, &full_translation, &model)
+                                {
                                     warn!("Failed to save translation to cache: {}", e);
                                 }
                             }
