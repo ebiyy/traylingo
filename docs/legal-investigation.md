@@ -90,13 +90,27 @@ TraiLingo (typo variants)
 
 ```
 User's Clipboard Text
-    ↓
-TrayLingo App (local)
-    ↓
-Anthropic API (US servers)
-    ↓
-Translated Text (local display)
+         ↓
+┌────────────────────────────────────────────────────────────┐
+│  TrayLingo App (local)                                     │
+│  ┌──────────────────────────────────────────────────────┐  │
+│  │ Local Storage (settings.json)                        │  │
+│  │ - API key (plaintext)                                │  │
+│  │ - Translation cache (500 entries, source preview)    │  │
+│  │ - Error history (last 50)                            │  │
+│  │ - App settings                                       │  │
+│  └──────────────────────────────────────────────────────┘  │
+└────────────────────────────────────────────────────────────┘
+         ↓                    ↓                      ↓
+   Anthropic API         Sentry (opt-out)      GitHub Updater
+   (translation)         (error reports)       (version check)
+         ↓
+Translated Text (local display + cache)
 ```
+
+**macOS Permissions Required:**
+- **Accessibility** (optional): For `osascript` to simulate ⌘C via System Events
+- **Automation** (optional): System Events access for keyboard simulation
 
 ### Research Questions
 
@@ -145,8 +159,10 @@ Translated Text (local display)
 | Component | Encryption Used | Export Concern |
 |-----------|-----------------|----------------|
 | HTTPS/TLS | Yes (standard) | Generally exempt |
-| Local storage | Tauri plugin-store | Check implementation |
-| API key storage | OS keychain (planned?) | OS-provided, exempt |
+| Local storage | Tauri plugin-store (unencrypted JSON) | No encryption |
+| API key storage | settings.json (plaintext) | No encryption, user responsibility |
+
+**Note**: API key is stored as plaintext in `settings.json`. Consider migrating to OS keychain for improved security (future enhancement).
 
 ### EAR Classification
 
@@ -227,11 +243,12 @@ Note: As an open-source project on GitHub, enforcement is limited, but awareness
 | Priority | Item | Owner | Status |
 |----------|------|-------|--------|
 | High | Review Anthropic API ToS | - | ⬜ Pending |
-| High | Verify PRIVACY.md completeness | - | ⬜ Pending |
+| High | Verify PRIVACY.md completeness | - | ✅ Done |
 | Medium | USPTO trademark search | - | ⬜ Pending |
 | Medium | Google Patents search | - | ⬜ Pending |
 | Low | EAR notification (if needed) | - | ⬜ Pending |
 | Low | J-PlatPat trademark search | - | ⬜ Pending |
+| Low | Migrate API key to OS keychain | - | ⬜ Future |
 
 ---
 

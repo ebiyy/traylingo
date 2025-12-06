@@ -34,8 +34,15 @@ If you discover a security vulnerability in TrayLingo, please report it responsi
 
 ### Network Security
 
-- TrayLingo communicates only with Anthropic's API over HTTPS
-- No data is stored or transmitted to any other servers
+TrayLingo communicates with the following services over HTTPS:
+
+| Service | Purpose | Data Sent |
+|---------|---------|-----------|
+| **Anthropic API** | Translation | Source text, model selection |
+| **Sentry** | Error monitoring (opt-out available) | Error reports, stack traces (no translation content) |
+| **GitHub** | Auto-update checks | None (read-only check for latest version) |
+
+All connections use TLS encryption. Translation content is never sent to Sentry or GitHub.
 
 ### Prompt Injection Prevention
 
