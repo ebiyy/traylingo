@@ -402,11 +402,17 @@ fn check_for_updates(app: tauri::AppHandle) {
 }
 
 /// Custom panic handler that ensures Sentry flush before process abort.
-/// WHY: Sentry's default PanicIntegration may not wait long enough for the HTTP
-/// request to complete before the process aborts. This handler uses
-/// Client::capture_event() directly and flushes with a 2-second timeout.
-fn install_panic_handler_with_flush() {
-    let prev_hook = std::panic::take_hook();
+/// WHY: Sentry's PanicIntegration uses thread-local Hub which can fail in spawned threads.
+/// This handler bypasses that by using Client::capture_event() directly.
+///
+/// Takes the default panic hook (saved BEFORE sentry::init) to avoid calling
+/// Sentry's PanicIntegration handler, which would cause duplicate events.
+#[allow(deprecated)] // PanicInfo is deprecated in favor of PanicHookInfo (Rust 1.81+), but MSRV is 1.77.2
+fn install_panic_handler_with_flush(
+    default_hook: Box<dyn Fn(&std::panic::PanicInfo<'_>) + Sync + Send + 'static>,
+) {
+    // Take Sentry's hook but don't use it (avoids duplicate events)
+    let _sentry_hook = std::panic::take_hook();
 
     std::panic::set_hook(Box::new(move |panic_info| {
         // Get client from main hub (captured at sentry::init time)
@@ -427,13 +433,22 @@ fn install_panic_handler_with_flush() {
             }
         }
 
-        // Call previous hook (for stderr output, backtrace, etc.)
-        prev_hook(panic_info);
+        // Call ONLY the default hook (stderr output, backtrace)
+        // NOT Sentry's hook - avoids duplicate events
+        default_hook(panic_info);
     }));
 }
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
+    // =========================================================================
+    // Phase 0: Save the REAL default panic hook BEFORE sentry::init
+    // =========================================================================
+    // WHY: sentry::init installs PanicIntegration which overwrites the panic hook.
+    // We save the default hook here so we can call it later without triggering
+    // Sentry's handler (which would cause duplicate events).
+    let default_hook = std::panic::take_hook();
+
     // =========================================================================
     // Phase 1: Early Sentry init (captures panics during Tauri initialization)
     // =========================================================================
@@ -465,8 +480,9 @@ pub fn run() {
     // WHY: Moving guard into Tauri's managed state caused client to become disabled
     *SENTRY_GUARD.lock().unwrap() = Some(guard);
 
-    // Install panic handler (must be after sentry::init)
-    install_panic_handler_with_flush();
+    // Install panic handler, passing the default hook saved before sentry::init
+    // This ensures we don't call Sentry's PanicIntegration (avoids duplicate events)
+    install_panic_handler_with_flush(default_hook);
 
     let app = tauri::Builder::default()
         .plugin(tauri_plugin_global_shortcut::Builder::new().build())
