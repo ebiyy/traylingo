@@ -115,3 +115,42 @@ gh pr view $ARGUMENTS --json mergeable,state
 | Both modified same line | Check which is more recent/complete |
 | One deleted, one modified | Usually keep the modification |
 | Structural reorganization | Follow the more organized structure |
+
+## Self-Improvement (IMPORTANT)
+
+After completing conflict resolution, evaluate and improve this command:
+
+### 10. Post-Resolution Review
+
+Ask yourself:
+1. **Was the resolution correct?** - Did the merge preserve all intended changes?
+2. **Were there unexpected issues?** - Duplicate sections, lost changes, wrong decisions?
+3. **Did I discover a new pattern?** - A scenario not covered in Common Patterns?
+4. **Could the process be improved?** - Missing steps, unclear instructions?
+
+### 11. Update This Command If Needed
+
+If any of the above apply:
+
+1. **New pattern discovered** → Add to Common Patterns table
+2. **Process improvement** → Update the relevant Steps section
+3. **Edge case encountered** → Add to Resolution Principles or create new section
+4. **Mistake made** → Document what went wrong and how to avoid it
+
+```bash
+# Edit this command file
+# .claude/commands/resolve-conflicts.md
+```
+
+Then commit the improvement:
+```bash
+git add .claude/commands/resolve-conflicts.md
+git commit -m "docs: improve /resolve-conflicts based on PR #$ARGUMENTS resolution"
+```
+
+### Why Self-Improvement Matters
+
+- Each conflict resolution is unique - rigid rules don't always apply
+- "Correct" resolution depends on context, project state, and intent
+- This command should evolve with the project's needs
+- Learned patterns benefit future conflict resolutions
