@@ -247,6 +247,8 @@ fn install_panic_handler_with_flush(
 - Store guard in static `Mutex<Option<...>>`, not Tauri's managed state
 - Call only the default hook (not Sentry's PanicIntegration) to prevent duplicates
 
+See [article/native-app-debugging-pain.md](../article/native-app-debugging-pain.md) for the debugging journey.
+
 ### Privacy Considerations
 
 - DSN is public (designed for client-side use)
