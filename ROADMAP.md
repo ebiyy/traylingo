@@ -5,16 +5,25 @@
 
 ## In Progress
 
+- [ ] Bug: Global shortcut triggers twice per single key press ([#23](https://github.com/ebiyy/traylingo/issues/23))
 - [ ] Bug: First shortcut trigger often times out (clipboard not captured) ([#22](https://github.com/ebiyy/traylingo/issues/22))
 
 ## Next Release
 
 - [ ] Refactor: Remove unreliable monitor_from_point() API usage ([#30](https://github.com/ebiyy/traylingo/issues/30))
+- [ ] Refactor: Extract system prompt constant (duplicated in translate_stream/translate_once)
+- [ ] Fix: Log format order in app_log (timestamp should come first)
+- [ ] Sentry: Add error capture at appropriate locations (API errors, panics, etc.) via sentry-cli
 
 ## v0.2.0
 
 - [ ] Persist and display cumulative AI cost (tauri-plugin-store)
 - [ ] Usage history for token/cost analysis ([#20](https://github.com/ebiyy/traylingo/issues/20))
+
+## v0.1.0
+
+- [ ] First release via GitHub Actions
+- [ ] Homebrew tap setup
 
 ## Legal / Compliance
 
@@ -23,11 +32,10 @@
 
 ## Future
 
-- [ ] Tray menu enhancements: Add "About" dialog (version, author, links), improve menu organization
 - [ ] Language auto-detection improvements
 - [ ] Use tauri-plugin-shell for external links (Settings.tsx Anthropic Console link)
 - [ ] Configurable popup auto-close delay (currently hardcoded 8s)
-- [ ] Fix: `message_stopped` logic bug in anthropic.rs (initialized but never set to true)
+- [ ] Clean up dead code: `message_stopped` variable in anthropic.rs
 - [ ] Add data management UI (clear cache, clear error history, clear all data)
 
 ## Under Consideration
@@ -90,12 +98,5 @@ Items requiring ROI evaluation before implementation:
 - [x] Auto-update via tauri-plugin-updater (Check for Updates in tray menu)
 - [x] ~~Bug: Multi-monitor detection fails intermittently~~ ([#21](https://github.com/ebiyy/traylingo/issues/21)) - Closed: Won't fix due to Tauri API limitations
 - [x] npm dependency license audit in CI (`pnpm licenses:check`)
-- [x] Bug: Global shortcut triggers twice per single key press ([#23](https://github.com/ebiyy/traylingo/issues/23))
-- [x] Sentry: Capture Rust panics before process abort ([#29](https://github.com/ebiyy/traylingo/issues/29))
-- [x] Refactor: Extract system prompt constant (duplicated in translate_stream/translate_once)
-- [x] Fix: Log format order in app_log (timestamp should come first)
-- [x] Sentry: Add environment tag and allowUrls for noise reduction
-- [x] First release via GitHub Actions (v0.1.1)
-- [x] Homebrew tap setup (`brew install --cask ebiyy/tap/traylingo`)
 
 </details>
