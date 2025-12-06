@@ -207,46 +207,19 @@ fn popup_ready() {
     POPUP_READY.store(true, Ordering::SeqCst);
 }
 
-/// Calculate popup position based on cursor location.
-///
-/// WHY: Tauri's monitor APIs have known bugs on multi-monitor Retina setups.
-/// - `monitor_from_point()` expects logical coords but `cursor_position()` returns physical
-/// - `available_monitors()` doesn't enumerate all monitors correctly
-///
-/// See: <https://github.com/tauri-apps/tauri/issues/12676>, #7890, #5229, #10263
-/// See: <https://github.com/ebiyy/traylingo/issues/21>
-///
-/// Instead of complex monitor detection, we simply position the popup near the cursor.
-#[cfg(target_os = "macos")]
-fn calculate_popup_position(app: &tauri::AppHandle) -> Option<(i32, i32)> {
-    const OFFSET: i32 = 15;
-
-    let cursor = app.cursor_position().ok()?;
-    Some((cursor.x as i32 + OFFSET, cursor.y as i32 + OFFSET))
-}
-
 fn show_popup(app: &tauri::AppHandle, clipboard_text: Option<String>) {
+    use tauri_plugin_positioner::{Position, WindowExt};
+
     if let Some(window) = app.get_webview_window("popup") {
         // Save frontmost app before showing popup
         #[cfg(target_os = "macos")]
         macos::save_frontmost_app();
 
-        // Position popup near cursor
-        #[cfg(target_os = "macos")]
-        {
-            if let Some((x, y)) = calculate_popup_position(app) {
-                let _ = window.set_position(tauri::Position::Physical(
-                    tauri::PhysicalPosition::new(x, y),
-                ));
-            }
-            // Fallback: primary monitor top-right (rare case)
-            else if let Ok(Some(monitor)) = window.primary_monitor() {
-                let size = monitor.size();
-                let _ = window.set_position(tauri::Position::Physical(
-                    tauri::PhysicalPosition::new((size.width as i32) - 420, 30),
-                ));
-            }
-        }
+        // Position popup near tray icon (avoids multi-monitor coordinate issues)
+        let _ = window
+            .as_ref()
+            .window()
+            .move_window(Position::TrayBottomCenter);
 
         let _ = window.show();
         let _ = window.set_focus();
@@ -365,6 +338,7 @@ pub fn run() {
         .plugin(tauri_plugin_store::Builder::new().build())
         .plugin(tauri_plugin_updater::Builder::new().build())
         .plugin(tauri_plugin_process::init())
+        .plugin(tauri_plugin_positioner::init())
         .invoke_handler(tauri::generate_handler![
             translate,
             get_settings,
@@ -453,6 +427,9 @@ pub fn run() {
                     _ => {}
                 })
                 .on_tray_icon_event(|tray, event| {
+                    // Track tray events for tauri-plugin-positioner
+                    tauri_plugin_positioner::on_tray_event(tray.app_handle(), &event);
+
                     if let TrayIconEvent::Click {
                         button: MouseButton::Left,
                         button_state: MouseButtonState::Up,
