@@ -40,7 +40,7 @@ TrayLingo communicates with the following services over HTTPS:
 |---------|---------|-----------|
 | **Anthropic API** | Translation | Source text, model selection |
 | **Sentry** | Error monitoring (opt-out available) | Error reports, stack traces (no translation content) |
-| **GitHub** | Auto-update checks | None (read-only check for latest version) |
+| **GitHub** | Auto-update checks | No app data (standard network metadata only) |
 
 All connections use TLS encryption. Translation content is never sent to Sentry or GitHub.
 
