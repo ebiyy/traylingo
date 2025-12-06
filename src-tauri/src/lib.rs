@@ -218,8 +218,18 @@ fn popup_ready() {
 fn find_monitor_at_point(app: &tauri::AppHandle, x: f64, y: f64) -> Option<tauri::Monitor> {
     // Try the direct API first (usually works)
     if let Ok(Some(monitor)) = app.monitor_from_point(x, y) {
+        let pos = monitor.position();
+        let size = monitor.size();
+        log::info!(
+            "[monitor-debug] monitor_from_point SUCCESS: {}x{} at ({}, {})",
+            size.width,
+            size.height,
+            pos.x,
+            pos.y
+        );
         return Some(monitor);
     }
+    log::info!("[monitor-debug] monitor_from_point returned None or Err");
 
     // Fallback: manually search through all monitors
     log::debug!(
@@ -248,9 +258,21 @@ fn find_monitor_at_point(app: &tauri::AppHandle, x: f64, y: f64) -> Option<tauri
         let top = pos.y;
         let bottom = pos.y + size.height as i32;
 
+        log::info!(
+            "[monitor-debug] Checking monitor: {}x{} at ({}, {}), bounds: x=[{}, {}), y=[{}, {})",
+            size.width,
+            size.height,
+            pos.x,
+            pos.y,
+            left,
+            right,
+            top,
+            bottom
+        );
+
         if point_x >= left && point_x < right && point_y >= top && point_y < bottom {
-            log::debug!(
-                "Found monitor via fallback: {}x{} at ({}, {})",
+            log::info!(
+                "[monitor-debug] Found monitor via fallback: {}x{} at ({}, {})",
                 size.width,
                 size.height,
                 pos.x,
@@ -287,7 +309,18 @@ fn calculate_popup_position(app: &tauri::AppHandle) -> Option<(i32, i32)> {
     let cursor_x = cursor.x as i32;
     let cursor_y = cursor.y as i32;
 
+    log::info!(
+        "[monitor-debug] cursor_position: ({}, {})",
+        cursor.x,
+        cursor.y
+    );
+
     // Try monitor_from_point first, with fallback to manual search
+    log::info!(
+        "[monitor-debug] Calling find_monitor_at_point for ({}, {})",
+        cursor.x,
+        cursor.y
+    );
     let monitor = find_monitor_at_point(app, cursor.x, cursor.y)?;
     let mon_pos = monitor.position();
     let mon_size = monitor.size();
