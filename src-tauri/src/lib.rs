@@ -153,12 +153,7 @@ fn hide_window(app: &tauri::AppHandle) {
 /// Poll clipboard until content changes from original or timeout.
 /// Returns the new clipboard text if changed, None if timeout.
 ///
-/// NOTE: First trigger after app launch often times out (works on second try).
-/// This may be due to:
-/// - macOS accessibility permission delays
-/// - osascript cold start latency
-/// - Clipboard daemon initialization
-///
+/// NOTE: Cold-start latency is mitigated by `prewarm_clipboard_and_osascript()` at app init.
 /// See: https://github.com/ebiyy/traylingo/issues/22
 fn wait_for_clipboard_change_from(original: &str, timeout_ms: u64) -> Option<String> {
     use arboard::Clipboard;
@@ -200,6 +195,30 @@ fn simulate_copy() {
 end tell"#,
         ])
         .output();
+}
+
+/// Pre-warm clipboard and osascript to eliminate cold-start latency.
+/// This runs during app init to ensure the first shortcut trigger is responsive.
+///
+/// Without pre-warming, the first ⌃⌥J trigger often times out because:
+/// - osascript runtime needs ~200-500ms to cold-start
+/// - Clipboard daemon may have initialization delay
+///
+/// See: https://github.com/ebiyy/traylingo/issues/22
+#[cfg(target_os = "macos")]
+fn prewarm_clipboard_and_osascript() {
+    use std::process::Command;
+
+    // Pre-warm clipboard (arboard crate initialization)
+    let _ = arboard::Clipboard::new()
+        .ok()
+        .and_then(|mut c| c.get_text().ok());
+
+    // Pre-warm osascript runtime with a no-op command
+    // This forces macOS to load the AppleScript interpreter
+    let _ = Command::new("osascript").args(["-e", "return"]).output();
+
+    log::debug!("Clipboard and osascript pre-warmed for faster first trigger");
 }
 
 #[tauri::command]
@@ -545,6 +564,11 @@ pub fn run() {
 
                     show_popup(app, clipboard_text);
                 })?;
+
+            // Pre-warm clipboard and osascript to eliminate first-trigger timeout
+            // See: https://github.com/ebiyy/traylingo/issues/22
+            #[cfg(target_os = "macos")]
+            prewarm_clipboard_and_osascript();
 
             // Preload popup window to ensure JS is loaded before first use
             // Tauri v2 webview JS doesn't load until window is first shown
