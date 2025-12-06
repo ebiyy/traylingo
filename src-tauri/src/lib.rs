@@ -207,145 +207,22 @@ fn popup_ready() {
     POPUP_READY.store(true, Ordering::SeqCst);
 }
 
-/// Find monitor at the given point, with fallback to manual search through all monitors.
+/// Calculate popup position based on cursor location.
 ///
-/// WHY: `monitor_from_point()` can fail intermittently on multi-monitor setups,
-/// likely due to coordinate mismatches or timing issues with monitor enumeration.
-/// The fallback manually searches through all available monitors to find one
-/// containing the cursor position.
-/// See: https://github.com/ebiyy/traylingo/issues/21
-#[cfg(target_os = "macos")]
-fn find_monitor_at_point(app: &tauri::AppHandle, x: f64, y: f64) -> Option<tauri::Monitor> {
-    // Try the direct API first (usually works)
-    if let Ok(Some(monitor)) = app.monitor_from_point(x, y) {
-        let pos = monitor.position();
-        let size = monitor.size();
-        log::info!(
-            "[monitor-debug] monitor_from_point SUCCESS: {}x{} at ({}, {})",
-            size.width,
-            size.height,
-            pos.x,
-            pos.y
-        );
-        return Some(monitor);
-    }
-    log::info!("[monitor-debug] monitor_from_point returned None or Err");
-
-    // Fallback: manually search through all monitors
-    log::debug!(
-        "monitor_from_point returned None, searching available monitors for ({}, {})",
-        x,
-        y
-    );
-
-    let monitors = match app.available_monitors() {
-        Ok(m) => m,
-        Err(e) => {
-            log::warn!("Failed to get available monitors: {:?}", e);
-            return None;
-        }
-    };
-
-    let point_x = x as i32;
-    let point_y = y as i32;
-
-    for monitor in monitors {
-        let pos = monitor.position();
-        let size = monitor.size();
-
-        let left = pos.x;
-        let right = pos.x + size.width as i32;
-        let top = pos.y;
-        let bottom = pos.y + size.height as i32;
-
-        log::info!(
-            "[monitor-debug] Checking monitor: {}x{} at ({}, {}), bounds: x=[{}, {}), y=[{}, {})",
-            size.width,
-            size.height,
-            pos.x,
-            pos.y,
-            left,
-            right,
-            top,
-            bottom
-        );
-
-        if point_x >= left && point_x < right && point_y >= top && point_y < bottom {
-            log::info!(
-                "[monitor-debug] Found monitor via fallback: {}x{} at ({}, {})",
-                size.width,
-                size.height,
-                pos.x,
-                pos.y
-            );
-            return Some(monitor);
-        }
-    }
-
-    log::warn!(
-        "No monitor found at cursor position ({}, {}) via fallback",
-        x,
-        y
-    );
-    None
-}
-
-/// Calculate popup position based on cursor location with edge detection
+/// WHY: Tauri's monitor APIs have known bugs on multi-monitor Retina setups.
+/// - `monitor_from_point()` expects logical coords but `cursor_position()` returns physical
+/// - `available_monitors()` doesn't enumerate all monitors correctly
+///
+/// See: <https://github.com/tauri-apps/tauri/issues/12676>, #7890, #5229, #10263
+/// See: <https://github.com/ebiyy/traylingo/issues/21>
+///
+/// Instead of complex monitor detection, we simply position the popup near the cursor.
 #[cfg(target_os = "macos")]
 fn calculate_popup_position(app: &tauri::AppHandle) -> Option<(i32, i32)> {
-    const POPUP_WIDTH: i32 = 400;
-    const POPUP_HEIGHT: i32 = 300; // Estimated max height
     const OFFSET: i32 = 15;
-    const MENU_BAR_HEIGHT: i32 = 25;
 
-    // Get cursor position from AppHandle (works even when window is hidden)
-    let cursor = match app.cursor_position() {
-        Ok(c) => c,
-        Err(e) => {
-            log::warn!("Failed to get cursor position: {:?}", e);
-            return None;
-        }
-    };
-    let cursor_x = cursor.x as i32;
-    let cursor_y = cursor.y as i32;
-
-    log::info!(
-        "[monitor-debug] cursor_position: ({}, {})",
-        cursor.x,
-        cursor.y
-    );
-
-    // Try monitor_from_point first, with fallback to manual search
-    log::info!(
-        "[monitor-debug] Calling find_monitor_at_point for ({}, {})",
-        cursor.x,
-        cursor.y
-    );
-    let monitor = find_monitor_at_point(app, cursor.x, cursor.y)?;
-    let mon_pos = monitor.position();
-    let mon_size = monitor.size();
-
-    let mon_right = mon_pos.x + mon_size.width as i32;
-    let mon_bottom = mon_pos.y + mon_size.height as i32;
-    let mon_top = mon_pos.y + MENU_BAR_HEIGHT;
-
-    // Default: bottom-right of cursor
-    let mut x = cursor_x + OFFSET;
-    let mut y = cursor_y + OFFSET;
-
-    // Edge detection: flip if needed
-    if x + POPUP_WIDTH > mon_right {
-        x = cursor_x - POPUP_WIDTH - OFFSET;
-    }
-    if y + POPUP_HEIGHT > mon_bottom {
-        y = cursor_y - POPUP_HEIGHT - OFFSET;
-    }
-
-    // Clamp to monitor bounds
-    x = x.max(mon_pos.x);
-    y = y.max(mon_top);
-
-    Some((x, y))
+    let cursor = app.cursor_position().ok()?;
+    Some((cursor.x as i32 + OFFSET, cursor.y as i32 + OFFSET))
 }
 
 fn show_popup(app: &tauri::AppHandle, clipboard_text: Option<String>) {
