@@ -1,0 +1,85 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 660 400" width="660" height="400">
+  <defs>
+    <!-- Background gradient -->
+    <linearGradient id="bgGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#2D2D2D"/>
+      <stop offset="100%" stop-color="#1A1A1A"/>
+    </linearGradient>
+
+    <!-- Subtle accent glow -->
+    <radialGradient id="accentGlow" cx="50%" cy="30%" r="60%">
+      <stop offset="0%" stop-color="#8B2942" stop-opacity="0.15"/>
+      <stop offset="100%" stop-color="#8B2942" stop-opacity="0"/>
+    </radialGradient>
+
+    <!-- Arrow gradient -->
+    <linearGradient id="arrowGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#E8847C"/>
+      <stop offset="100%" stop-color="#8B2942"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Background -->
+  <rect width="660" height="400" fill="url(#bgGradient)"/>
+
+  <!-- Accent glow -->
+  <rect width="660" height="400" fill="url(#accentGlow)"/>
+
+  <!-- Top branding area -->
+  <text x="330" y="65"
+    font-family="-apple-system, BlinkMacSystemFont, 'Helvetica Neue', sans-serif"
+    font-size="28"
+    font-weight="600"
+    fill="#FFFFFF"
+    text-anchor="middle">TrayLingo</text>
+
+  <text x="330" y="95"
+    font-family="-apple-system, BlinkMacSystemFont, 'Helvetica Neue', sans-serif"
+    font-size="14"
+    fill="#888888"
+    text-anchor="middle">Menu bar translation for macOS</text>
+
+  <!-- Drag instruction -->
+  <text x="330" y="340"
+    font-family="-apple-system, BlinkMacSystemFont, 'Helvetica Neue', sans-serif"
+    font-size="13"
+    fill="#666666"
+    text-anchor="middle">Drag to Applications to install</text>
+
+  <!-- Arrow (pointing from app position to Applications position) -->
+  <!-- App icon center ~150, Applications center ~510 -->
+  <path d="M 210 200
+           C 270 200, 310 175, 340 175
+           C 370 175, 420 200, 460 200"
+    stroke="url(#arrowGradient)"
+    stroke-width="3"
+    fill="none"
+    stroke-linecap="round"
+    stroke-dasharray="8 6"
+    opacity="0.6"/>
+
+  <!-- Arrow head -->
+  <path d="M 450 195 L 463 200 L 450 205"
+    stroke="url(#arrowGradient)"
+    stroke-width="3"
+    fill="none"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+    opacity="0.6"/>
+
+  <!-- Icon area backgrounds (for label visibility) -->
+  <rect x="70" y="130" width="160" height="150" rx="15" fill="#FFFFFF" fill-opacity="0.35"/>
+  <rect x="430" y="130" width="160" height="150" rx="15" fill="#FFFFFF" fill-opacity="0.35"/>
+
+  <!-- Small decorative peach icon in corner -->
+  <g transform="translate(590, 25) scale(0.06)">
+    <!-- Apple skin ring -->
+    <circle cx="512" cy="540" r="380" fill="#8B2942" opacity="0.5"/>
+    <!-- Apple flesh -->
+    <circle cx="512" cy="540" r="330" fill="#FFE8E5" opacity="0.5"/>
+    <!-- Stem -->
+    <path d="M512 160 Q540 100 580 110" stroke="#5D4037" stroke-width="18" fill="none" stroke-linecap="round" opacity="0.5"/>
+    <!-- Leaf -->
+    <ellipse cx="600" cy="125" rx="50" ry="25" fill="#6B8E23" transform="rotate(25 600 125)" opacity="0.5"/>
+  </g>
+</svg>
