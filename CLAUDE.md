@@ -105,6 +105,7 @@ docs/                   # Documentation
 | Source | Requirement |
 |--------|-------------|
 | `develop` | Title must start with `Release:` |
+| `release/*` | Title must start with `Release:` |
 | `hotfix/*` | Allowed (for urgent fixes) |
 | `fix/*` | Allowed (for urgent fixes) |
 | Other branches | Blocked |
