@@ -1,5 +1,5 @@
 use std::sync::atomic::{AtomicBool, Ordering};
-use std::sync::Arc;
+use std::sync::{Arc, Mutex};
 use std::time::{Duration, Instant};
 use tauri::{
     image::Image,
@@ -10,6 +10,12 @@ use tauri::{
 use tauri_plugin_global_shortcut::{Code, GlobalShortcutExt, Modifiers, Shortcut, ShortcutState};
 
 static POPUP_READY: AtomicBool = AtomicBool::new(false);
+
+/// Global Sentry guard to keep the client alive for the entire program lifetime.
+/// WHY: Moving the guard into Tauri's managed state caused the client to become
+/// disabled. Keeping it in a static ensures it lives as long as the process.
+/// Using Mutex to allow taking (dropping) the guard if telemetry is disabled.
+static SENTRY_GUARD: Mutex<Option<sentry::ClientInitGuard>> = Mutex::new(None);
 
 mod anthropic;
 mod error;
@@ -395,10 +401,72 @@ fn check_for_updates(app: tauri::AppHandle) {
     });
 }
 
+/// Custom panic handler that ensures Sentry flush before process abort.
+/// WHY: Sentry's default PanicIntegration may not wait long enough for the HTTP
+/// request to complete before the process aborts. This handler uses
+/// Client::capture_event() directly and flushes with a 2-second timeout.
+fn install_panic_handler_with_flush() {
+    let prev_hook = std::panic::take_hook();
+
+    std::panic::set_hook(Box::new(move |panic_info| {
+        // Get client from main hub (captured at sentry::init time)
+        if let Some(client) = sentry::Hub::main().client() {
+            if client.is_enabled() {
+                // Build event manually
+                let event = sentry::protocol::Event {
+                    message: Some(panic_info.to_string()),
+                    level: sentry::Level::Fatal,
+                    ..Default::default()
+                };
+
+                // Use Client::capture_event directly (bypasses thread-local Hub issues)
+                client.capture_event(event, None);
+
+                // Flush with timeout to ensure event is sent before abort
+                client.flush(Some(std::time::Duration::from_secs(2)));
+            }
+        }
+
+        // Call previous hook (for stderr output, backtrace, etc.)
+        prev_hook(panic_info);
+    }));
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
-    // NOTE: Sentry initialization is moved to setup() to read settings first.
-    // See setup() callback below for the conditional Sentry init.
+    // =========================================================================
+    // Phase 1: Early Sentry init (captures panics during Tauri initialization)
+    // =========================================================================
+    // NOTE: We initialize Sentry early to capture panics during startup.
+    // If user has disabled telemetry, we'll drop the guard in setup().
+    // This is opt-in by default, matching our privacy policy.
+    //
+    // IMPORTANT: Privacy Protection - Sentry PII Masking
+    // This app handles sensitive user data (clipboard text for translation).
+    // We MUST scrub any text content before sending to Sentry.
+    // See also: src/index.tsx for frontend Sentry configuration.
+    let guard = sentry::init((
+        "https://7a8f51076788f70a7a7caaa5841f436b@o4503930312261632.ingest.us.sentry.io/4510482334482432",
+        sentry::ClientOptions {
+            release: sentry::release_name!(),
+            before_send: Some(Arc::new(|mut event| {
+                // WHY: Users paste sensitive content (emails, passwords, private messages)
+                // for translation. This data MUST NOT be sent to external services.
+                event.extra.remove("text");
+                event.extra.remove("translation");
+                event.extra.remove("clipboard");
+                Some(event)
+            })),
+            ..Default::default()
+        },
+    ));
+
+    // Store guard in static to keep client alive for entire program lifetime
+    // WHY: Moving guard into Tauri's managed state caused client to become disabled
+    *SENTRY_GUARD.lock().unwrap() = Some(guard);
+
+    // Install panic handler (must be after sentry::init)
+    install_panic_handler_with_flush();
 
     let app = tauri::Builder::default()
         .plugin(tauri_plugin_global_shortcut::Builder::new().build())
@@ -421,42 +489,20 @@ pub fn run() {
             open_external_url
         ])
         .setup(|app| {
-            // =============================================================================
-            // IMPORTANT: Privacy Protection - Sentry PII Masking
-            // =============================================================================
-            // This app handles sensitive user data (clipboard text for translation).
-            // We MUST scrub any text content before sending to Sentry to protect user privacy.
-            //
-            // DO NOT:
-            // - Add send_default_pii: true (sends IP, user agent, etc.)
-            // - Log clipboard/translation text via sentry::capture_message or set_extra
-            // - Remove or weaken the before_send filter below
-            //
-            // If adding new Sentry integrations, ensure they don't leak user text content.
-            // See also: src/index.tsx for frontend Sentry configuration.
-            // =============================================================================
+            // =================================================================
+            // Phase 2: Check telemetry setting and disable Sentry if opted out
+            // =================================================================
             let user_settings = settings::get_settings(app.handle());
-            let sentry_guard: Option<sentry::ClientInitGuard> = if user_settings.send_telemetry {
-                Some(sentry::init((
-                    "https://7a8f51076788f70a7a7caaa5841f436b@o4503930312261632.ingest.us.sentry.io/4510482334482432",
-                    sentry::ClientOptions {
-                        release: sentry::release_name!(),
-                        before_send: Some(Arc::new(|mut event| {
-                            // WHY: Users paste sensitive content (emails, passwords, private messages)
-                            // for translation. This data MUST NOT be sent to external services.
-                            event.extra.remove("text");
-                            event.extra.remove("translation");
-                            event.extra.remove("clipboard");
-                            Some(event)
-                        })),
-                        ..Default::default()
-                    },
-                )))
-            } else {
-                None
-            };
-            // Store guard in managed state to keep Sentry client alive
-            app.manage(sentry_guard);
+
+            if !user_settings.send_telemetry {
+                // User opted out - take and drop guard to disable Sentry
+                // NOTE: Panics during startup were still captured (opt-in default),
+                // but future events won't be sent.
+                if let Some(guard) = SENTRY_GUARD.lock().unwrap().take() {
+                    drop(guard);
+                }
+            }
+            // If telemetry is ON, guard stays in SENTRY_GUARD for entire program lifetime
 
             // Create tray menu
             let quit = MenuItem::with_id(app, "quit", "Quit", true, None::<&str>)?;
@@ -490,7 +536,8 @@ pub fn run() {
                         check_for_updates(app.clone());
                     }
                     "privacy" => {
-                        let _ = open::that("https://github.com/ebiyy/traylingo/blob/main/PRIVACY.md");
+                        let _ =
+                            open::that("https://github.com/ebiyy/traylingo/blob/main/PRIVACY.md");
                     }
                     _ => {}
                 })
