@@ -1,0 +1,44 @@
+name: PR Rules
+
+on:
+  pull_request:
+    branches: [main]
+    types: [opened, edited, synchronize]
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Validate PR
+        run: |
+          BASE="${{ github.base_ref }}"
+          HEAD="${{ github.head_ref }}"
+          TITLE="${{ github.event.pull_request.title }}"
+
+          echo "Base: $BASE"
+          echo "Head: $HEAD"
+          echo "Title: $TITLE"
+
+          if [[ "$BASE" == "main" ]]; then
+            if [[ "$HEAD" == "develop" ]]; then
+              # develop → main: Release prefix required
+              if [[ ! "$TITLE" =~ ^Release: ]]; then
+                echo "❌ PRs from develop to main must start with 'Release:'"
+                echo "   Example: 'Release: v0.1.0'"
+                exit 1
+              fi
+              echo "✅ Release PR title is valid"
+            elif [[ "$HEAD" =~ ^(hotfix/|fix/) ]]; then
+              # hotfix/* or fix/* → main: allowed
+              echo "✅ Hotfix PR is allowed"
+            else
+              # Other branches → main: not allowed
+              echo "❌ Direct PRs to main only allowed from:"
+              echo "   - develop (with 'Release:' prefix)"
+              echo "   - hotfix/* branches"
+              echo "   - fix/* branches"
+              exit 1
+            fi
+          fi
+
+          echo "✅ PR validation passed"
