@@ -256,6 +256,26 @@ If you're interested in adding platform support, please open an issue first to d
 
 Feel free to open an issue for questions or discussions.
 
+## Forking This Project
+
+When forking this app and distributing it as your own build, please update:
+
+### Required Changes
+
+- **`src-tauri/tauri.conf.json`**
+  - `identifier`: Use your own unique bundle identifier (e.g., `com.yourname.yourapp`)
+  - `updater`: Either remove the section entirely, or point `endpoints` and `pubkey` to your own repo/key
+
+- **Telemetry / Sentry**
+  - Replace the Sentry DSN in `src/index.tsx` and `src-tauri/src/lib.rs` with your own, or leave it empty to disable telemetry
+
+### Recommended Changes
+
+If you plan to publish your fork:
+
+- Rename the app (`productName` in `tauri.conf.json`) and change the icon
+- Make it clear in your README that your build is not the official TrayLingo release
+
 ## License
 
 By contributing, you agree that your contributions will be licensed under the MIT License.
