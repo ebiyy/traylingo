@@ -20,10 +20,10 @@ jobs:
           echo "Title: $TITLE"
 
           if [[ "$BASE" == "main" ]]; then
-            if [[ "$HEAD" == "develop" ]]; then
-              # develop → main: Release prefix required
+            if [[ "$HEAD" == "develop" || "$HEAD" =~ ^release/ ]]; then
+              # develop or release/* → main: Release prefix required
               if [[ ! "$TITLE" =~ ^Release: ]]; then
-                echo "❌ PRs from develop to main must start with 'Release:'"
+                echo "❌ PRs from $HEAD to main must start with 'Release:'"
                 echo "   Example: 'Release: v0.1.0'"
                 exit 1
               fi
@@ -35,6 +35,7 @@ jobs:
               # Other branches → main: not allowed
               echo "❌ Direct PRs to main only allowed from:"
               echo "   - develop (with 'Release:' prefix)"
+              echo "   - release/* branches (with 'Release:' prefix)"
               echo "   - hotfix/* branches"
               echo "   - fix/* branches"
               exit 1

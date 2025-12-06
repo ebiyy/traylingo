@@ -97,8 +97,18 @@ docs/                   # Documentation
 
 - **Branches**: `main` (protected) ← `develop` (default) ← feature branches
 - **Pull strategy**: `pull.rebase true` is configured for this repo
-- **Merge policy**: Merge commits only (squash disabled)
+- **Merge policy**: Rebase preferred, squash as fallback (for rebase conflicts)
 - **PRs**: Target `develop`, not `main`
+
+### PRs to main (CI enforced)
+
+| Source | Requirement |
+|--------|-------------|
+| `develop` | Title must start with `Release:` |
+| `release/*` | Title must start with `Release:` |
+| `hotfix/*` | Allowed (for urgent fixes) |
+| `fix/*` | Allowed (for urgent fixes) |
+| Other branches | Blocked |
 
 See [CONTRIBUTING.md](CONTRIBUTING.md#git-workflow) for details.
 
