@@ -37,6 +37,14 @@ export function setTelemetryEnabled(enabled: boolean) {
 // =============================================================================
 Sentry.init({
   dsn: "https://REDACTED",
+  environment: import.meta.env.PROD ? "production" : "development",
+  // WHY: DSN is public in OSS. allowUrls reduces noise from non-app sources.
+  // This is NOT a security boundary - just noise reduction.
+  allowUrls: [
+    /localhost:1420/, // dev (Vite)
+    /tauri:\/\/localhost/, // prod (macOS / Linux)
+    /tauri\.localhost/, // prod (Windows)
+  ],
   beforeSend(event) {
     // Check opt-out first - drop all events if telemetry disabled
     if (!telemetryEnabled) {

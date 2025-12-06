@@ -464,6 +464,11 @@ pub fn run() {
         "https://7a8f51076788f70a7a7caaa5841f436b@o4503930312261632.ingest.us.sentry.io/4510482334482432",
         sentry::ClientOptions {
             release: sentry::release_name!(),
+            environment: Some(if cfg!(debug_assertions) {
+                "development".into()
+            } else {
+                "production".into()
+            }),
             before_send: Some(Arc::new(|mut event| {
                 // WHY: Users paste sensitive content (emails, passwords, private messages)
                 // for translation. This data MUST NOT be sent to external services.
