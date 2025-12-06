@@ -130,6 +130,7 @@ Direct PRs to `main` are restricted by CI validation:
 | Source Branch | Requirement |
 |---------------|-------------|
 | `develop` | Title must start with `Release:` (e.g., `Release: v0.1.0`) |
+| `release/*` | Title must start with `Release:` (e.g., `Release: v0.1.0`) |
 | `hotfix/*` | Allowed for urgent production fixes |
 | `fix/*` | Allowed for urgent production fixes |
 | Other branches | Blocked - must go through `develop` first |
