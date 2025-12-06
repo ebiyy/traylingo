@@ -51,6 +51,6 @@ jobs:
 
             Download the `.dmg` file below and drag TrayLingo to your Applications folder.
 
-            **Note:** You'll need to set up your OpenAI API key. See the [README](https://github.com/ebiyy/traylingo#setup) for instructions.
+            **Note:** You'll need to set up your Anthropic API key. See the [README](https://github.com/ebiyy/traylingo#setup) for instructions.
           releaseDraft: true
           prerelease: false
