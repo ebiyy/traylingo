@@ -7,6 +7,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.2] - 2025-12-07
+
+### Added
+
+- Homebrew Cask installation support (`brew install --cask ebiyy/tap/traylingo`)
+- Custom DMG installer background with branded design
+- Automated Homebrew Cask update workflow (PR-based for security)
+- Fork guidelines in CONTRIBUTING.md
+
+### Fixed
+
+- Duplicate Sentry panic events
+- Rust panics now reliably captured by Sentry before process abort
+
+### Changed
+
+- Sentry: Added environment tag and allowUrls for noise reduction
+- Refactored system prompt to single constant (removed duplication)
+- Log format improved (timestamp first)
+
+### Documentation
+
+- Added Gatekeeper troubleshooting to README
+- Added native app debugging guide
+- Updated error management documentation
+
 ## [0.1.1] - 2025-12-06
 
 ### Added
@@ -55,6 +81,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - TypeScript frontend with Rust backend
 - Biome for linting and formatting
 
-[Unreleased]: https://github.com/ebiyy/traylingo/compare/v0.1.1...HEAD
+[Unreleased]: https://github.com/ebiyy/traylingo/compare/v0.1.2...HEAD
+[0.1.2]: https://github.com/ebiyy/traylingo/compare/v0.1.1...v0.1.2
 [0.1.1]: https://github.com/ebiyy/traylingo/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/ebiyy/traylingo/releases/tag/v0.1.0
