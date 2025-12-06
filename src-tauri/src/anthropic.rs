@@ -23,6 +23,7 @@ fn parse_api_error_message(body: &str) -> String {
         .unwrap_or_else(|| "Unknown API error".to_string())
 }
 
+
 // WHY: Prompt injection prevention + cost optimization
 // ~150 tokens (75% of original). Critical security rules preserved.
 // Shared between translate_stream and translate_once for consistency.
