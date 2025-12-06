@@ -7,7 +7,7 @@ use tauri::{
     tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent},
     Emitter, Manager, RunEvent, WindowEvent,
 };
-use tauri_plugin_global_shortcut::{Code, GlobalShortcutExt, Modifiers, Shortcut};
+use tauri_plugin_global_shortcut::{Code, GlobalShortcutExt, Modifiers, Shortcut, ShortcutState};
 
 static POPUP_READY: AtomicBool = AtomicBool::new(false);
 
@@ -509,7 +509,14 @@ pub fn run() {
             // Register ⌘J global shortcut (main window)
             let shortcut = Shortcut::new(Some(Modifiers::SUPER), Code::KeyJ);
             app.global_shortcut()
-                .on_shortcut(shortcut, |app, _shortcut, _event| {
+                .on_shortcut(shortcut, |app, _shortcut, event| {
+                    // WHY: tauri-plugin-global-shortcut fires twice (Pressed + Released).
+                    // Only handle Pressed to prevent duplicate translation requests.
+                    // See: https://github.com/tauri-apps/plugins-workspace/issues/1748
+                    if event.state != ShortcutState::Pressed {
+                        return;
+                    }
+
                     // Capture clipboard content BEFORE simulating copy
                     let original_clipboard = arboard::Clipboard::new()
                         .ok()
@@ -530,7 +537,14 @@ pub fn run() {
             let popup_shortcut =
                 Shortcut::new(Some(Modifiers::CONTROL | Modifiers::ALT), Code::KeyJ);
             app.global_shortcut()
-                .on_shortcut(popup_shortcut, |app, _shortcut, _event| {
+                .on_shortcut(popup_shortcut, |app, _shortcut, event| {
+                    // WHY: tauri-plugin-global-shortcut fires twice (Pressed + Released).
+                    // Only handle Pressed to prevent duplicate translation requests.
+                    // See: https://github.com/tauri-apps/plugins-workspace/issues/1748
+                    if event.state != ShortcutState::Pressed {
+                        return;
+                    }
+
                     // Capture clipboard content BEFORE simulating copy
                     let original_clipboard = arboard::Clipboard::new()
                         .ok()
