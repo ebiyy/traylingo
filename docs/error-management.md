@@ -198,11 +198,25 @@ Rust panics require special handling to ensure they're captured by Sentry before
 // Store guard in static (not Tauri managed state)
 static SENTRY_GUARD: Mutex<Option<sentry::ClientInitGuard>> = Mutex::new(None);
 
-fn install_panic_handler_with_flush() {
-    let prev_hook = std::panic::take_hook();
+pub fn run() {
+    // Phase 0: Save default hook BEFORE sentry::init (avoids duplicate events)
+    let default_hook = std::panic::take_hook();
+
+    // Phase 1: sentry::init (PanicIntegration overwrites hook)
+    let guard = sentry::init((...));
+    *SENTRY_GUARD.lock().unwrap() = Some(guard);
+
+    // Install our handler, passing the default hook
+    install_panic_handler_with_flush(default_hook);
+}
+
+fn install_panic_handler_with_flush(
+    default_hook: Box<dyn Fn(&std::panic::PanicInfo<'_>) + Sync + Send + 'static>,
+) {
+    // Take Sentry's hook but don't use it (avoids duplicate events)
+    let _sentry_hook = std::panic::take_hook();
 
     std::panic::set_hook(Box::new(move |panic_info| {
-        // Use Hub::main() to get the original Hub from init
         if let Some(client) = sentry::Hub::main().client() {
             if client.is_enabled() {
                 let event = sentry::protocol::Event {
@@ -218,16 +232,20 @@ fn install_panic_handler_with_flush() {
                 client.flush(Some(std::time::Duration::from_secs(2)));
             }
         }
-        prev_hook(panic_info);
+
+        // Call ONLY the default hook (not Sentry's) - avoids duplicates
+        default_hook(panic_info);
     }));
 }
 ```
 
 **Key points**:
+- Save default hook **BEFORE** `sentry::init` to avoid duplicate events
 - Use `Hub::main().client()` instead of `Hub::current()` to avoid thread-local issues
 - Use `client.capture_event()` directly instead of `sentry::capture_event()`
 - Flush with explicit timeout (2 seconds) to ensure HTTP request completes
 - Store guard in static `Mutex<Option<...>>`, not Tauri's managed state
+- Call only the default hook (not Sentry's PanicIntegration) to prevent duplicates
 
 See [article/native-app-debugging-pain.md](../article/native-app-debugging-pain.md) for the debugging journey.
 
