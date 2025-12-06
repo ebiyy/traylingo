@@ -110,6 +110,7 @@ See [CONTRIBUTING.md](CONTRIBUTING.md#git-workflow) for details.
 |---------|---------|
 | `/fix-issue {n}` | Fix GitHub issue in worktree |
 | `/release {version}` | Create release branch and PR |
+| `/resolve-conflicts {pr}` | Resolve PR conflicts with careful commit analysis |
 
 ### Release Workflow
 
