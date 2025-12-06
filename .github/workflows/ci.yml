@@ -46,6 +46,9 @@ jobs:
       - name: Frontend tests
         run: pnpm test
 
+      - name: License check (npm)
+        run: pnpm licenses:check
+
   rust:
     runs-on: macos-latest
 
