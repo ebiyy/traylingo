@@ -47,14 +47,26 @@ TrayLingo is designed to minimize API costs while maintaining translation qualit
 
 ## Installation
 
-### Prerequisites
+### Homebrew (Recommended)
+
+```bash
+brew install --cask ebiyy/tap/traylingo
+```
+
+> **Note:** Apple Silicon (M1/M2/M3) only. Intel Mac support coming soon.
+
+### Download
+
+Download the `.dmg` file from [Releases](https://github.com/ebiyy/traylingo/releases) and drag TrayLingo to your Applications folder.
+
+### Build from Source
+
+#### Prerequisites
 
 - macOS 10.15+
 - [Rust](https://rustup.rs/) (1.70+)
 - [Node.js](https://nodejs.org/) (20+)
 - [pnpm](https://pnpm.io/) (10+)
-
-### Build from Source
 
 ```bash
 # Clone the repository
@@ -95,6 +107,18 @@ The built app will be in `src-tauri/target/release/bundle/`.
 - **Ctrl+Option+J**: Quick translate popup (minimal UI, auto-closes)
 
 ### Troubleshooting
+
+#### "TrayLingo is damaged" (macOS Gatekeeper)
+
+TrayLingo is not yet notarized by Apple. If you trust this source, you can bypass Gatekeeper:
+
+```bash
+xattr -cr /Applications/TrayLingo.app
+```
+
+> **Security note:** Only run this command for binaries from sources you trust. When in doubt, [build from source](#build-from-source).
+
+#### Error Reports
 
 If an error occurs, click the **"Copy Report"** button to copy error details. You can paste this directly into a [GitHub Issue](https://github.com/ebiyy/traylingo/issues) for support.
 
