@@ -19,11 +19,6 @@
 - [ ] Persist and display cumulative AI cost (tauri-plugin-store)
 - [ ] Usage history for token/cost analysis ([#20](https://github.com/ebiyy/traylingo/issues/20))
 
-## v0.1.0
-
-- [ ] First release via GitHub Actions
-- [ ] Homebrew tap setup
-
 ## Legal / Compliance
 
 - [ ] Review Anthropic API Terms of Service for commercial use compliance
@@ -99,5 +94,10 @@ Items requiring ROI evaluation before implementation:
 - [x] npm dependency license audit in CI (`pnpm licenses:check`)
 - [x] Bug: Global shortcut triggers twice per single key press ([#23](https://github.com/ebiyy/traylingo/issues/23))
 - [x] Sentry: Capture Rust panics before process abort ([#29](https://github.com/ebiyy/traylingo/issues/29))
+- [x] Refactor: Extract system prompt constant (duplicated in translate_stream/translate_once)
+- [x] Fix: Log format order in app_log (timestamp should come first)
+- [x] Sentry: Add environment tag and allowUrls for noise reduction
+- [x] First release via GitHub Actions (v0.1.1)
+- [x] Homebrew tap setup (`brew install --cask ebiyy/tap/traylingo`)
 
 </details>
