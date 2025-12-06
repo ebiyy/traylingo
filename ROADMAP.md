@@ -7,7 +7,6 @@
 
 - [ ] Bug: Global shortcut triggers twice per single key press ([#23](https://github.com/ebiyy/traylingo/issues/23))
 - [ ] Bug: First shortcut trigger often times out (clipboard not captured) ([#22](https://github.com/ebiyy/traylingo/issues/22))
-- [ ] Bug: Multi-monitor detection fails intermittently ([#21](https://github.com/ebiyy/traylingo/issues/21))
 
 ## Next Release
 
@@ -90,5 +89,6 @@ Items requiring ROI evaluation before implementation:
 - [x] Bug: Update event listeners not cleaned up in App.tsx (memory leak on HMR)
 - [x] Consistency: Japanese error message in PopupView.tsx (should be English)
 - [x] Auto-update via tauri-plugin-updater (Check for Updates in tray menu)
+- [x] ~~Bug: Multi-monitor detection fails intermittently~~ ([#21](https://github.com/ebiyy/traylingo/issues/21)) - Closed: Won't fix due to Tauri API limitations
 
 </details>
