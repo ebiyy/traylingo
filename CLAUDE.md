@@ -225,6 +225,48 @@ sentry-cli projects list --org ORG_SLUG   # List projects
 
 See [docs/error-management.md](docs/error-management.md) for details.
 
+## Native App Debugging
+
+Native apps (Tauri/Rust) have different debugging challenges than web apps. See [article/native-app-debugging-pain.md](article/native-app-debugging-pain.md) for a detailed case study.
+
+### Key Differences from Web Debugging
+
+| Aspect | Web App | Native App (Tauri) |
+|--------|---------|-------------------|
+| Error visibility | Browser console | Scattered across system logs, Rust stderr, Tauri logs |
+| Process lifecycle | Page stays alive | Process can abort (panic) |
+| Threading | Single-threaded (mostly) | Multi-threaded, thread-local state issues |
+| State management | Global JS objects | Framework state vs static variables |
+
+### Debugging Checklist
+
+When something "silently fails" in the Rust backend:
+
+1. **Add `eprintln!` debugging** - Crude but reliable when logs don't work
+2. **Check user settings** - Features may be disabled (`send_telemetry`, etc.)
+3. **Test each layer** - Main thread vs spawned threads vs async tasks
+4. **Verify external services** - Network, API keys, DSN validity
+5. **Check process lifecycle** - Does the process die before completing async work?
+
+### Common Pitfalls
+
+- **Thread-local state**: Libraries using thread-local storage (like Sentry Hub) may not work correctly in spawned threads
+- **Framework state management**: `app.manage()` isn't always equivalent to a global static
+- **Implicit timeouts**: `flush(None)` may not wait long enough before process abort
+
+### Useful Commands
+
+```bash
+# View macOS system logs
+log show --predicate 'subsystem == "com.ebiyy.traylingo"' --last 5m
+
+# Tauri app logs
+ls ~/Library/Logs/com.ebiyy.traylingo/
+
+# Run with verbose Rust output
+RUST_BACKTRACE=1 pnpm tauri dev
+```
+
 ## Unified Logging (Development)
 
 TrayLingo uses a unified logging layer that consolidates frontend and backend logs into the Rust terminal.
