@@ -348,7 +348,7 @@ fn app_log(entry: LogEntry) {
 
     let line = format!(
         "[{}] [{}] [corr={}] {}{}",
-        entry.scope, corr, entry.ts, entry.message, data_str
+        entry.ts, entry.scope, corr, entry.message, data_str
     );
 
     match entry.level.as_str() {
