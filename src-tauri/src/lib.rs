@@ -207,6 +207,67 @@ fn popup_ready() {
     POPUP_READY.store(true, Ordering::SeqCst);
 }
 
+/// Find monitor at the given point, with fallback to manual search through all monitors.
+///
+/// WHY: `monitor_from_point()` can fail intermittently on multi-monitor setups,
+/// likely due to coordinate mismatches or timing issues with monitor enumeration.
+/// The fallback manually searches through all available monitors to find one
+/// containing the cursor position.
+/// See: https://github.com/ebiyy/traylingo/issues/21
+#[cfg(target_os = "macos")]
+fn find_monitor_at_point(app: &tauri::AppHandle, x: f64, y: f64) -> Option<tauri::Monitor> {
+    // Try the direct API first (usually works)
+    if let Ok(Some(monitor)) = app.monitor_from_point(x, y) {
+        return Some(monitor);
+    }
+
+    // Fallback: manually search through all monitors
+    log::debug!(
+        "monitor_from_point returned None, searching available monitors for ({}, {})",
+        x,
+        y
+    );
+
+    let monitors = match app.available_monitors() {
+        Ok(m) => m,
+        Err(e) => {
+            log::warn!("Failed to get available monitors: {:?}", e);
+            return None;
+        }
+    };
+
+    let point_x = x as i32;
+    let point_y = y as i32;
+
+    for monitor in monitors {
+        let pos = monitor.position();
+        let size = monitor.size();
+
+        let left = pos.x;
+        let right = pos.x + size.width as i32;
+        let top = pos.y;
+        let bottom = pos.y + size.height as i32;
+
+        if point_x >= left && point_x < right && point_y >= top && point_y < bottom {
+            log::debug!(
+                "Found monitor via fallback: {}x{} at ({}, {})",
+                size.width,
+                size.height,
+                pos.x,
+                pos.y
+            );
+            return Some(monitor);
+        }
+    }
+
+    log::warn!(
+        "No monitor found at cursor position ({}, {}) via fallback",
+        x,
+        y
+    );
+    None
+}
+
 /// Calculate popup position based on cursor location with edge detection
 #[cfg(target_os = "macos")]
 fn calculate_popup_position(app: &tauri::AppHandle) -> Option<(i32, i32)> {
@@ -226,21 +287,8 @@ fn calculate_popup_position(app: &tauri::AppHandle) -> Option<(i32, i32)> {
     let cursor_x = cursor.x as i32;
     let cursor_y = cursor.y as i32;
 
-    // TODO: Multi-monitor detection sometimes fails (returns None) even when cursor
-    // is clearly on a monitor. This may be a Tauri API issue or coordinate mismatch.
-    // When this happens, popup falls back to primary monitor top-right position.
-    // See: https://github.com/ebiyy/traylingo/issues/21
-    let monitor = match app.monitor_from_point(cursor.x, cursor.y) {
-        Ok(Some(m)) => m,
-        Ok(None) => {
-            log::warn!("No monitor found at cursor position");
-            return None;
-        }
-        Err(e) => {
-            log::warn!("Failed to get monitor: {:?}", e);
-            return None;
-        }
-    };
+    // Try monitor_from_point first, with fallback to manual search
+    let monitor = find_monitor_at_point(app, cursor.x, cursor.y)?;
     let mon_pos = monitor.position();
     let mon_size = monitor.size();
 
