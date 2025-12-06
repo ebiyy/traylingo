@@ -10,9 +10,6 @@
 ## Next Release
 
 - [ ] Refactor: Remove unreliable monitor_from_point() API usage ([#30](https://github.com/ebiyy/traylingo/issues/30))
-- [ ] Refactor: Extract system prompt constant (duplicated in translate_stream/translate_once)
-- [ ] Fix: Log format order in app_log (timestamp should come first)
-- [ ] Sentry: Add error capture at appropriate locations (API errors, etc.) via sentry-cli
 
 ## v0.2.0
 
@@ -99,5 +96,8 @@ Items requiring ROI evaluation before implementation:
 - [x] npm dependency license audit in CI (`pnpm licenses:check`)
 - [x] Bug: Global shortcut triggers twice per single key press ([#23](https://github.com/ebiyy/traylingo/issues/23))
 - [x] Sentry: Capture Rust panics before process abort ([#29](https://github.com/ebiyy/traylingo/issues/29))
+- [x] Refactor: Extract system prompt constant (duplicated in translate_stream/translate_once)
+- [x] Fix: Log format order in app_log (timestamp should come first)
+- [x] Sentry: Add environment tag and allowUrls for noise reduction
 
 </details>
