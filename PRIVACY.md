@@ -30,7 +30,9 @@ TrayLingo stores the following data locally on your device (`settings.json`):
 
 ## Opt-Out
 
-You can disable error reporting entirely in Settings > "Send error reports"
+Error reporting is **enabled by default**. You can disable it entirely in Settings > "Send error reports".
+
+Changes take effect after restarting the app.
 
 ## Third Party Services
 
