@@ -132,7 +132,22 @@ import * as Sentry from "@sentry/solid";
 
 Sentry.init({
   dsn: "YOUR_FRONTEND_DSN",
-  sendDefaultPii: true,
+  // NOTE: sendDefaultPii is intentionally NOT set (defaults to false)
+  // to avoid sending IP addresses, user agents, etc.
+  beforeSend(event) {
+    // Filter sensitive data from breadcrumbs
+    if (event.breadcrumbs) {
+      event.breadcrumbs = event.breadcrumbs.map((breadcrumb) => {
+        if (breadcrumb.data) {
+          delete breadcrumb.data.text;
+          delete breadcrumb.data.translation;
+          delete breadcrumb.data.clipboard;
+        }
+        return breadcrumb;
+      });
+    }
+    return event;
+  },
 });
 ```
 
@@ -142,7 +157,16 @@ let _sentry_guard = sentry::init((
     "YOUR_BACKEND_DSN",
     sentry::ClientOptions {
         release: sentry::release_name!(),
-        send_default_pii: true,
+        // NOTE: send_default_pii is intentionally NOT set (defaults to false)
+        before_send: Some(Arc::new(|mut event| {
+            // Filter sensitive data from extras
+            if let Some(extra) = event.extra.as_mut() {
+                extra.remove("text");
+                extra.remove("translation");
+                extra.remove("clipboard");
+            }
+            Some(event)
+        })),
         ..Default::default()
     },
 ));
@@ -166,7 +190,10 @@ Install via mise (configured in `.tool-versions`).
 
 - DSN is public (designed for client-side use)
 - Configure **Allowed Domains** in Sentry dashboard to prevent abuse
-- API keys should be filtered before sending to Sentry
+- API keys are filtered before sending to Sentry
+- `sendDefaultPii` / `send_default_pii` is NOT enabled (IP addresses not attached to events)
+- Translation text, clipboard content, and source text are scrubbed via `beforeSend` filters
+- Users can disable telemetry entirely via Settings > "Send error reports"
 
 ## Error Reporting for GitHub Issues
 
