@@ -36,6 +36,7 @@
 - [ ] Use tauri-plugin-shell for external links (Settings.tsx Anthropic Console link)
 - [ ] Configurable popup auto-close delay (currently hardcoded 8s)
 - [ ] Clean up dead code: `message_stopped` variable in anthropic.rs
+- [ ] Add data management UI (clear cache, clear error history, clear all data)
 
 ## Under Consideration
 
