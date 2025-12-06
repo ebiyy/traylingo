@@ -49,6 +49,7 @@ pnpm test:all          # All tests
 
 # Code analysis
 pnpm knip              # Find unused code/dependencies
+pnpm licenses:check    # Check npm license compatibility (CI)
 ```
 
 ## Development Tools
