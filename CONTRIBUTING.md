@@ -119,9 +119,22 @@ This prevents divergent branch issues when pulling changes while you have local 
 
 ### PR Merge Policy
 
-- **Use merge commits only** (squash merge is disabled)
+- **Rebase merge preferred** for linear history
+- **Squash merge** as fallback when rebase has conflicts
 - Keep commits clean before creating PR (use `git rebase -i` if needed)
-- This preserves meaningful commit history and avoids branch sync issues
+
+### PRs to main (CI enforced)
+
+Direct PRs to `main` are restricted by CI validation:
+
+| Source Branch | Requirement |
+|---------------|-------------|
+| `develop` | Title must start with `Release:` (e.g., `Release: v0.1.0`) |
+| `hotfix/*` | Allowed for urgent production fixes |
+| `fix/*` | Allowed for urgent production fixes |
+| Other branches | Blocked - must go through `develop` first |
+
+This ensures all releases go through proper review and hotfixes are clearly identified.
 
 ### Workflow Example
 
