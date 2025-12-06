@@ -186,6 +186,51 @@ sentry-cli projects list --org YOUR_ORG
 
 Install via mise (configured in `.tool-versions`).
 
+### Rust Panic Capture
+
+Rust panics require special handling to ensure they're captured by Sentry before the process aborts.
+
+**Problem**: Sentry's default `PanicIntegration` uses thread-local Hub, which can fail in spawned threads.
+
+**Solution** (in `src-tauri/src/lib.rs`):
+
+```rust
+// Store guard in static (not Tauri managed state)
+static SENTRY_GUARD: Mutex<Option<sentry::ClientInitGuard>> = Mutex::new(None);
+
+fn install_panic_handler_with_flush() {
+    let prev_hook = std::panic::take_hook();
+
+    std::panic::set_hook(Box::new(move |panic_info| {
+        // Use Hub::main() to get the original Hub from init
+        if let Some(client) = sentry::Hub::main().client() {
+            if client.is_enabled() {
+                let event = sentry::protocol::Event {
+                    message: Some(panic_info.to_string()),
+                    level: sentry::Level::Fatal,
+                    ..Default::default()
+                };
+
+                // Direct client call bypasses thread-local Hub issues
+                client.capture_event(event, None);
+
+                // Explicit timeout ensures delivery before abort
+                client.flush(Some(std::time::Duration::from_secs(2)));
+            }
+        }
+        prev_hook(panic_info);
+    }));
+}
+```
+
+**Key points**:
+- Use `Hub::main().client()` instead of `Hub::current()` to avoid thread-local issues
+- Use `client.capture_event()` directly instead of `sentry::capture_event()`
+- Flush with explicit timeout (2 seconds) to ensure HTTP request completes
+- Store guard in static `Mutex<Option<...>>`, not Tauri's managed state
+
+See [article/native-app-debugging-pain.md](../article/native-app-debugging-pain.md) for the debugging journey.
+
 ### Privacy Considerations
 
 - DSN is public (designed for client-side use)
