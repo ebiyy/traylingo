@@ -35,36 +35,41 @@ export function setTelemetryEnabled(enabled: boolean) {
 //
 // If adding new Sentry integrations, ensure they don't leak user text content.
 // =============================================================================
-Sentry.init({
-  dsn: "https://12cc4e2328693a567ba7580e40f8b3f1@o4503930312261632.ingest.us.sentry.io/4510482273009664",
-  environment: import.meta.env.PROD ? "production" : "development",
-  // WHY: DSN is public in OSS. allowUrls reduces noise from non-app sources.
-  // This is NOT a security boundary - just noise reduction.
-  allowUrls: [
-    /localhost:1420/, // dev (Vite)
-    /tauri:\/\/localhost/, // prod (macOS / Linux)
-    /tauri\.localhost/, // prod (Windows)
-  ],
-  beforeSend(event) {
-    // Check opt-out first - drop all events if telemetry disabled
-    if (!telemetryEnabled) {
-      return null;
-    }
+// NOTE: DSN is injected via build-time env var (VITE_SENTRY_DSN).
+// For OSS builds without DSN, Sentry is disabled.
+const sentryDsn = import.meta.env.VITE_SENTRY_DSN || "";
+if (sentryDsn) {
+  Sentry.init({
+    dsn: sentryDsn,
+    environment: import.meta.env.PROD ? "production" : "development",
+    // WHY: allowUrls reduces noise from non-app sources.
+    // This is NOT a security boundary - just noise reduction.
+    allowUrls: [
+      /localhost:1420/, // dev (Vite)
+      /tauri:\/\/localhost/, // prod (macOS / Linux)
+      /tauri\.localhost/, // prod (Windows)
+    ],
+    beforeSend(event) {
+      // Check opt-out first - drop all events if telemetry disabled
+      if (!telemetryEnabled) {
+        return null;
+      }
 
-    // WHY: Users paste sensitive content (emails, passwords, private messages) for translation.
-    // This data MUST NOT be sent to external services.
-    if (event.breadcrumbs) {
-      for (const breadcrumb of event.breadcrumbs) {
-        if (breadcrumb.data) {
-          delete breadcrumb.data.text;
-          delete breadcrumb.data.translation;
-          delete breadcrumb.data.clipboard;
+      // WHY: Users paste sensitive content (emails, passwords, private messages) for translation.
+      // This data MUST NOT be sent to external services.
+      if (event.breadcrumbs) {
+        for (const breadcrumb of event.breadcrumbs) {
+          if (breadcrumb.data) {
+            delete breadcrumb.data.text;
+            delete breadcrumb.data.translation;
+            delete breadcrumb.data.clipboard;
+          }
         }
       }
-    }
-    return event;
-  },
-});
+      return event;
+    },
+  });
+}
 
 const root = document.getElementById("root") as HTMLElement;
 const hash = window.location.hash;
