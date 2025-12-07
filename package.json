@@ -1,6 +1,6 @@
 {
   "name": "traylingo",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "description": "Mac tray-based streaming translation tool",
   "type": "module",
   "scripts": {
