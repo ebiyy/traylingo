@@ -34,6 +34,13 @@ jobs:
       - name: Install dependencies
         run: pnpm install
 
+      - name: Debug signing env
+        run: |
+          echo "TAURI_SIGNING_PRIVATE_KEY length: ${#TAURI_SIGNING_PRIVATE_KEY}"
+          echo "First 30 chars: ${TAURI_SIGNING_PRIVATE_KEY:0:30}"
+        env:
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+
       - name: Build Tauri app
         uses: tauri-apps/tauri-action@v0
         env:
