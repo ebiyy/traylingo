@@ -1,6 +1,6 @@
 import { invoke } from "@tauri-apps/api/core";
 import { X } from "lucide-solid";
-import { createEffect, createMemo, createResource, createSignal, For, Show } from "solid-js";
+import { createEffect, createResource, createSignal, For, Show } from "solid-js";
 import { setTelemetryEnabled } from "../index";
 import { Logger } from "../utils/logger";
 
@@ -27,24 +27,12 @@ export function Settings(props: SettingsProps) {
   const [model, setModel] = createSignal("claude-haiku-4-5-20251001");
   const [sendTelemetry, setSendTelemetry] = createSignal(true);
   const [cacheEnabled, setCacheEnabled] = createSignal(true);
-  const [saving, setSaving] = createSignal(false);
-  const [saved, setSaved] = createSignal(false);
   const [showKey, setShowKey] = createSignal(false);
   const [clearingCache, setClearingCache] = createSignal(false);
   const [cacheCleared, setCacheCleared] = createSignal(false);
-
-  // Track if there are unsaved changes
-  const hasChanges = createMemo(() => {
-    const s = settings();
-    if (!s) return false;
-    const currentStoredKey = storedApiKey() ?? "";
-    return (
-      apiKey() !== currentStoredKey ||
-      model() !== s.model ||
-      sendTelemetry() !== (s.send_telemetry ?? true) ||
-      cacheEnabled() !== (s.cache_enabled ?? true)
-    );
-  });
+  const [saved, setSaved] = createSignal(false);
+  const [savingApiKey, setSavingApiKey] = createSignal(false);
+  const [apiKeySaved, setApiKeySaved] = createSignal(false);
 
   // Initialize form when settings load
   createEffect(() => {
@@ -70,32 +58,61 @@ export function Settings(props: SettingsProps) {
     });
   };
 
-  const handleSave = async () => {
-    setSaving(true);
+  // Save API key to Keychain (explicit save)
+  const handleSaveApiKey = async () => {
+    setSavingApiKey(true);
     try {
-      // Save API key to macOS Keychain (separate from other settings)
       await invoke("set_api_key", { key: apiKey() });
-
-      // Save other settings to settings.json
-      await invoke("save_settings", {
-        newSettings: {
-          model: model(),
-          send_telemetry: sendTelemetry(),
-          cache_enabled: cacheEnabled(),
-        },
-      });
-      // Update frontend telemetry flag immediately
-      setTelemetryEnabled(sendTelemetry());
-      // Refetch settings and API key to update hasChanges comparison
-      await refetch();
       await refetchApiKey();
+      setApiKeySaved(true);
+      setTimeout(() => setApiKeySaved(false), 2000);
+    } catch (err) {
+      Logger.error("ipc", "Failed to save API key", { error: String(err) });
+    } finally {
+      setSavingApiKey(false);
+    }
+  };
+
+  // Auto-save settings (model, cache, telemetry)
+  const handleAutoSave = async (newSettings: Partial<SettingsData>) => {
+    try {
+      const currentSettings = settings();
+      if (!currentSettings) return;
+
+      const mergedSettings = {
+        model: newSettings.model ?? model(),
+        send_telemetry: newSettings.send_telemetry ?? sendTelemetry(),
+        cache_enabled: newSettings.cache_enabled ?? cacheEnabled(),
+      };
+
+      await invoke("save_settings", { newSettings: mergedSettings });
+
+      // Update frontend telemetry flag if changed
+      if (newSettings.send_telemetry !== undefined) {
+        setTelemetryEnabled(newSettings.send_telemetry);
+      }
+
+      await refetch();
       setSaved(true);
       setTimeout(() => setSaved(false), 2000);
     } catch (err) {
       Logger.error("ipc", "Failed to save settings", { error: String(err) });
-    } finally {
-      setSaving(false);
     }
+  };
+
+  const handleModelChange = (newModel: string) => {
+    setModel(newModel);
+    handleAutoSave({ model: newModel });
+  };
+
+  const handleCacheEnabledChange = (enabled: boolean) => {
+    setCacheEnabled(enabled);
+    handleAutoSave({ cache_enabled: enabled });
+  };
+
+  const handleTelemetryChange = (enabled: boolean) => {
+    setSendTelemetry(enabled);
+    handleAutoSave({ send_telemetry: enabled });
   };
 
   const handleClearCache = async () => {
@@ -112,18 +129,29 @@ export function Settings(props: SettingsProps) {
     }
   };
 
+  // Check if API key has unsaved changes
+  const apiKeyChanged = () => {
+    const currentStoredKey = storedApiKey() ?? "";
+    return apiKey() !== currentStoredKey;
+  };
+
   return (
     <div class="flex flex-col h-full bg-gradient-subtle text-[var(--text-primary)]">
       {/* Header */}
-      <div class="flex items-center justify-between p-3 border-b border-[var(--border-primary)]">
+      <div class="sticky top-0 z-10 flex items-center justify-between p-3 border-b border-[var(--border-primary)] bg-[var(--bg-primary)]">
         <h2 class="text-sm font-medium text-[var(--accent-secondary)]">Settings</h2>
-        <button
-          type="button"
-          onClick={props.onClose}
-          class="text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-theme"
-        >
-          <X size={20} />
-        </button>
+        <div class="flex items-center gap-3">
+          <Show when={saved()}>
+            <span class="text-xs text-[var(--accent-success)]">Saved ✓</span>
+          </Show>
+          <button
+            type="button"
+            onClick={props.onClose}
+            class="text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-theme"
+          >
+            <X size={20} />
+          </button>
+        </div>
       </div>
 
       {/* Content */}
@@ -140,21 +168,35 @@ export function Settings(props: SettingsProps) {
             >
               Anthropic API Key
             </label>
-            <div class="relative">
-              <input
-                id="api-key"
-                type={showKey() ? "text" : "password"}
-                value={apiKey()}
-                onInput={(e) => setApiKey(e.currentTarget.value)}
-                placeholder="sk-ant-..."
-                class="w-full px-3 py-2 bg-[var(--bg-secondary)] border border-[var(--border-primary)] rounded-md text-[var(--text-primary)] placeholder-[var(--text-placeholder)] focus:outline-none focus:border-[var(--accent-primary)] transition-theme text-sm"
-              />
+            <div class="flex gap-2">
+              <div class="relative flex-1">
+                <input
+                  id="api-key"
+                  type={showKey() ? "text" : "password"}
+                  value={apiKey()}
+                  onInput={(e) => setApiKey(e.currentTarget.value)}
+                  placeholder="sk-ant-..."
+                  class="w-full px-3 py-2 bg-[var(--bg-secondary)] border border-[var(--border-primary)] rounded-md text-[var(--text-primary)] placeholder-[var(--text-placeholder)] focus:outline-none focus:border-[var(--accent-primary)] transition-theme text-sm"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowKey(!showKey())}
+                  class="absolute right-2 top-1/2 -translate-y-1/2 text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-theme text-xs"
+                >
+                  {showKey() ? "Hide" : "Show"}
+                </button>
+              </div>
               <button
                 type="button"
-                onClick={() => setShowKey(!showKey())}
-                class="absolute right-2 top-1/2 -translate-y-1/2 text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-theme text-xs"
+                onClick={handleSaveApiKey}
+                disabled={savingApiKey() || !apiKeyChanged()}
+                class={`px-3 py-2 rounded-md text-sm transition-theme whitespace-nowrap ${
+                  apiKeyChanged() && !savingApiKey()
+                    ? "bg-[var(--accent-primary)] hover:bg-[var(--accent-primary-hover)] text-white"
+                    : "bg-[var(--bg-tertiary)] text-[var(--text-muted)] cursor-not-allowed"
+                }`}
               >
-                {showKey() ? "Hide" : "Show"}
+                {savingApiKey() ? "..." : apiKeySaved() ? "Saved" : "Save"}
               </button>
             </div>
             <p class="mt-1 text-xs text-[var(--text-muted)]">
@@ -180,7 +222,7 @@ export function Settings(props: SettingsProps) {
             <select
               id="model-select"
               value={model()}
-              onChange={(e) => setModel(e.currentTarget.value)}
+              onChange={(e) => handleModelChange(e.currentTarget.value)}
               class="w-full px-3 py-2 bg-[var(--bg-secondary)] border border-[var(--border-primary)] rounded-md text-[var(--text-primary)] focus:outline-none focus:border-[var(--accent-primary)] transition-theme text-sm"
             >
               <For each={models()}>{([id, name]) => <option value={id}>{name}</option>}</For>
@@ -194,7 +236,7 @@ export function Settings(props: SettingsProps) {
               <input
                 type="checkbox"
                 checked={cacheEnabled()}
-                onChange={(e) => setCacheEnabled(e.currentTarget.checked)}
+                onChange={(e) => handleCacheEnabledChange(e.currentTarget.checked)}
                 class="w-4 h-4 rounded border-[var(--border-primary)] bg-[var(--bg-secondary)] text-[var(--accent-primary)] focus:ring-[var(--accent-primary)] focus:ring-offset-0"
               />
               <span class="text-sm text-[var(--text-secondary)]">
@@ -223,7 +265,7 @@ export function Settings(props: SettingsProps) {
               <input
                 type="checkbox"
                 checked={sendTelemetry()}
-                onChange={(e) => setSendTelemetry(e.currentTarget.checked)}
+                onChange={(e) => handleTelemetryChange(e.currentTarget.checked)}
                 class="w-4 h-4 rounded border-[var(--border-primary)] bg-[var(--bg-secondary)] text-[var(--accent-primary)] focus:ring-[var(--accent-primary)] focus:ring-offset-0"
               />
               <span class="text-sm text-[var(--text-secondary)]">
@@ -258,34 +300,14 @@ export function Settings(props: SettingsProps) {
       </div>
 
       {/* Footer */}
-      <div class="flex items-center justify-between p-4 border-t border-[var(--border-primary)]">
-        <Show when={hasChanges() && !saved()}>
-          <span class="text-xs text-[var(--accent-warning)]">Unsaved changes</span>
-        </Show>
-        <Show when={!hasChanges() || saved()}>
-          <span />
-        </Show>
-        <div class="flex items-center gap-3">
-          <button
-            type="button"
-            onClick={props.onClose}
-            class="px-4 py-2 text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-theme text-sm"
-          >
-            Cancel
-          </button>
-          <button
-            type="button"
-            onClick={handleSave}
-            disabled={saving()}
-            class={`px-4 py-2 rounded-md transition-theme text-sm ${
-              hasChanges() && !saving()
-                ? "bg-[var(--accent-primary)] hover:bg-[var(--accent-primary-hover)] text-white animate-pulse"
-                : "bg-[var(--accent-primary)] hover:bg-[var(--accent-primary-hover)] disabled:opacity-50 text-white"
-            }`}
-          >
-            {saving() ? "Saving..." : saved() ? "Saved!" : "Save"}
-          </button>
-        </div>
+      <div class="flex items-center justify-end p-4 border-t border-[var(--border-primary)]">
+        <button
+          type="button"
+          onClick={props.onClose}
+          class="px-4 py-2 text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-theme text-sm"
+        >
+          Close
+        </button>
       </div>
     </div>
   );

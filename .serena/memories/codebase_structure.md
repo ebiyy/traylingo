@@ -38,17 +38,26 @@ src-tauri/
 ├── src/
 │   ├── main.rs         # Rust entry point
 │   ├── lib.rs          # Tauri app setup & commands
-│   │                   # Modules: anthropic, macos, settings, error
-│   │                   # Functions: translate, toggle_window,
-│   │                   #            show_window, hide_window, run
-│   │                   # macOS module: set_dock_visible, save_frontmost_app,
-│   │                   #               restore_frontmost_app (focus management)
+│   │                   # Modules: anthropic, macos, settings, error, keychain
+│   │                   # Functions: translate, toggle_window, show_window, hide_window,
+│   │                   #            show_popup, hide_popup, quick_translate, close_popup,
+│   │                   #            get_api_key, set_api_key, has_api_key,
+│   │                   #            get_error_history, clear_error_history,
+│   │                   #            clear_translation_cache, check_for_updates,
+│   │                   #            open_external_url, app_log, run
+│   │                   # macOS module: save_frontmost_app, restore_frontmost_app
 │   ├── anthropic.rs    # Anthropic Claude API integration
 │   │                   # Structs: MessageRequest, Message, StreamEvent,
 │   │                   #          ContentDelta, Usage, NonStreamResponse, etc.
-│   │                   # Functions: calculate_cost, translate_stream, translate_once
-│   ├── settings.rs     # Settings management
-│   │                   # Functions: get_model_pricing
+│   │                   # Functions: calculate_cost, translate_stream
+│   ├── keychain.rs     # macOS Keychain integration for API key storage
+│   │                   # Functions: get_api_key, set_api_key, delete_api_key, has_api_key
+│   ├── settings.rs     # Settings & cache management
+│   │                   # Functions: get_settings, save_settings, get_model_pricing,
+│   │                   #            save_error, get_error_history, clear_error_history,
+│   │                   #            get_cached_translation, save_cached_translation,
+│   │                   #            get_cache_stats, clear_translation_cache,
+│   │                   #            mask_sensitive_patterns (PII protection)
 │   │                   # Supported models: claude-haiku-4-5, claude-sonnet-4-5
 │   └── error.rs        # Error handling types
 ├── Cargo.toml          # Rust dependencies
@@ -75,7 +84,7 @@ docs/
 ├── architecture.md     # High-level architecture overview
 ├── error-management.md # Error handling strategy
 ├── logging.md          # Unified logging layer documentation
-├── icon-design.md      # Menu bar icon design details
+├── auto-updater.md     # Auto-update via GitHub Releases
 ├── screenshot.png      # Application screenshot
 └── screenshot-popup.png # Quick popup screenshot
 

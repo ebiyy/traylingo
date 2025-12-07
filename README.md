@@ -16,7 +16,7 @@ A lightweight macOS menu bar app for instant translation powered by Claude AI.
 
 - **Global Shortcut**: Press `Cmd+J` to translate selected text instantly
 - **Streaming Translation**: See translations appear in real-time
-- **Auto Language Detection**: Automatically translates Japanese to English and vice versa
+- **Japanese Translation**: Translates Japanese text to English (English → Japanese coming soon)
 - **Code Block Preservation**: Technical content and code blocks remain intact
 - **Token Usage Tracking**: Monitor API usage and costs per request and session
 - **Menu Bar Integration**: Lives quietly in your system tray
@@ -141,7 +141,7 @@ Select a model in Settings. Available models:
 | `claude-3-5-sonnet-20241022` | Good | $3/1M | $15/1M |
 | `claude-3-5-haiku-20241022` | Fast | $0.8/1M | $4/1M |
 
-Your API key and preferences are stored locally in `settings.json`. Translation cache can be disabled or cleared in Settings.
+Your preferences are stored locally in `settings.json`. Your API key is stored securely in macOS Keychain. Translation cache can be disabled or cleared in Settings.
 
 ## Privacy
 

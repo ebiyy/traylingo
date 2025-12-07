@@ -209,7 +209,7 @@ pub fn save_window_position(
 pub struct CachedTranslation {
     /// SHA256 hash of source text (for lookup)
     pub source_hash: String,
-    /// Original source text (truncated for storage, first 100 chars)
+    /// Original source text (truncated for storage, first 30 chars)
     pub source_preview: String,
     /// Translated text
     pub translated_text: String,

@@ -73,11 +73,8 @@ pnpm test:all
 
 ## Environment Setup
 
-```bash
-# Copy environment template
-# Configure API key via in-app Settings (gear icon)
-# ANTHROPIC_API_KEY=sk-ant-your-api-key-here
-```
+API key is configured via in-app Settings UI (gear icon). Stored securely in macOS Keychain.
+No environment variables or `.env` files needed.
 
 ## Vite Commands
 

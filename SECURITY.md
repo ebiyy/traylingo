@@ -33,6 +33,8 @@ If you discover a security vulnerability in TrayLingo, please report it responsi
 - Rotate your API key if you suspect it has been exposed
 - Keychain access is protected by your macOS user account
 
+**Technical note**: Internally, TrayLingo uses the `security` CLI to access Keychain. During key storage, the API key briefly appears in process arguments (visible via `ps`). This exposure is momentary and the Keychain itself remains encrypted.
+
 ### Network Security
 
 TrayLingo communicates with the following services over HTTPS:

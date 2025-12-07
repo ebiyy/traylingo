@@ -52,7 +52,6 @@ traylingo/
 | Component | Description |
 |-----------|-------------|
 | `translate_stream` | Streaming API call to Anthropic |
-| `sanitize_input` | Clean input text (see [Input Sanitization](input-sanitization.md)) |
 | `calculate_cost` | Token usage cost calculation |
 | `MessageRequest` | API request structure |
 | `StreamEvent` | Streaming response event |
@@ -100,7 +99,7 @@ Frontend communicates with Rust backend via:
 
 ### API Key
 
-Configured via in-app Settings UI (gear icon). Stored locally via `tauri-plugin-store`.
+Configured via in-app Settings UI (gear icon). Stored securely in macOS Keychain.
 
 ### Build Configuration
 
@@ -110,4 +109,5 @@ Configured via in-app Settings UI (gear icon). Stored locally via `tauri-plugin-
 
 ## Related Documentation
 
-- [Input Sanitization](input-sanitization.md) - Unicode handling for translations
+- [Error Management](error-management.md) - Error handling strategy
+- [Logging](logging.md) - Unified logging layer
