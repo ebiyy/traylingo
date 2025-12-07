@@ -107,6 +107,33 @@ export interface ErrorReportContext {
 }
 
 /**
+ * Sanitize error data for reports (remove potentially sensitive message content)
+ */
+function sanitizeErrorData(error: TranslateError): Record<string, unknown> | null {
+  if (!("data" in error)) return null;
+
+  const data = error.data as Record<string, unknown>;
+
+  switch (error.type) {
+    case "ApiError":
+      // Only include status, not the message (may contain API response details)
+      return { status: data.status };
+    case "RateLimitExceeded":
+      return { retry_after_secs: data.retry_after_secs };
+    case "Timeout":
+      return { timeout_secs: data.timeout_secs };
+    case "NetworkError":
+    case "ParseError":
+    case "AuthenticationFailed":
+    case "Unknown":
+      // Don't include raw messages in reports
+      return null;
+    default:
+      return null;
+  }
+}
+
+/**
  * Generate a GitHub Issue-ready error report
  */
 export function generateErrorReport(error: TranslateError, context?: ErrorReportContext): string {
@@ -126,9 +153,10 @@ export function generateErrorReport(error: TranslateError, context?: ErrorReport
     lines.push(`**Version**: ${context.appVersion}`);
   }
 
-  // Add technical details for errors with data
-  if ("data" in error) {
-    lines.push("", "### Details", "```json", JSON.stringify(error.data, null, 2), "```");
+  // Add sanitized technical details (exclude potentially sensitive data)
+  const safeData = sanitizeErrorData(error);
+  if (safeData && Object.keys(safeData).length > 0) {
+    lines.push("", "### Details", "```json", JSON.stringify(safeData, null, 2), "```");
   }
 
   return lines.join("\n");

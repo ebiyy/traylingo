@@ -51,7 +51,9 @@
 ### Project Structure
 - `lib.rs`: Tauri commands and app setup
 - `main.rs`: Entry point
-- `openai.rs`: OpenAI API integration
+- `anthropic.rs`: Anthropic Claude API integration
+- `settings.rs`: User settings and cache management
+- `error.rs`: Error types and handling
 
 ### Naming Conventions
 - Functions: `snake_case` (e.g., `translate_stream`, `toggle_window`)
@@ -123,6 +125,7 @@ Example: `feat: add streaming translation support`
 ## Security Guidelines
 
 - **NEVER** commit API keys or secrets
-- API key is configured via in-app Settings UI (no `.env` file)
-- Settings stored locally via `tauri-plugin-store`
+- API key is read from `ANTHROPIC_API_KEY` environment variable (never stored in app)
+- Sentry DSN is injected via CI (OSS builds have Sentry disabled)
+- Settings stored locally via `tauri-plugin-store` (cache toggle, telemetry)
 - Review changes for security issues before committing

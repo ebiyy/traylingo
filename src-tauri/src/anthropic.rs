@@ -14,6 +14,15 @@ use crate::settings::{
 
 const REQUEST_TIMEOUT_SECS: u64 = 30;
 
+/// Parse error message from Anthropic API response body.
+/// Returns only the error.message field to avoid leaking full response details.
+fn parse_api_error_message(body: &str) -> String {
+    serde_json::from_str::<serde_json::Value>(body)
+        .ok()
+        .and_then(|v| v["error"]["message"].as_str().map(String::from))
+        .unwrap_or_else(|| "Unknown API error".to_string())
+}
+
 // WHY: Prompt injection prevention + cost optimization
 // ~150 tokens (75% of original). Critical security rules preserved.
 // Shared between translate_stream and translate_once for consistency.
@@ -263,10 +272,12 @@ pub async fn translate_stream(
             .and_then(|s| s.parse().ok());
         let body = response.text().await.unwrap_or_default();
 
+        // Parse only the error message, not the full response body (privacy)
+        let error_msg = parse_api_error_message(&body);
         let error = match status {
             401 => {
-                error!("Authentication failed: {}", body);
-                TranslateError::AuthenticationFailed { message: body }
+                error!("Authentication failed: {}", error_msg);
+                TranslateError::AuthenticationFailed { message: error_msg }
             }
             429 => {
                 warn!("Rate limited, retry_after={:?}", retry_after);
@@ -279,10 +290,10 @@ pub async fn translate_stream(
                 TranslateError::Overloaded
             }
             _ => {
-                error!("API error: status={}, body={}", status, body);
+                error!("API error: status={}, message={}", status, error_msg);
                 TranslateError::ApiError {
                     status,
-                    message: body,
+                    message: error_msg,
                 }
             }
         };
@@ -482,10 +493,12 @@ pub async fn translate_once(
             .and_then(|s| s.parse().ok());
         let body = response.text().await.unwrap_or_default();
 
+        // Parse only the error message, not the full response body (privacy)
+        let error_msg = parse_api_error_message(&body);
         let error = match status {
             401 => {
-                error!("Authentication failed: {}", body);
-                TranslateError::AuthenticationFailed { message: body }
+                error!("Authentication failed: {}", error_msg);
+                TranslateError::AuthenticationFailed { message: error_msg }
             }
             429 => {
                 warn!("Rate limited, retry_after={:?}", retry_after);
@@ -498,10 +511,10 @@ pub async fn translate_once(
                 TranslateError::Overloaded
             }
             _ => {
-                error!("API error: status={}, body={}", status, body);
+                error!("API error: status={}, message={}", status, error_msg);
                 TranslateError::ApiError {
                     status,
-                    message: body,
+                    message: error_msg,
                 }
             }
         };

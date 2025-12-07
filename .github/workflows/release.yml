@@ -35,11 +35,14 @@ jobs:
         run: pnpm install
 
       - name: Build Tauri app
-        uses: tauri-apps/tauri-action@v0
+        uses: tauri-apps/tauri-action@v0.5.16
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
-          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ""
+          # Sentry DSN injection (OSS builds without these secrets have Sentry disabled)
+          SENTRY_DSN_BACKEND: ${{ secrets.SENTRY_DSN_BACKEND }}
+          VITE_SENTRY_DSN: ${{ secrets.SENTRY_DSN_FRONTEND }}
         with:
           tagName: ${{ github.ref_name }}
           releaseName: 'TrayLingo ${{ github.ref_name }}'

@@ -8,6 +8,7 @@ interface SettingsData {
   api_key: string;
   model: string;
   send_telemetry?: boolean;
+  cache_enabled?: boolean;
 }
 
 interface SettingsProps {
@@ -21,9 +22,12 @@ export function Settings(props: SettingsProps) {
   const [apiKey, setApiKey] = createSignal("");
   const [model, setModel] = createSignal("claude-haiku-4-5-20251001");
   const [sendTelemetry, setSendTelemetry] = createSignal(true);
+  const [cacheEnabled, setCacheEnabled] = createSignal(true);
   const [saving, setSaving] = createSignal(false);
   const [saved, setSaved] = createSignal(false);
   const [showKey, setShowKey] = createSignal(false);
+  const [clearingCache, setClearingCache] = createSignal(false);
+  const [cacheCleared, setCacheCleared] = createSignal(false);
 
   // Track if there are unsaved changes
   const hasChanges = createMemo(() => {
@@ -32,7 +36,8 @@ export function Settings(props: SettingsProps) {
     return (
       apiKey() !== s.api_key ||
       model() !== s.model ||
-      sendTelemetry() !== (s.send_telemetry ?? true)
+      sendTelemetry() !== (s.send_telemetry ?? true) ||
+      cacheEnabled() !== (s.cache_enabled ?? true)
     );
   });
 
@@ -43,6 +48,7 @@ export function Settings(props: SettingsProps) {
       setApiKey(s.api_key);
       setModel(s.model);
       setSendTelemetry(s.send_telemetry ?? true);
+      setCacheEnabled(s.cache_enabled ?? true);
     }
   });
 
@@ -60,6 +66,7 @@ export function Settings(props: SettingsProps) {
           api_key: apiKey(),
           model: model(),
           send_telemetry: sendTelemetry(),
+          cache_enabled: cacheEnabled(),
         },
       });
       // Update frontend telemetry flag immediately
@@ -72,6 +79,20 @@ export function Settings(props: SettingsProps) {
       Logger.error("ipc", "Failed to save settings", { error: String(err) });
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleClearCache = async () => {
+    setClearingCache(true);
+    try {
+      await invoke("clear_translation_cache");
+      setCacheCleared(true);
+      setTimeout(() => setCacheCleared(false), 2000);
+      Logger.info("ui", "Translation cache cleared");
+    } catch (err) {
+      Logger.error("ipc", "Failed to clear cache", { error: String(err) });
+    } finally {
+      setClearingCache(false);
     }
   };
 
@@ -150,8 +171,38 @@ export function Settings(props: SettingsProps) {
             </select>
           </div>
 
+          {/* Cache Settings */}
+          <div class="mb-6">
+            <h3 class="text-sm font-medium text-[var(--text-secondary)] mb-3">Translation Cache</h3>
+            <label class="flex items-center gap-3 cursor-pointer mb-3">
+              <input
+                type="checkbox"
+                checked={cacheEnabled()}
+                onChange={(e) => setCacheEnabled(e.currentTarget.checked)}
+                class="w-4 h-4 rounded border-[var(--border-primary)] bg-[var(--bg-secondary)] text-[var(--accent-primary)] focus:ring-[var(--accent-primary)] focus:ring-offset-0"
+              />
+              <span class="text-sm text-[var(--text-secondary)]">
+                Save translation cache locally
+              </span>
+            </label>
+            <p class="text-xs text-[var(--text-muted)] ml-7 mb-3">
+              Caches translations to avoid repeated API calls. Disable for privacy.
+              <br />
+              Cache entries expire after 30 days.
+            </p>
+            <button
+              type="button"
+              onClick={handleClearCache}
+              disabled={clearingCache()}
+              class="ml-7 px-3 py-1.5 text-xs bg-[var(--bg-secondary)] border border-[var(--border-primary)] rounded hover:bg-[var(--bg-tertiary)] transition-theme disabled:opacity-50"
+            >
+              {clearingCache() ? "Clearing..." : cacheCleared() ? "Cleared!" : "Clear all cache"}
+            </button>
+          </div>
+
           {/* Error Reporting */}
           <div class="mb-6">
+            <h3 class="text-sm font-medium text-[var(--text-secondary)] mb-3">Privacy</h3>
             <label class="flex items-center gap-3 cursor-pointer">
               <input
                 type="checkbox"
@@ -183,7 +234,8 @@ export function Settings(props: SettingsProps) {
           <div class="p-3 bg-[var(--accent-secondary-muted)] rounded-md border border-[var(--border-primary)]">
             <p class="text-xs text-[var(--text-secondary)]">
               <span class="text-[var(--accent-secondary)]">Security:</span> Your API key is stored
-              locally on your device and never sent anywhere except to Anthropic's API.
+              locally on your device and never sent anywhere except to Anthropic's API. Translation
+              cache is stored locally and can be cleared anytime.
             </p>
           </div>
         </Show>

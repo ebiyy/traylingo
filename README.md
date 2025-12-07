@@ -90,8 +90,8 @@ The built app will be in `src-tauri/target/release/bundle/`.
 ### Setup
 
 1. Get an Anthropic API key from [console.anthropic.com](https://console.anthropic.com/)
-2. Launch TrayLingo and click the gear icon (⚙️) to open Settings
-3. Enter your API key and select your preferred model
+2. Launch TrayLingo and open Settings (gear icon in the main window)
+3. Paste your API key and click Save
 
 ### Translating Text
 
@@ -132,15 +132,16 @@ If an error occurs, click the **"Copy Report"** button to copy error details. Yo
 
 ## Configuration
 
-Available models (configurable in Settings):
-| Model | Speed | Input | Output |
-|-------|-------|-------|--------|
-| Claude Haiku 4.5 (default) | Fast | $1/1M | $5/1M |
-| Claude Sonnet 4.5 | Best | $3/1M | $15/1M |
-| Claude 3.5 Sonnet | Good | $3/1M | $15/1M |
-| Claude 3.5 Haiku | Fast | $0.8/1M | $4/1M |
+Select a model in Settings. Available models:
 
-Your API key and settings are stored locally on your device.
+| Model ID | Speed | Input | Output |
+|----------|-------|-------|--------|
+| `claude-haiku-4-5-20251001` (default) | Fast | $1/1M | $5/1M |
+| `claude-sonnet-4-5-20250514` | Best | $3/1M | $15/1M |
+| `claude-3-5-sonnet-20241022` | Good | $3/1M | $15/1M |
+| `claude-3-5-haiku-20241022` | Fast | $0.8/1M | $4/1M |
+
+Your API key and preferences are stored locally in `settings.json`. Translation cache can be disabled or cleared in Settings.
 
 ## Privacy
 
