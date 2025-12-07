@@ -141,7 +141,7 @@ Select a model in Settings. Available models:
 | `claude-3-5-sonnet-20241022` | Good | $3/1M | $15/1M |
 | `claude-3-5-haiku-20241022` | Fast | $0.8/1M | $4/1M |
 
-Your API key and preferences are stored locally in `settings.json`. Translation cache can be disabled or cleared in Settings.
+Your preferences are stored locally in `settings.json`. Your API key is stored securely in macOS Keychain. Translation cache can be disabled or cleared in Settings.
 
 ## Privacy
 

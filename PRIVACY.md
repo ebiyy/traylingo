@@ -26,6 +26,8 @@ TrayLingo stores data locally on your device in two locations:
 
 Your API key is securely stored in macOS Keychain, protected by your user account credentials. It is never sent anywhere except to Anthropic's API.
 
+**Note**: Uninstalling via `brew uninstall --cask traylingo` or `brew zap` removes app data but leaves the Keychain entry intact. To fully remove your API key, use Keychain Access app or clear it in Settings before uninstalling.
+
 ### Settings File (`settings.json`)
 
 | Data | Purpose | Retention |
