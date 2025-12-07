@@ -37,7 +37,7 @@ jobs:
       - name: Setup updater key
         run: |
           mkdir -p /tmp/.tauri
-          printf '%s\n' "$TAURI_KEY" > /tmp/.tauri/traylingo.key
+          echo -n "$TAURI_KEY" > /tmp/.tauri/traylingo.key
         shell: bash
         env:
           TAURI_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
