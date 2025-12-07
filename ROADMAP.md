@@ -23,6 +23,7 @@
 
 ## Future
 
+- [ ] Tray menu enhancements: Add "About" dialog (version, author, links), improve menu organization
 - [ ] Language auto-detection improvements
 - [ ] Use tauri-plugin-shell for external links (Settings.tsx Anthropic Console link)
 - [ ] Configurable popup auto-close delay (currently hardcoded 8s)
