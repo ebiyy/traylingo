@@ -9,6 +9,7 @@
 
 ## Next Release
 
+- [ ] Add Sentry Performance Monitoring (tracing) ([#51](https://github.com/ebiyy/traylingo/issues/51))
 - [ ] Refactor: Remove unreliable monitor_from_point() API usage ([#30](https://github.com/ebiyy/traylingo/issues/30))
 - [ ] Refactor: Extract system prompt constant (duplicated in translate_stream/translate_once)
 - [ ] Fix: Log format order in app_log (timestamp should come first)
