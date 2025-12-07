@@ -19,10 +19,8 @@ const SOURCE_PREVIEW_LENGTH: usize = 30; // Reduced from 100 for privacy
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Settings {
-    /// Anthropic API key
-    #[serde(default)]
-    pub api_key: String,
-
+    // NOTE: API key is stored in macOS Keychain, not here.
+    // See src/keychain.rs for Keychain operations.
     /// Selected model
     #[serde(default = "default_model")]
     pub model: String,
@@ -51,7 +49,6 @@ fn default_cache_enabled() -> bool {
 impl Default for Settings {
     fn default() -> Self {
         Self {
-            api_key: String::new(),
             model: default_model(),
             send_telemetry: default_send_telemetry(),
             cache_enabled: default_cache_enabled(),
@@ -411,7 +408,7 @@ mod tests {
     #[test]
     fn test_default_settings() {
         let settings = Settings::default();
-        assert!(settings.api_key.is_empty()); // Default: empty
+        // NOTE: api_key is now stored in macOS Keychain, not in Settings
         assert_eq!(settings.model, "claude-haiku-4-5-20251001"); // Default model
         assert!(settings.send_telemetry); // Default: enabled (opt-out)
         assert!(settings.cache_enabled); // Default: enabled

@@ -19,25 +19,19 @@ static SENTRY_GUARD: Mutex<Option<sentry::ClientInitGuard>> = Mutex::new(None);
 
 mod anthropic;
 mod error;
+mod keychain;
 mod settings;
 
 use settings::Settings;
 
 #[tauri::command]
 async fn translate(app: tauri::AppHandle, text: String, session_id: String) -> Result<(), String> {
-    let current_settings = settings::get_settings(&app);
-    if current_settings.api_key.is_empty() {
+    let api_key = keychain::get_api_key().ok_or_else(|| {
         let err = error::TranslateError::ApiKeyMissing;
-        return Err(serde_json::to_string(&err).unwrap());
-    }
-    anthropic::translate_stream(
-        app,
-        text,
-        session_id,
-        current_settings.api_key,
-        current_settings.model,
-    )
-    .await
+        serde_json::to_string(&err).unwrap()
+    })?;
+    let current_settings = settings::get_settings(&app);
+    anthropic::translate_stream(app, text, session_id, api_key, current_settings.model).await
 }
 
 #[tauri::command]
@@ -61,6 +55,26 @@ fn get_available_models() -> Vec<(String, String)> {
 #[tauri::command]
 fn clear_translation_cache(app: tauri::AppHandle) -> Result<(), String> {
     settings::clear_translation_cache(&app)
+}
+
+// ==================== API Key (Keychain) Commands ====================
+
+#[tauri::command]
+fn get_api_key() -> Option<String> {
+    keychain::get_api_key()
+}
+
+#[tauri::command]
+fn set_api_key(key: String) -> Result<(), String> {
+    if key.is_empty() {
+        return keychain::delete_api_key();
+    }
+    keychain::set_api_key(&key)
+}
+
+#[tauri::command]
+fn has_api_key() -> bool {
+    keychain::has_api_key()
 }
 
 #[tauri::command]
@@ -330,12 +344,12 @@ fn hide_popup(app: &tauri::AppHandle) {
 
 #[tauri::command]
 async fn quick_translate(app: tauri::AppHandle, text: String) -> Result<String, String> {
-    let current_settings = settings::get_settings(&app);
-    if current_settings.api_key.is_empty() {
+    let api_key = keychain::get_api_key().ok_or_else(|| {
         let err = error::TranslateError::ApiKeyMissing;
-        return Err(serde_json::to_string(&err).unwrap());
-    }
-    anthropic::translate_once(&app, text, current_settings.api_key, current_settings.model).await
+        serde_json::to_string(&err).unwrap()
+    })?;
+    let current_settings = settings::get_settings(&app);
+    anthropic::translate_once(&app, text, api_key, current_settings.model).await
 }
 
 #[tauri::command]
@@ -523,6 +537,9 @@ pub fn run() {
             save_settings,
             get_available_models,
             clear_translation_cache,
+            get_api_key,
+            set_api_key,
+            has_api_key,
             get_error_history,
             clear_error_history,
             quick_translate,
@@ -533,7 +550,7 @@ pub fn run() {
         ])
         .setup(|app| {
             // =================================================================
-            // Phase 2: Check telemetry setting and disable Sentry if opted out
+            // Check telemetry setting and disable Sentry if opted out
             // =================================================================
             let user_settings = settings::get_settings(app.handle());
 
