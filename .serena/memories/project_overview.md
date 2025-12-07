@@ -60,9 +60,17 @@ TrayLingo is a macOS menu bar (system tray) application for instant translation 
 - tauri-plugin-global-shortcut
 - tauri-plugin-clipboard-manager
 - tauri-plugin-notification
+- tauri-plugin-store
+- tauri-plugin-updater
+- tauri-plugin-process
+- tauri-plugin-log
 - reqwest 0.12 (json, stream features)
 - tokio (full features)
 - sha2 0.10 (for translation cache hashing)
+- sentry 0.46 (error monitoring)
+- arboard 3 (clipboard)
+- regex, once_cell (utilities)
+- open 5 (open URLs in browser)
 - objc2, objc2-app-kit (macOS specific)
 
 **Node.js (package.json)**:
@@ -70,6 +78,9 @@ TrayLingo is a macOS menu bar (system tray) application for instant translation 
 - @tauri-apps/plugin-clipboard-manager
 - @tauri-apps/plugin-global-shortcut
 - @tauri-apps/plugin-notification
+- @tauri-apps/plugin-process
+- @tauri-apps/plugin-updater
+- @sentry/solid ^10.29.0 (error monitoring)
 - lucide-solid ^0.555.0
 - solid-js ^1.9.10
 - tailwindcss ^4.1.17
