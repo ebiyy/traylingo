@@ -28,9 +28,10 @@ If you discover a security vulnerability in TrayLingo, please report it responsi
 
 ### API Key Safety
 
-- Your API key is stored locally on your device via `tauri-plugin-store`
-- Never share your API key or settings file
+- Your API key is securely stored in **macOS Keychain** (not in plain text files)
+- Never share your API key
 - Rotate your API key if you suspect it has been exposed
+- Keychain access is protected by your macOS user account
 
 ### Network Security
 
