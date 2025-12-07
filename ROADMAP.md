@@ -26,6 +26,8 @@
 
 ## Future
 
+- [ ] English language support (English → Japanese translation)
+- [ ] Multi-language support (TBD)
 - [ ] Language auto-detection improvements
 - [ ] Use tauri-plugin-shell for external links (Settings.tsx Anthropic Console link)
 - [ ] Configurable popup auto-close delay (currently hardcoded 8s)
