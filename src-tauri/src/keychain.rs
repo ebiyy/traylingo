@@ -3,9 +3,12 @@ use std::process::Command;
 const SERVICE_NAME: &str = "com.ebiyy.traylingo";
 const ACCOUNT_NAME: &str = "anthropic_api_key";
 
+// WHY: Use absolute path to prevent PATH hijacking attacks
+const SECURITY_CMD: &str = "/usr/bin/security";
+
 /// Get API key from macOS Keychain using `security` command
 pub fn get_api_key() -> Option<String> {
-    let output = Command::new("security")
+    let output = Command::new(SECURITY_CMD)
         .args([
             "find-generic-password",
             "-s",
@@ -38,7 +41,7 @@ pub fn set_api_key(key: &str) -> Result<(), String> {
     let _ = delete_api_key();
 
     // Add the new password
-    let output = Command::new("security")
+    let output = Command::new(SECURITY_CMD)
         .args([
             "add-generic-password",
             "-s",
@@ -64,7 +67,7 @@ pub fn set_api_key(key: &str) -> Result<(), String> {
 
 /// Delete API key from macOS Keychain using `security` command
 pub fn delete_api_key() -> Result<(), String> {
-    let output = Command::new("security")
+    let output = Command::new(SECURITY_CMD)
         .args([
             "delete-generic-password",
             "-s",
