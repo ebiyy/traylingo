@@ -25,9 +25,19 @@ use settings::Settings;
 
 #[tauri::command]
 async fn translate(app: tauri::AppHandle, text: String, session_id: String) -> Result<(), String> {
-    let api_key = settings::get_api_key(&app);
-    let model = settings::get_model(&app);
-    anthropic::translate_stream(app, text, session_id, api_key, model).await
+    let current_settings = settings::get_settings(&app);
+    if current_settings.api_key.is_empty() {
+        let err = error::TranslateError::ApiKeyMissing;
+        return Err(serde_json::to_string(&err).unwrap());
+    }
+    anthropic::translate_stream(
+        app,
+        text,
+        session_id,
+        current_settings.api_key,
+        current_settings.model,
+    )
+    .await
 }
 
 #[tauri::command]
@@ -46,6 +56,11 @@ fn get_available_models() -> Vec<(String, String)> {
         .iter()
         .map(|(id, name)| (id.to_string(), name.to_string()))
         .collect()
+}
+
+#[tauri::command]
+fn clear_translation_cache(app: tauri::AppHandle) -> Result<(), String> {
+    settings::clear_translation_cache(&app)
 }
 
 #[tauri::command]
@@ -315,9 +330,12 @@ fn hide_popup(app: &tauri::AppHandle) {
 
 #[tauri::command]
 async fn quick_translate(app: tauri::AppHandle, text: String) -> Result<String, String> {
-    let api_key = settings::get_api_key(&app);
-    let model = settings::get_model(&app);
-    anthropic::translate_once(&app, text, api_key, model).await
+    let current_settings = settings::get_settings(&app);
+    if current_settings.api_key.is_empty() {
+        let err = error::TranslateError::ApiKeyMissing;
+        return Err(serde_json::to_string(&err).unwrap());
+    }
+    anthropic::translate_once(&app, text, current_settings.api_key, current_settings.model).await
 }
 
 #[tauri::command]
@@ -452,42 +470,45 @@ pub fn run() {
     // =========================================================================
     // Phase 1: Early Sentry init (captures panics during Tauri initialization)
     // =========================================================================
-    // NOTE: We initialize Sentry early to capture panics during startup.
+    // NOTE: DSN is injected via build-time env var (SENTRY_DSN_BACKEND).
+    // For OSS builds without DSN, Sentry is disabled.
     // If user has disabled telemetry, we'll drop the guard in setup().
-    // This is opt-in by default, matching our privacy policy.
     //
     // IMPORTANT: Privacy Protection - Sentry PII Masking
     // This app handles sensitive user data (clipboard text for translation).
     // We MUST scrub any text content before sending to Sentry.
     // See also: src/index.tsx for frontend Sentry configuration.
-    let guard = sentry::init((
-        "https://7a8f51076788f70a7a7caaa5841f436b@o4503930312261632.ingest.us.sentry.io/4510482334482432",
-        sentry::ClientOptions {
-            release: sentry::release_name!(),
-            environment: Some(if cfg!(debug_assertions) {
-                "development".into()
-            } else {
-                "production".into()
-            }),
-            before_send: Some(Arc::new(|mut event| {
-                // WHY: Users paste sensitive content (emails, passwords, private messages)
-                // for translation. This data MUST NOT be sent to external services.
-                event.extra.remove("text");
-                event.extra.remove("translation");
-                event.extra.remove("clipboard");
-                Some(event)
-            })),
-            ..Default::default()
-        },
-    ));
+    let dsn = option_env!("SENTRY_DSN_BACKEND").unwrap_or("");
+    if !dsn.is_empty() {
+        let guard = sentry::init((
+            dsn,
+            sentry::ClientOptions {
+                release: sentry::release_name!(),
+                environment: Some(if cfg!(debug_assertions) {
+                    "development".into()
+                } else {
+                    "production".into()
+                }),
+                before_send: Some(Arc::new(|mut event| {
+                    // WHY: Users paste sensitive content (emails, passwords, private messages)
+                    // for translation. This data MUST NOT be sent to external services.
+                    event.extra.remove("text");
+                    event.extra.remove("translation");
+                    event.extra.remove("clipboard");
+                    Some(event)
+                })),
+                ..Default::default()
+            },
+        ));
 
-    // Store guard in static to keep client alive for entire program lifetime
-    // WHY: Moving guard into Tauri's managed state caused client to become disabled
-    *SENTRY_GUARD.lock().unwrap() = Some(guard);
+        // Store guard in static to keep client alive for entire program lifetime
+        // WHY: Moving guard into Tauri's managed state caused client to become disabled
+        *SENTRY_GUARD.lock().unwrap() = Some(guard);
 
-    // Install panic handler, passing the default hook saved before sentry::init
-    // This ensures we don't call Sentry's PanicIntegration (avoids duplicate events)
-    install_panic_handler_with_flush(default_hook);
+        // Install panic handler, passing the default hook saved before sentry::init
+        // This ensures we don't call Sentry's PanicIntegration (avoids duplicate events)
+        install_panic_handler_with_flush(default_hook);
+    }
 
     let app = tauri::Builder::default()
         .plugin(tauri_plugin_global_shortcut::Builder::new().build())
@@ -501,6 +522,7 @@ pub fn run() {
             get_settings,
             save_settings,
             get_available_models,
+            clear_translation_cache,
             get_error_history,
             clear_error_history,
             quick_translate,
