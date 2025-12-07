@@ -36,9 +36,8 @@ jobs:
 
       - name: Setup updater key
         run: |
-          mkdir -p "$RUNNER_TEMP/.tauri"
-          printf '%s\n' "$TAURI_KEY" > "$RUNNER_TEMP/.tauri/traylingo.key"
-          echo "TAURI_KEY_PATH=$RUNNER_TEMP/.tauri/traylingo.key" >> "$GITHUB_ENV"
+          mkdir -p /tmp/.tauri
+          printf '%s\n' "$TAURI_KEY" > /tmp/.tauri/traylingo.key
         shell: bash
         env:
           TAURI_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
@@ -47,7 +46,7 @@ jobs:
         uses: tauri-apps/tauri-action@v0.5.16
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          TAURI_SIGNING_PRIVATE_KEY: ${{ env.TAURI_KEY_PATH }}
+          TAURI_SIGNING_PRIVATE_KEY: /tmp/.tauri/traylingo.key
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
           # Sentry DSN injection (OSS builds without these secrets have Sentry disabled)
           SENTRY_DSN_BACKEND: ${{ secrets.SENTRY_DSN_BACKEND }}
