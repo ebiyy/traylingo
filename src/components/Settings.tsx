@@ -5,7 +5,7 @@ import { setTelemetryEnabled } from "../index";
 import { Logger } from "../utils/logger";
 
 interface SettingsData {
-  api_key: string;
+  // NOTE: api_key is stored in macOS Keychain, fetched separately via get_api_key
   model: string;
   send_telemetry?: boolean;
   cache_enabled?: boolean;
@@ -18,6 +18,10 @@ interface SettingsProps {
 export function Settings(props: SettingsProps) {
   const [settings, { refetch }] = createResource<SettingsData>(() => invoke("get_settings"));
   const [models] = createResource<[string, string][]>(() => invoke("get_available_models"));
+  // API key is stored in macOS Keychain, fetched separately
+  const [storedApiKey, { refetch: refetchApiKey }] = createResource<string | null>(() =>
+    invoke("get_api_key"),
+  );
 
   const [apiKey, setApiKey] = createSignal("");
   const [model, setModel] = createSignal("claude-haiku-4-5-20251001");
@@ -33,8 +37,9 @@ export function Settings(props: SettingsProps) {
   const hasChanges = createMemo(() => {
     const s = settings();
     if (!s) return false;
+    const currentStoredKey = storedApiKey() ?? "";
     return (
-      apiKey() !== s.api_key ||
+      apiKey() !== currentStoredKey ||
       model() !== s.model ||
       sendTelemetry() !== (s.send_telemetry ?? true) ||
       cacheEnabled() !== (s.cache_enabled ?? true)
@@ -45,10 +50,17 @@ export function Settings(props: SettingsProps) {
   createEffect(() => {
     const s = settings();
     if (s) {
-      setApiKey(s.api_key);
       setModel(s.model);
       setSendTelemetry(s.send_telemetry ?? true);
       setCacheEnabled(s.cache_enabled ?? true);
+    }
+  });
+
+  // Initialize API key from Keychain
+  createEffect(() => {
+    const key = storedApiKey();
+    if (key !== undefined) {
+      setApiKey(key ?? "");
     }
   });
 
@@ -61,9 +73,12 @@ export function Settings(props: SettingsProps) {
   const handleSave = async () => {
     setSaving(true);
     try {
+      // Save API key to macOS Keychain (separate from other settings)
+      await invoke("set_api_key", { key: apiKey() });
+
+      // Save other settings to settings.json
       await invoke("save_settings", {
         newSettings: {
-          api_key: apiKey(),
           model: model(),
           send_telemetry: sendTelemetry(),
           cache_enabled: cacheEnabled(),
@@ -71,8 +86,9 @@ export function Settings(props: SettingsProps) {
       });
       // Update frontend telemetry flag immediately
       setTelemetryEnabled(sendTelemetry());
-      // Refetch settings to update hasChanges comparison
+      // Refetch settings and API key to update hasChanges comparison
       await refetch();
+      await refetchApiKey();
       setSaved(true);
       setTimeout(() => setSaved(false), 2000);
     } catch (err) {
@@ -113,7 +129,7 @@ export function Settings(props: SettingsProps) {
       {/* Content */}
       <div class="flex-1 overflow-y-auto p-6">
         <Show
-          when={!settings.loading}
+          when={!settings.loading && !storedApiKey.loading}
           fallback={<p class="text-[var(--text-muted)]">Loading...</p>}
         >
           {/* API Key */}
@@ -233,9 +249,9 @@ export function Settings(props: SettingsProps) {
           {/* Security Note */}
           <div class="p-3 bg-[var(--accent-secondary-muted)] rounded-md border border-[var(--border-primary)]">
             <p class="text-xs text-[var(--text-secondary)]">
-              <span class="text-[var(--accent-secondary)]">Security:</span> Your API key is stored
-              locally on your device and never sent anywhere except to Anthropic's API. Translation
-              cache is stored locally and can be cleared anytime.
+              <span class="text-[var(--accent-secondary)]">Security:</span> Your API key is securely
+              stored in macOS Keychain and never sent anywhere except to Anthropic's API.
+              Translation cache is stored locally and can be cleared anytime.
             </p>
           </div>
         </Show>

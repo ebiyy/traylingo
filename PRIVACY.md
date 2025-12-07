@@ -16,17 +16,24 @@ TrayLingo uses Sentry for error monitoring to improve app stability.
 
 ## Local Storage
 
-TrayLingo stores the following data locally on your device (`settings.json`):
+TrayLingo stores data locally on your device in two locations:
+
+### macOS Keychain (Secure Storage)
 
 | Data | Purpose | Retention |
 |------|---------|-----------|
 | API key | Anthropic API authentication | Until you change it |
+
+Your API key is securely stored in macOS Keychain, protected by your user account credentials. It is never sent anywhere except to Anthropic's API.
+
+### Settings File (`settings.json`)
+
+| Data | Purpose | Retention |
+|------|---------|-----------|
 | Translation cache | Avoid redundant API calls | Up to 100 entries, auto-expires after 30 days |
 | Source text preview | Cache lookup display | First 30 characters (with sensitive data masked) |
 | Error history | Debugging | Last 50 errors |
-| App settings | Preferences (cache toggle, telemetry) | Until you change them |
-
-**Note**: Your API key is stored locally in `settings.json` and is never sent anywhere except to Anthropic's API.
+| App settings | Preferences (model, cache toggle, telemetry) | Until you change them |
 
 ### Privacy Controls
 
@@ -35,7 +42,7 @@ TrayLingo stores the following data locally on your device (`settings.json`):
 - **Auto-Expiry**: Cache entries automatically expire after 30 days
 - **Sensitive Data Masking**: Email addresses, URLs, and long numbers are masked in cache previews
 
-Delete `settings.json` to clear all local data.
+Delete `settings.json` to clear local settings and cache. To remove your API key, use the Keychain Access app or clear it in Settings.
 
 ## Opt-Out
 
