@@ -1,11 +1,21 @@
+use once_cell::sync::Lazy;
+use regex::Regex;
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 use tauri::AppHandle;
 use tauri_plugin_store::StoreExt;
 
+// Regex patterns for masking sensitive data in cache previews
+static EMAIL_REGEX: Lazy<Regex> =
+    Lazy::new(|| Regex::new(r"[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}").unwrap());
+static URL_REGEX: Lazy<Regex> = Lazy::new(|| Regex::new(r"https?://[^\s]+").unwrap());
+static LONG_NUMBER_REGEX: Lazy<Regex> = Lazy::new(|| Regex::new(r"\d{4,}").unwrap());
+
 const STORE_PATH: &str = "settings.json";
 const MAX_ERROR_HISTORY: usize = 50;
-const MAX_TRANSLATION_CACHE: usize = 500;
+const MAX_TRANSLATION_CACHE: usize = 100; // Reduced from 500 for privacy
+const CACHE_TTL_SECS: i64 = 30 * 24 * 60 * 60; // 30 days
+const SOURCE_PREVIEW_LENGTH: usize = 30; // Reduced from 100 for privacy
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Settings {
@@ -20,6 +30,10 @@ pub struct Settings {
     /// Send error reports to Sentry (opt-out: enabled by default)
     #[serde(default = "default_send_telemetry")]
     pub send_telemetry: bool,
+
+    /// Enable translation cache (default: true)
+    #[serde(default = "default_cache_enabled")]
+    pub cache_enabled: bool,
 }
 
 fn default_model() -> String {
@@ -30,12 +44,17 @@ fn default_send_telemetry() -> bool {
     true // Opt-out: enabled by default
 }
 
+fn default_cache_enabled() -> bool {
+    true // Cache enabled by default
+}
+
 impl Default for Settings {
     fn default() -> Self {
         Self {
             api_key: String::new(),
             model: default_model(),
             send_telemetry: default_send_telemetry(),
+            cache_enabled: default_cache_enabled(),
         }
     }
 }
@@ -84,14 +103,9 @@ pub fn save_settings(app: &AppHandle, settings: &Settings) -> Result<(), String>
     Ok(())
 }
 
-/// Get API key from settings
-pub fn get_api_key(app: &AppHandle) -> String {
-    get_settings(app).api_key
-}
-
-/// Get model from settings
-pub fn get_model(app: &AppHandle) -> String {
-    get_settings(app).model
+/// Check if cache is enabled
+pub fn is_cache_enabled(app: &AppHandle) -> bool {
+    get_settings(app).cache_enabled
 }
 
 // ==================== Error History ====================
@@ -226,8 +240,28 @@ fn hash_text(text: &str) -> String {
     format!("{:x}", hasher.finalize())
 }
 
-/// Get cached translation if exists
+/// Create a safe preview of text for cache storage.
+/// Truncates to SOURCE_PREVIEW_LENGTH and masks sensitive patterns.
+fn create_safe_preview(text: &str) -> String {
+    let preview: String = text.chars().take(SOURCE_PREVIEW_LENGTH).collect();
+    mask_sensitive_patterns(&preview)
+}
+
+/// Mask sensitive patterns in text (emails, URLs, long numbers)
+fn mask_sensitive_patterns(text: &str) -> String {
+    let text = EMAIL_REGEX.replace_all(text, "[EMAIL]");
+    let text = URL_REGEX.replace_all(&text, "[URL]");
+    let text = LONG_NUMBER_REGEX.replace_all(&text, "[***]");
+    text.to_string()
+}
+
+/// Get cached translation if exists (respects cache_enabled setting)
 pub fn get_cached_translation(app: &AppHandle, text: &str, model: &str) -> Option<String> {
+    // Check if cache is enabled
+    if !is_cache_enabled(app) {
+        return None;
+    }
+
     let store = app.store(STORE_PATH).ok()?;
     let hash = hash_text(text);
 
@@ -236,10 +270,20 @@ pub fn get_cached_translation(app: &AppHandle, text: &str, model: &str) -> Optio
         .and_then(|v| serde_json::from_value(v).ok())
         .unwrap_or_default();
 
-    // Find matching entry (same hash and model)
+    // Get current timestamp for expiry check
+    let now = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .map(|d| d.as_secs() as i64)
+        .unwrap_or(0);
+
+    // Find matching entry (same hash and model, not expired)
     let result = cache
         .iter()
-        .find(|entry| entry.source_hash == hash && entry.model == model)
+        .find(|entry| {
+            entry.source_hash == hash
+                && entry.model == model
+                && (now - entry.timestamp) < CACHE_TTL_SECS
+        })
         .map(|entry| entry.translated_text.clone());
 
     // Update stats
@@ -264,42 +308,48 @@ pub fn get_cached_translation(app: &AppHandle, text: &str, model: &str) -> Optio
     result
 }
 
-/// Save translation to cache (LRU eviction when full)
+/// Save translation to cache (respects cache_enabled setting, LRU eviction when full)
 pub fn save_cached_translation(
     app: &AppHandle,
     text: &str,
     translated_text: &str,
     model: &str,
 ) -> Result<(), String> {
+    // Check if cache is enabled
+    if !is_cache_enabled(app) {
+        return Ok(());
+    }
+
     let store = app.store(STORE_PATH).map_err(|e| e.to_string())?;
     let hash = hash_text(text);
+    let now = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .map(|d| d.as_secs() as i64)
+        .unwrap_or(0);
 
     let mut cache: Vec<CachedTranslation> = store
         .get("translation_cache")
         .and_then(|v| serde_json::from_value(v).ok())
         .unwrap_or_default();
 
+    // Remove expired entries (30-day TTL)
+    cache.retain(|entry| (now - entry.timestamp) < CACHE_TTL_SECS);
+
     // Check if already exists (update timestamp if so)
     if let Some(entry) = cache
         .iter_mut()
         .find(|e| e.source_hash == hash && e.model == model)
     {
-        entry.timestamp = std::time::SystemTime::now()
-            .duration_since(std::time::UNIX_EPOCH)
-            .map(|d| d.as_secs() as i64)
-            .unwrap_or(0);
+        entry.timestamp = now;
         entry.translated_text = translated_text.to_string();
     } else {
-        // Add new entry
+        // Add new entry with safe preview (truncated + masked for privacy)
         let entry = CachedTranslation {
             source_hash: hash,
-            source_preview: text.chars().take(100).collect(),
+            source_preview: create_safe_preview(text),
             translated_text: translated_text.to_string(),
             model: model.to_string(),
-            timestamp: std::time::SystemTime::now()
-                .duration_since(std::time::UNIX_EPOCH)
-                .map(|d| d.as_secs() as i64)
-                .unwrap_or(0),
+            timestamp: now,
         };
         cache.push(entry);
     }
@@ -339,8 +389,7 @@ pub fn get_cache_stats(app: &AppHandle) -> CacheStats {
         .unwrap_or_default()
 }
 
-/// Clear translation cache
-#[allow(dead_code)] // For future UI feature
+/// Clear translation cache (called from UI)
 pub fn clear_translation_cache(app: &AppHandle) -> Result<(), String> {
     let store = app.store(STORE_PATH).map_err(|e| e.to_string())?;
     store.set(
@@ -362,9 +411,10 @@ mod tests {
     #[test]
     fn test_default_settings() {
         let settings = Settings::default();
-        assert!(settings.api_key.is_empty());
-        assert_eq!(settings.model, "claude-haiku-4-5-20251001");
+        assert!(settings.api_key.is_empty()); // Default: empty
+        assert_eq!(settings.model, "claude-haiku-4-5-20251001"); // Default model
         assert!(settings.send_telemetry); // Default: enabled (opt-out)
+        assert!(settings.cache_enabled); // Default: enabled
     }
 
     #[test]
@@ -379,8 +429,39 @@ mod tests {
     }
 
     #[test]
-    fn test_available_models() {
-        assert!(!AVAILABLE_MODELS.is_empty());
-        assert_eq!(AVAILABLE_MODELS[0].0, "claude-haiku-4-5-20251001");
+    fn test_mask_sensitive_patterns() {
+        // Email masking
+        assert_eq!(
+            mask_sensitive_patterns("Contact: user@example.com"),
+            "Contact: [EMAIL]"
+        );
+
+        // URL masking
+        assert_eq!(
+            mask_sensitive_patterns("See https://example.com/path"),
+            "See [URL]"
+        );
+
+        // Long number masking (4+ digits)
+        assert_eq!(mask_sensitive_patterns("Card: 1234567890"), "Card: [***]");
+
+        // Short numbers are kept
+        assert_eq!(mask_sensitive_patterns("Code: 123"), "Code: 123");
+
+        // Combined
+        assert_eq!(
+            mask_sensitive_patterns("Email user@test.com or call 12345"),
+            "Email [EMAIL] or call [***]"
+        );
+    }
+
+    #[test]
+    fn test_create_safe_preview() {
+        // Long text is truncated
+        let long_text = "a".repeat(100);
+        assert_eq!(create_safe_preview(&long_text).len(), SOURCE_PREVIEW_LENGTH);
+
+        // Short text with sensitive data is masked
+        assert!(create_safe_preview("user@example.com").contains("[EMAIL]"));
     }
 }

@@ -20,13 +20,22 @@ TrayLingo stores the following data locally on your device (`settings.json`):
 
 | Data | Purpose | Retention |
 |------|---------|-----------|
-| API key | Authentication | Until you change it |
-| Translation cache | Avoid redundant API calls | Up to 500 entries (LRU eviction) |
-| Source text preview | Cache lookup display | First 100 characters per entry |
+| API key | Anthropic API authentication | Until you change it |
+| Translation cache | Avoid redundant API calls | Up to 100 entries, auto-expires after 30 days |
+| Source text preview | Cache lookup display | First 30 characters (with sensitive data masked) |
 | Error history | Debugging | Last 50 errors |
-| App settings | Preferences | Until you change them |
+| App settings | Preferences (cache toggle, telemetry) | Until you change them |
 
-**Note**: Translation cache includes the full translated text and a preview of the source text. Delete `settings.json` to clear all local data.
+**Note**: Your API key is stored locally in `settings.json` and is never sent anywhere except to Anthropic's API.
+
+### Privacy Controls
+
+- **Cache Toggle**: Disable translation cache entirely in Settings
+- **Clear Cache**: One-click button to delete all cached translations
+- **Auto-Expiry**: Cache entries automatically expire after 30 days
+- **Sensitive Data Masking**: Email addresses, URLs, and long numbers are masked in cache previews
+
+Delete `settings.json` to clear all local data.
 
 ## Opt-Out
 
