@@ -99,6 +99,62 @@ taplo fmt src-tauri/Cargo.toml
 - Write clear, concise commit messages
 - Use conventional commits when possible (feat:, fix:, docs:, etc.)
 
+### Code Comments (Annotation Tags)
+
+We treat comments as **understanding priority metadata**, not explanations. This reduces review costs and prevents understanding debt.
+
+**Tag vocabulary:**
+
+| Tag | Purpose | Required Content |
+|-----|---------|------------------|
+| `WHY:` | Design decisions, rejected alternatives | Specific reason |
+| `NOTE:` | Context, absence explanation, known limits | What's missing/limited |
+| `SECURITY:` | PII, secrets, permissions, external calls | MUST/SHOULD + examples |
+| `IMPORTANT:` | Invariants that break if changed/deleted | What breaks (symptom) |
+| `PITFALL:` / `BUG:` | External dependency traps | **Link required** |
+| `HACK:` | Temporary workaround | — |
+| `TODO:` | Future improvement | Condition preferred |
+| `REMOVE_WHEN:` | Cleanup condition for temporary code | Version/issue |
+
+**Writing rules:**
+
+- **No abstractions**: "for security" alone is forbidden → write what leaks/breaks
+- **External behavior**: must include link (Issue/Doc/PR) for `PITFALL/BUG`
+- **Temporary guards**: should have `REMOVE_WHEN:` with condition
+- **Missing things**: explain absence with `NOTE:` (grep can't find what doesn't exist)
+
+**Placement:**
+- Spec/contract → doc comment (`///` or `/** */`)
+- Trap/workaround → inline, directly before the line
+- Long flow → split with `PHASE n:`
+
+**Forbidden:**
+- Obvious comments (restating code)
+- Abstract warnings without concrete example
+- `TODO` without condition or context
+
+**TrayLingo examples:**
+
+```rust
+// SECURITY: clipboard text could include passwords, emails, private messages;
+// MUST NOT log raw text, only length
+let text = clipboard::read_text()?;
+
+// IMPORTANT: changing send order causes duplicate translations;
+// keep request_id check before API call
+if self.pending_requests.contains(&request_id) { return; }
+
+// PITFALL: Sentry flush(None) doesn't wait in spawned threads
+// - see https://github.com/getsentry/sentry-rust/issues/XXX
+sentry::flush(Some(Duration::from_secs(2)));
+
+// REMOVE_WHEN: tauri-plugin-global-shortcut fixes double-fire (#23)
+if event.state != ShortcutState::Pressed { return; }
+```
+
+**Review principle:**
+> Don't blame missing tags. Blame lying tags.
+
 ## Git Workflow
 
 ### Branch Strategy

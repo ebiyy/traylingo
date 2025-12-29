@@ -1,15 +1,11 @@
 ## Summary
-Brief description of changes.
+What changed? (1-3 lines)
 
-## Changes
--
--
+## Test Plan
+- How to verify
 
-## Related Issues
+## Risk (if applicable)
+- [ ] Security / PII / Secrets
+- [ ] Breaking change
+
 Closes #
-
-## Checklist
-- [ ] Code follows the project style
-- [ ] Self-reviewed the code
-- [ ] Tested locally with `pnpm tauri dev`
-- [ ] Updated documentation if needed

@@ -386,34 +386,43 @@ Config: [src-tauri/deny.toml](src-tauri/deny.toml)
 
 ### Self-Documenting Code
 
-**Principle**: Code should explain itself. Use comments only when code alone cannot convey intent.
+**Principle**: Code should explain itself. Comments are supplements, not substitutes.
 
-**When to write comments:**
-- Non-obvious design decisions (use `WHY:`)
-- Workarounds or temporary fixes (use `HACK:`)
-- Important notes for future readers (use `NOTE:`)
-- Planned improvements (use `TODO:`)
+#### Naming
 
-**Comment prefixes:**
-| Prefix | Purpose | Example |
-|--------|---------|---------|
-| `WHY:` | Explains non-obvious decisions | `// WHY: Translate technical terms for accessibility` |
-| `HACK:` | Temporary workaround | `// HACK: Delay needed due to race condition` |
-| `NOTE:` | Important context | `// NOTE: This API returns null on first call` |
-| `TODO:` | Future improvement | `// TODO: Add retry logic for network errors` |
+- Use descriptive names that reveal intent
+- Avoid abbreviations unless universally understood
+- Functions: verb + noun (`calculateCost`, `fetchUserData`)
+- Booleans: `is`/`has`/`should` prefix (`isLoading`, `hasError`)
+
+#### Annotation Tags
+
+Comments are **understanding priority metadata**. Use only when code alone cannot convey intent.
+
+| Tag | When to Use | Required |
+|-----|-------------|----------|
+| `WHY:` | Design decisions, rejected alternatives | Specific reason |
+| `NOTE:` | Context, absence explanation, known limits | — |
+| `SECURITY:` | PII/secrets/permissions/external calls | MUST/SHOULD + examples |
+| `IMPORTANT:` | Invariants that break if changed | What breaks |
+| `PITFALL:` / `BUG:` | External dependency traps | **Link required** |
+| `HACK:` | Temporary workaround | — |
+| `TODO:` | Future improvement | Condition preferred |
+| `REMOVE_WHEN:` | Cleanup condition for temp code | Version/issue |
+
+**Rules:**
+- Abstractions forbidden: "for security" alone → write what leaks/breaks
+- `PITFALL/BUG`: must include link (Issue/Doc/PR)
+- Temporary guards: should have `REMOVE_WHEN:`
 
 **What NOT to comment:**
-- Obvious code (e.g., `// increment counter` before `i++`)
-- Already clear variable/function names
-- Implementation details that code shows clearly
+- Obvious code (restating what code does)
+- Clear variable/function names
 
-**Example (good):**
-```rust
-// WHY: Translate technical terms for accessibility
-// Users who don't understand English need full translation, not preserved terms.
-// Only proper nouns (product/service names) are kept unchanged.
-let system_prompt = r#"..."#;
-```
+**Review principle:**
+> Don't blame missing tags. Blame lying tags.
+
+See [CONTRIBUTING.md](CONTRIBUTING.md#code-comments-annotation-tags) for full guide with examples.
 
 ### Security
 - Never commit API keys or secrets
