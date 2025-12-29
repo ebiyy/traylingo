@@ -485,3 +485,14 @@ Propose `mcp__serena__edit_memory` or `mcp__serena__write_memory` when:
 | `codebase_structure.md` | Directory structure, files renamed/moved, new modules/components |
 | `project_overview.md` | Tech stack, API provider, models, features, or shortcuts change |
 | `task_completion_checklist.md` | CI/CD or review process changes |
+
+## Claude Code Skills (Experimental)
+
+Project-local skills in `.claude/skills/`. These are experimental and being refined.
+
+| Skill | Description |
+|-------|-------------|
+| `tauri-development` | Tauri v2 macOS app development: debugging, signing, shortcuts, Keychain, Homebrew |
+| `llm-cost-optimization` | LLM API cost reduction: caching, prompt compression, debouncing |
+| `oss-release-checklist` | OSS release prep: security, legal/licensing, privacy compliance |
+| `tdd` | Test-Driven Development patterns (placeholder) |
