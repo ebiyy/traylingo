@@ -5,6 +5,7 @@
 
 ## In Progress
 
+- [ ] Bug: Check for Updates menu item does not work ([#53](https://github.com/ebiyy/traylingo/issues/53))
 - [ ] Bug: First shortcut trigger often times out (clipboard not captured) ([#22](https://github.com/ebiyy/traylingo/issues/22))
 
 ## Next Release
