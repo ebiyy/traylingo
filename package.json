@@ -28,7 +28,7 @@
   ],
   "author": "",
   "license": "MIT",
-  "packageManager": "pnpm@10.24.0",
+  "packageManager": "pnpm@10.27.0",
   "dependencies": {
     "@sentry/solid": "^10.29.0",
     "@tauri-apps/api": "^2.9.1",
