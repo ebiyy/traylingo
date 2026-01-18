@@ -10,7 +10,7 @@ importers:
     dependencies:
       '@sentry/solid':
         specifier: ^10.29.0
-        version: 10.32.1(solid-js@1.9.10)
+        version: 10.34.0(solid-js@1.9.10)
       '@tauri-apps/api':
         specifier: ^2.9.1
         version: 2.9.1
@@ -621,32 +621,32 @@ packages:
     cpu: [x64]
     os: [win32]
 
-  '@sentry-internal/browser-utils@10.32.1':
-    resolution: {integrity: sha512-sjLLep1es3rTkbtAdTtdpc/a6g7v7bK5YJiZJsUigoJ4NTiFeMI5uIDCxbH/tjJ1q23YE1LzVn7T96I+qBRjHA==}
+  '@sentry-internal/browser-utils@10.34.0':
+    resolution: {integrity: sha512-0YNr60rGHyedmwkO0lbDBjNx2KAmT3kWamjaqu7Aw+jsESoPLgt+fzaTVvUBvkftBDui2PeTSzXm/nqzssctYg==}
     engines: {node: '>=18'}
 
-  '@sentry-internal/feedback@10.32.1':
-    resolution: {integrity: sha512-O24G8jxbfBY1RE/v2qFikPJISVMOrd/zk8FKyl+oUVYdOxU2Ucjk2cR3EQruBFlc7irnL6rT3GPfRZ/kBgLkmQ==}
+  '@sentry-internal/feedback@10.34.0':
+    resolution: {integrity: sha512-wgGnq+iNxsFSOe9WX/FOvtoItSTjgLJJ4dQkVYtcVM6WGBVIg4wgNYfECCnRNztUTPzpZHLjC9r+4Pym451DDQ==}
     engines: {node: '>=18'}
 
-  '@sentry-internal/replay-canvas@10.32.1':
-    resolution: {integrity: sha512-/XGTzWNWVc+B691fIVekV2KeoHFEDA5KftrLFAhEAW7uWOwk/xy3aQX4TYM0LcPm2PBKvoumlAD+Sd/aXk63oA==}
+  '@sentry-internal/replay-canvas@10.34.0':
+    resolution: {integrity: sha512-XWH/9njtgMD+LLWjc4KKgBpb+dTCkoUEIFDxcvzG/87d+jirmzf0+r8EfpLwKG+GrqNiiGRV39zIqu0SfPl+cw==}
     engines: {node: '>=18'}
 
-  '@sentry-internal/replay@10.32.1':
-    resolution: {integrity: sha512-KKmLUgIaLRM0VjrMA1ByQTawZyRDYSkG2evvEOVpEtR9F0sumidAQdi7UY71QEKE1RYe/Jcp/3WoaqsMh8tbnQ==}
+  '@sentry-internal/replay@10.34.0':
+    resolution: {integrity: sha512-Vmea0GcOg57z/S1bVSj3saFcRvDqdLzdy4wd9fQMpMgy5OCbTlo7lxVUndKzbcZnanma6zF6VxwnWER1WuN9RA==}
     engines: {node: '>=18'}
 
-  '@sentry/browser@10.32.1':
-    resolution: {integrity: sha512-NPNCXTZ05ZGTFyJdKNqjykpFm+urem0ebosILQiw3C4BxNVNGH4vfYZexyl6prRhmg91oB6GjVNiVDuJiap1gg==}
+  '@sentry/browser@10.34.0':
+    resolution: {integrity: sha512-8WCsAXli5Z+eIN8dMY8KGQjrS3XgUp1np/pjdeWNrVPVR8q8XpS34qc+f+y/LFrYQC9bs2Of5aIBwRtDCIvRsg==}
     engines: {node: '>=18'}
 
-  '@sentry/core@10.32.1':
-    resolution: {integrity: sha512-PH2ldpSJlhqsMj2vCTyU0BI2Fx1oIDhm7Izo5xFALvjVCS0gmlqHt1udu6YlKn8BtpGH6bGzssvv5APrk+OdPQ==}
+  '@sentry/core@10.34.0':
+    resolution: {integrity: sha512-4FFpYBMf0VFdPcsr4grDYDOR87mRu6oCfb51oQjU/Pndmty7UgYo0Bst3LEC/8v0SpytBtzXq+Wx/fkwulBesg==}
     engines: {node: '>=18'}
 
-  '@sentry/solid@10.32.1':
-    resolution: {integrity: sha512-Gz9zUuDAd/FvTcogXdasBMN3GHMtovSjlh5nPvysqFHa1t8x1HWYR5h7l5YVl38PYSCswyABcf4dumSphQbyMg==}
+  '@sentry/solid@10.34.0':
+    resolution: {integrity: sha512-EFKlrH8qDgf8XbWPjnjaHYvKbGM6aNiXu1bTGuyT7iM3YiSYq9EJYG4hqOUqbsP6DK4EXicXafPwyS4c0nLbRQ==}
     engines: {node: '>=18'}
     peerDependencies:
       '@solidjs/router': ^0.13.4 || ^0.14.0 || ^0.15.0
@@ -1837,38 +1837,38 @@ snapshots:
   '@rollup/rollup-win32-x64-msvc@4.55.1':
     optional: true
 
-  '@sentry-internal/browser-utils@10.32.1':
+  '@sentry-internal/browser-utils@10.34.0':
     dependencies:
-      '@sentry/core': 10.32.1
+      '@sentry/core': 10.34.0
 
-  '@sentry-internal/feedback@10.32.1':
+  '@sentry-internal/feedback@10.34.0':
     dependencies:
-      '@sentry/core': 10.32.1
+      '@sentry/core': 10.34.0
 
-  '@sentry-internal/replay-canvas@10.32.1':
+  '@sentry-internal/replay-canvas@10.34.0':
     dependencies:
-      '@sentry-internal/replay': 10.32.1
-      '@sentry/core': 10.32.1
+      '@sentry-internal/replay': 10.34.0
+      '@sentry/core': 10.34.0
 
-  '@sentry-internal/replay@10.32.1':
+  '@sentry-internal/replay@10.34.0':
     dependencies:
-      '@sentry-internal/browser-utils': 10.32.1
-      '@sentry/core': 10.32.1
+      '@sentry-internal/browser-utils': 10.34.0
+      '@sentry/core': 10.34.0
 
-  '@sentry/browser@10.32.1':
+  '@sentry/browser@10.34.0':
     dependencies:
-      '@sentry-internal/browser-utils': 10.32.1
-      '@sentry-internal/feedback': 10.32.1
-      '@sentry-internal/replay': 10.32.1
-      '@sentry-internal/replay-canvas': 10.32.1
-      '@sentry/core': 10.32.1
+      '@sentry-internal/browser-utils': 10.34.0
+      '@sentry-internal/feedback': 10.34.0
+      '@sentry-internal/replay': 10.34.0
+      '@sentry-internal/replay-canvas': 10.34.0
+      '@sentry/core': 10.34.0
 
-  '@sentry/core@10.32.1': {}
+  '@sentry/core@10.34.0': {}
 
-  '@sentry/solid@10.32.1(solid-js@1.9.10)':
+  '@sentry/solid@10.34.0(solid-js@1.9.10)':
     dependencies:
-      '@sentry/browser': 10.32.1
-      '@sentry/core': 10.32.1
+      '@sentry/browser': 10.34.0
+      '@sentry/core': 10.34.0
       solid-js: 1.9.10
 
   '@standard-schema/spec@1.1.0': {}
