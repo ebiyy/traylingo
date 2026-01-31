@@ -13,6 +13,7 @@ interface SettingsData {
 
 interface SettingsProps {
   onClose: () => void;
+  onNavigateReport: () => void;
 }
 
 export function Settings(props: SettingsProps) {
@@ -300,7 +301,14 @@ export function Settings(props: SettingsProps) {
       </div>
 
       {/* Footer */}
-      <div class="flex items-center justify-end p-4 border-t border-[var(--border-primary)]">
+      <div class="flex items-center justify-between p-4 border-t border-[var(--border-primary)]">
+        <button
+          type="button"
+          onClick={props.onNavigateReport}
+          class="text-sm text-[var(--text-muted)] hover:text-[var(--accent-secondary)] transition-theme"
+        >
+          Report Issue
+        </button>
         <button
           type="button"
           onClick={props.onClose}

@@ -394,7 +394,33 @@ fn app_log(entry: LogEntry) {
 
 #[tauri::command]
 fn open_external_url(url: String) -> Result<(), String> {
-    open::that(&url).map_err(|e| e.to_string())
+    log::info!("open_external_url called with: {}", url);
+    match open::that(&url) {
+        Ok(_) => {
+            log::info!("Successfully opened URL");
+            Ok(())
+        }
+        Err(e) => {
+            log::error!("Failed to open URL: {}", e);
+            Err(e.to_string())
+        }
+    }
+}
+
+#[derive(serde::Serialize)]
+struct AppInfo {
+    version: String,
+    os: String,
+    arch: String,
+}
+
+#[tauri::command]
+fn get_app_info() -> AppInfo {
+    AppInfo {
+        version: env!("CARGO_PKG_VERSION").to_string(),
+        os: std::env::consts::OS.to_string(),
+        arch: std::env::consts::ARCH.to_string(),
+    }
 }
 
 /// Check for updates and notify user of result.
@@ -546,7 +572,8 @@ pub fn run() {
             close_popup,
             popup_ready,
             app_log,
-            open_external_url
+            open_external_url,
+            get_app_info
         ])
         .setup(|app| {
             // =================================================================
